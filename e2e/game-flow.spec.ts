@@ -39,7 +39,7 @@ async function setTopicAndStart(
   timerSeconds = 10,
 ) {
   // Set topic
-  await page.getByPlaceholder("topic").fill(topic);
+  await page.getByPlaceholder("e.g. types of cheese").fill(topic);
   await page.getByRole("button", { name: "set" }).first().click();
   await expect(page.getByText(`topic: ${topic}`)).toBeVisible({
     timeout: 5000,

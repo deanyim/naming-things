@@ -23,7 +23,7 @@ test.describe("Suggest topic button", () => {
     await createGame(hostPage);
 
     // Topic input should be empty initially
-    const topicInput = hostPage.getByPlaceholder("topic");
+    const topicInput = hostPage.getByPlaceholder("e.g. types of cheese");
     await expect(topicInput).toHaveValue("");
 
     // Click suggest

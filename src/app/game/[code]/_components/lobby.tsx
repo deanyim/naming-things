@@ -234,17 +234,18 @@ export function Lobby({
         {/* Topic & timer — visible to all, editable by host */}
         {game.isHost ? (
           <div className="flex w-full flex-col gap-4">
-            <div className="flex w-full gap-2">
+            <div className="flex w-full items-center gap-2">
+              <label className="text-sm text-gray-500">topic</label>
               <input
                 type="text"
-                placeholder="topic (e.g. types of cheese)"
+                placeholder="e.g. types of cheese"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 onBlur={saveCategory}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") saveCategory();
                 }}
-                className="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-gray-900"
+                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 outline-none focus:border-gray-900"
               />
               <button
                 onClick={saveCategory}
@@ -253,13 +254,13 @@ export function Lobby({
                   !category.trim() ||
                   category.trim() === game.category
                 }
-                className="rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-50"
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-50"
               >
                 {setCategoryMutation.isPending ? "..." : "set"}
               </button>
               <button
                 onClick={suggestTopic}
-                className="rounded-lg border border-dashed border-gray-300 px-4 py-3 text-sm font-medium text-gray-400 transition hover:border-gray-400 hover:text-gray-600"
+                className="rounded-lg border border-dashed border-gray-300 px-3 py-2 text-sm font-medium text-gray-400 transition hover:border-gray-400 hover:text-gray-600"
               >
                 random
               </button>

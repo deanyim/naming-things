@@ -87,7 +87,7 @@ test.describe("Spectator mode", () => {
     });
 
     // Host starts round (set topic first, then start)
-    await hostPage.getByPlaceholder("topic").fill("animals");
+    await hostPage.getByPlaceholder("e.g. types of cheese").fill("animals");
     await hostPage.getByRole("button", { name: "set" }).first().click();
     await expect(hostPage.getByText("topic: animals")).toBeVisible({ timeout: 5000 });
     await hostPage.getByRole("button", { name: "start round" }).click();
