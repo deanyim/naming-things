@@ -151,6 +151,7 @@ export const gameRouter = createTRPCRouter({
         endedAt: game.endedAt,
         isHost: game.hostPlayerId === player.id,
         isSpectator,
+        rematchCode: game.rematchCode ?? null,
         hostPlayerId: game.hostPlayerId,
         players: game.gamePlayers
           .filter((gp) => !gp.isSpectator)
@@ -604,5 +605,75 @@ export const gameRouter = createTRPCRouter({
       }
 
       return { success: true };
+    }),
+
+  createRematch: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        gameId: z.number(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+      const game = await requireHost(ctx.db, input.gameId, player.id);
+
+      if (game.status !== "finished") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Game must be finished to create a rematch",
+        });
+      }
+
+      // Idempotent: if rematch already created, return existing code
+      if (game.rematchCode) {
+        return { code: game.rematchCode };
+      }
+
+      // Generate unique code
+      let code = generateCode();
+      let attempts = 0;
+      while (attempts < 10) {
+        const existing = await ctx.db.query.games.findFirst({
+          where: eq(games.code, code),
+        });
+        if (!existing) break;
+        code = generateCode();
+        attempts++;
+      }
+
+      // Create new game
+      const [newGame] = await ctx.db
+        .insert(games)
+        .values({
+          code,
+          hostPlayerId: player.id,
+          status: "lobby",
+        })
+        .returning();
+
+      // Copy all players/spectators from old game
+      const oldPlayers = await ctx.db.query.gamePlayers.findMany({
+        where: eq(gamePlayers.gameId, input.gameId),
+      });
+
+      if (oldPlayers.length > 0) {
+        await ctx.db.insert(gamePlayers).values(
+          oldPlayers.map((gp) => ({
+            gameId: newGame!.id,
+            playerId: gp.playerId,
+            score: 0,
+            isSpectator: gp.isSpectator,
+          })),
+        );
+      }
+
+      // Set rematchCode on old game
+      await ctx.db
+        .update(games)
+        .set({ rematchCode: code })
+        .where(eq(games.id, input.gameId));
+
+      return { code };
     }),
 });

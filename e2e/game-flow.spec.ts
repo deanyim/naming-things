@@ -44,7 +44,8 @@ async function setTopicAndStart(
   await expect(page.getByText(`topic: ${topic}`)).toBeVisible({
     timeout: 5000,
   });
-  // Set timer
+  // Set timer (default unit is "minutes", switch to "seconds" first)
+  await page.locator("select").selectOption("seconds");
   await page.locator("input[type=number]").fill(String(timerSeconds));
   await page.getByRole("button", { name: "set" }).nth(1).click();
   await expect(page.getByText(`timer: ${timerSeconds}s`)).toBeVisible({
@@ -367,6 +368,81 @@ test.describe("Game flow", () => {
     ).toBeVisible({ timeout: 3000 });
     const playerAppleRow = hostPage.locator("li", { hasText: "apple" });
     await expect(playerAppleRow.getByText("common")).toBeVisible();
+
+    await hostContext.close();
+    await playerContext.close();
+  });
+
+  test("host can rematch and all players auto-navigate to new game", async ({
+    browser,
+  }) => {
+    test.setTimeout(120000);
+
+    const hostContext = await browser.newContext();
+    const hostPage = await hostContext.newPage();
+    const playerContext = await browser.newContext();
+    const playerPage = await playerContext.newPage();
+
+    await setupPlayer(hostPage, "Host");
+    const code = await createGame(hostPage);
+
+    await setupPlayer(playerPage, "Player");
+    await joinGame(playerPage, code);
+    await expect(hostPage.getByText("Player")).toBeVisible();
+
+    // Start with 10s timer
+    await setTopicAndStart(hostPage, "animals");
+
+    await expect(hostPage.getByText("animals")).toBeVisible({ timeout: 5000 });
+    await expect(playerPage.getByText("animals")).toBeVisible({ timeout: 5000 });
+
+    // Both submit answers
+    await hostPage.getByPlaceholder("type an answer").fill("cat");
+    await hostPage.getByRole("button", { name: "add" }).click();
+    await playerPage.getByPlaceholder("type an answer").fill("dog");
+    await playerPage.getByRole("button", { name: "add" }).click();
+
+    // Wait for review phase
+    await expect(
+      hostPage.getByRole("heading", { name: "review answers" }),
+    ).toBeVisible({ timeout: 15000 });
+
+    // Wait for answers to appear before finishing
+    await expect(hostPage.getByText("dog")).toBeVisible({ timeout: 10000 });
+
+    // Host finishes the game
+    await hostPage.getByRole("button", { name: /finish/i }).click();
+
+    // Wait for final scores on both pages
+    await expect(hostPage.getByText("final scores")).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(playerPage.getByText("final scores")).toBeVisible({
+      timeout: 10000,
+    });
+
+    // Host clicks rematch
+    await hostPage.getByRole("button", { name: "rematch" }).click();
+
+    // Both should auto-navigate to a new game URL (different code)
+    const notOriginalCode = (url: URL) => {
+      const match = url.pathname.match(/\/game\/([A-Z0-9]{6})$/);
+      return !!match && match[1] !== code;
+    };
+    await hostPage.waitForURL(notOriginalCode, { timeout: 15000 });
+    await playerPage.waitForURL(notOriginalCode, { timeout: 15000 });
+
+    const newHostCode = hostPage.url().split("/game/")[1]!;
+    const newPlayerCode = playerPage.url().split("/game/")[1]!;
+
+    // Both should be at the same new game code
+    expect(newHostCode).toBe(newPlayerCode);
+
+    // Both should see the lobby with both players
+    await expect(hostPage.getByText("lobby")).toBeVisible({ timeout: 10000 });
+    await expect(hostPage.getByText("players (2)")).toBeVisible({ timeout: 5000 });
+
+    await expect(playerPage.getByText("lobby")).toBeVisible({ timeout: 10000 });
 
     await hostContext.close();
     await playerContext.close();

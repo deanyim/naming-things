@@ -21,6 +21,7 @@ export function FinalScoreboard({
 }) {
   const router = useRouter();
   const [expandedPlayer, setExpandedPlayer] = useState<number | null>(null);
+  const createRematch = api.game.createRematch.useMutation();
 
   const answersQuery = api.game.getAllAnswers.useQuery(
     { sessionToken, gameId: game.id },
@@ -153,11 +154,29 @@ export function FinalScoreboard({
           </p>
         )}
 
+        {game.rematchCode ? (
+          <p className="text-sm text-gray-500">redirecting to rematch...</p>
+        ) : game.isHost ? (
+          <button
+            onClick={() =>
+              createRematch.mutate({ sessionToken, gameId: game.id })
+            }
+            disabled={createRematch.isPending}
+            className="w-full rounded-lg bg-gray-900 px-4 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
+          >
+            {createRematch.isPending ? "creating..." : "rematch"}
+          </button>
+        ) : (
+          <p className="text-sm text-gray-500">
+            waiting for host to start rematch...
+          </p>
+        )}
+
         <button
           onClick={() => router.push("/")}
           className="w-full rounded-lg border border-gray-900 px-4 py-3 font-medium text-gray-900 transition hover:bg-gray-100"
         >
-          play again
+          back to home
         </button>
       </div>
     </main>

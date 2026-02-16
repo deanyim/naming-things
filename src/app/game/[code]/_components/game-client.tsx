@@ -83,6 +83,13 @@ export function GameClient({ code }: { code: string }) {
     spectate,
   ]);
 
+  // Auto-navigate to rematch when rematchCode appears
+  useEffect(() => {
+    if (game?.rematchCode) {
+      router.push(`/game/${game.rematchCode}`);
+    }
+  }, [game?.rematchCode, router]);
+
   // Batch-submit local answers when game transitions to reviewing (skip for spectators)
   useEffect(() => {
     if (!game || game.status !== "reviewing" || hasSubmittedRef.current) return;

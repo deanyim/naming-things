@@ -78,6 +78,7 @@ export const games = createTable(
       .timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
+    rematchCode: d.varchar({ length: 6 }),
     updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
   }),
   (t) => [uniqueIndex("code_idx").on(t.code)],
