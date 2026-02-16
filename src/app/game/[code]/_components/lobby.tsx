@@ -14,8 +14,12 @@ export function Lobby({
   sessionToken: string;
 }) {
   const [category, setCategory] = useState("");
-  const [timerSeconds, setTimerSeconds] = useState(60);
+  const [timerValue, setTimerValue] = useState(60);
+  const [timerUnit, setTimerUnit] = useState<"seconds" | "minutes">("seconds");
   const [error, setError] = useState("");
+
+  const timerSeconds =
+    timerUnit === "minutes" ? timerValue * 60 : timerValue;
 
   const utils = api.useUtils();
   const startGame = api.game.start.useMutation({
@@ -26,6 +30,10 @@ export function Lobby({
   const handleStart = () => {
     if (!category.trim()) {
       setError("Enter a category");
+      return;
+    }
+    if (timerSeconds < 10 || timerSeconds > 3600) {
+      setError("Timer must be between 10 seconds and 60 minutes");
       return;
     }
     setError("");
@@ -58,16 +66,22 @@ export function Lobby({
 
             <div className="flex items-center gap-3">
               <label className="text-sm text-gray-500">timer</label>
+              <input
+                type="number"
+                min={1}
+                value={timerValue}
+                onChange={(e) => setTimerValue(Math.max(1, Number(e.target.value)))}
+                className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-gray-900 outline-none focus:border-gray-900"
+              />
               <select
-                value={timerSeconds}
-                onChange={(e) => setTimerSeconds(Number(e.target.value))}
+                value={timerUnit}
+                onChange={(e) =>
+                  setTimerUnit(e.target.value as "seconds" | "minutes")
+                }
                 className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900 outline-none focus:border-gray-900"
               >
-                <option value={30}>30s</option>
-                <option value={60}>60s</option>
-                <option value={90}>90s</option>
-                <option value={120}>2 min</option>
-                <option value={180}>3 min</option>
+                <option value="seconds">seconds</option>
+                <option value="minutes">minutes</option>
               </select>
             </div>
 

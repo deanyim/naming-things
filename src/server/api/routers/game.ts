@@ -152,7 +152,7 @@ export const gameRouter = createTRPCRouter({
         sessionToken: z.string().min(1),
         gameId: z.number(),
         category: z.string().min(1).max(256),
-        timerSeconds: z.number().min(10).max(300),
+        timerSeconds: z.number().min(10).max(3600),
       }),
     )
     .mutation(async ({ ctx, input }) => {

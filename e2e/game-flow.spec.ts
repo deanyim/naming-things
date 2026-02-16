@@ -217,7 +217,7 @@ test.describe("Game flow", () => {
 
     // Start with the shortest timer (30s)
     await hostPage.getByPlaceholder("category").fill("fruits");
-    await hostPage.locator("select").selectOption("30");
+    await hostPage.locator("input[type=number]").fill("10");
     await hostPage.getByRole("button", { name: "start round" }).click();
 
     await expect(hostPage.getByText("fruits")).toBeVisible({ timeout: 5000 });
@@ -240,7 +240,7 @@ test.describe("Game flow", () => {
 
     // Wait for timer to expire and game to transition to review
     await expect(hostPage.getByRole("heading", { name: "review answers" })).toBeVisible({
-      timeout: 35000,
+      timeout: 15000,
     });
     await expect(playerPage.getByRole("heading", { name: "review answers" })).toBeVisible({
       timeout: 10000,
@@ -287,7 +287,7 @@ test.describe("Game flow", () => {
 
     // Start with shortest timer
     await hostPage.getByPlaceholder("category").fill("fruits");
-    await hostPage.locator("select").selectOption("30");
+    await hostPage.locator("input[type=number]").fill("10");
     await hostPage.getByRole("button", { name: "start round" }).click();
 
     await expect(hostPage.getByText("fruits")).toBeVisible({ timeout: 5000 });
