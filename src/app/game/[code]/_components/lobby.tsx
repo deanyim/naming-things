@@ -6,6 +6,109 @@ import { ShareCode } from "./share-code";
 import { PlayerList } from "./player-list";
 import type { GameState } from "./types";
 
+const TOPIC_SUGGESTIONS = [
+  "types of cheese",
+  "things in a toolbox",
+  "cartoon characters",
+  "pizza toppings",
+  "things at the beach",
+  "dog breeds",
+  "board games",
+  "things in a fridge",
+  "famous landmarks",
+  "ice cream flavors",
+  "things that are red",
+  "superheroes",
+  "breakfast foods",
+  "musical instruments",
+  "things in a park",
+  "halloween costumes",
+  "vegetables",
+  "olympic sports",
+  "things in a backpack",
+  "movie genres",
+  "things that fly",
+  "cocktails",
+  "things in a hospital",
+  "candy bars",
+  "dance moves",
+  "things in space",
+  "card games",
+  "desserts",
+  "things at a circus",
+  "mythical creatures",
+  "things that are round",
+  "pasta shapes",
+  "things in a classroom",
+  "emojis",
+  "things at a wedding",
+  "types of fish",
+  "things in a garage",
+  "disney movies",
+  "things that are sticky",
+  "fast food chains",
+  "things you lose",
+  "country music artists",
+  "things at a gas station",
+  "yoga poses",
+  "things in a junk drawer",
+  "video game characters",
+  "things that bounce",
+  "salad ingredients",
+  "things in a museum",
+  "rap artists",
+  "things that glow",
+  "sandwich types",
+  "things at a campsite",
+  "tv show genres",
+  "things in a purse",
+  "national parks",
+  "things that melt",
+  "sushi rolls",
+  "things in an office",
+  "fairy tale characters",
+  "things that are spicy",
+  "types of hats",
+  "things at a birthday party",
+  "rock bands",
+  "things that float",
+  "fruits",
+  "things in a bathroom",
+  "sci-fi movies",
+  "things that are cold",
+  "types of shoes",
+  "things at a zoo",
+  "pop stars",
+  "things that spin",
+  "soup varieties",
+  "things in a gym",
+  "horror movie villains",
+  "things that are soft",
+  "types of trees",
+  "things at a concert",
+  "board game pieces",
+  "things that are loud",
+  "baked goods",
+  "things in a library",
+  "action movie stars",
+  "things that smell good",
+  "types of weather",
+  "things at an airport",
+  "reality tv shows",
+  "things that are blue",
+  "types of dances",
+  "things at a farmers market",
+  "car brands",
+  "things that are sharp",
+  "herbs and spices",
+  "things in a kitchen",
+  "sitcom characters",
+  "things that are tiny",
+  "winter sports",
+  "things at a theme park",
+  "things that slither",
+];
+
 function formatTimer(seconds: number): string {
   if (seconds >= 60 && seconds % 60 === 0) {
     const mins = seconds / 60;
@@ -110,6 +213,12 @@ export function Lobby({
     });
   };
 
+  const suggestTopic = () => {
+    const options = TOPIC_SUGGESTIONS.filter((t) => t !== category);
+    const pick = options[Math.floor(Math.random() * options.length)]!;
+    setCategory(pick);
+  };
+
   const topicSet = !!game.category;
   const timerChanged = timerSeconds !== game.timerSeconds;
 
@@ -147,6 +256,12 @@ export function Lobby({
                 className="rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-50"
               >
                 {setCategoryMutation.isPending ? "..." : "set"}
+              </button>
+              <button
+                onClick={suggestTopic}
+                className="rounded-lg border border-dashed border-gray-300 px-4 py-3 text-sm font-medium text-gray-400 transition hover:border-gray-400 hover:text-gray-600"
+              >
+                random
               </button>
             </div>
 
