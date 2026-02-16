@@ -100,6 +100,7 @@ export const gamePlayers = createTable(
     gameId: d.integer().notNull(),
     playerId: d.integer().notNull(),
     score: d.integer().default(0).notNull(),
+    isSpectator: d.boolean().default(false).notNull(),
     joinedAt: d
       .timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)

@@ -15,6 +15,13 @@
       "when": 1771210873706,
       "tag": "0001_lovely_karnak",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771214454902,
+      "tag": "0002_furry_pet_avengers",
+      "breakpoints": true
     }
   ]
 }

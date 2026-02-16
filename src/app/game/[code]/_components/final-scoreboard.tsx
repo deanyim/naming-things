@@ -146,6 +146,12 @@ export function FinalScoreboard({
           })}
         </div>
 
+        {game.spectators.length > 0 && (
+          <p className="text-sm text-gray-400">
+            {game.spectators.length} spectator{game.spectators.length !== 1 ? "s" : ""} watched this game
+          </p>
+        )}
+
         <button
           onClick={() => router.push("/")}
           className="w-full rounded-lg border border-gray-900 px-4 py-3 font-medium text-gray-900 transition hover:bg-gray-100"

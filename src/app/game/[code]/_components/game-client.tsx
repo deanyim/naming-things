@@ -28,9 +28,11 @@ function clearLocalAnswers(gameId: number) {
 
 export function GameClient({ code }: { code: string }) {
   const router = useRouter();
-  const { sessionToken, displayName, isReady } = useSession();
+  const { sessionToken, displayName, login, isReady } = useSession();
   const [isSubmittingAnswers, setIsSubmittingAnswers] = useState(false);
   const hasSubmittedRef = useRef(false);
+  const hasSpectatedRef = useRef(false);
+  const [nameInput, setNameInput] = useState("");
 
   // Auto-login on mount if we have a saved display name
   const ensureSession = api.player.ensureSession.useMutation();
@@ -44,21 +46,50 @@ export function GameClient({ code }: { code: string }) {
   const gameState = api.game.getState.useQuery(
     { sessionToken, code },
     {
-      enabled: isReady && !!sessionToken,
+      enabled: isReady && !!sessionToken && !!displayName,
       refetchInterval: 2000,
     },
   );
 
   const submitBatch = api.game.submitAnswersBatch.useMutation();
+  const spectate = api.game.spectate.useMutation();
 
-  // Batch-submit local answers when game transitions to reviewing
+  // Auto-spectate when user is not in the game
   const game = gameState.data;
   useEffect(() => {
+    if (
+      !game ||
+      !game.isSpectator ||
+      hasSpectatedRef.current ||
+      spectate.isPending
+    )
+      return;
+
+    // Check if already in spectators list
+    const alreadyInGame =
+      game.players.some((p) => p.id === game.myPlayerId) ||
+      game.spectators.some((s) => s.id === game.myPlayerId);
+    if (alreadyInGame) return;
+
+    hasSpectatedRef.current = true;
+    spectate.mutate({ sessionToken, code });
+  }, [
+    game?.isSpectator,
+    game?.myPlayerId,
+    game?.players,
+    game?.spectators,
+    sessionToken,
+    code,
+    spectate,
+  ]);
+
+  // Batch-submit local answers when game transitions to reviewing (skip for spectators)
+  useEffect(() => {
     if (!game || game.status !== "reviewing" || hasSubmittedRef.current) return;
+    if (game.isSpectator) return;
 
     const localAnswers = loadLocalAnswers(game.id);
     if (!localAnswers) {
-      // Nothing to submit
       return;
     }
 
@@ -80,9 +111,45 @@ export function GameClient({ code }: { code: string }) {
       .finally(() => {
         setIsSubmittingAnswers(false);
       });
-  }, [game?.status, game?.id, sessionToken, submitBatch]);
+  }, [game?.status, game?.id, game?.isSpectator, sessionToken, submitBatch]);
 
   if (!isReady) return null;
+
+  // No display name — show inline name prompt
+  if (!displayName) {
+    const handleNameSubmit = async () => {
+      const name = nameInput.trim();
+      if (!name) return;
+      await login(name);
+    };
+
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center bg-white px-4">
+        <div className="flex w-full max-w-sm flex-col items-center gap-4">
+          <p className="text-center text-gray-500">
+            enter your name to watch this game
+          </p>
+          <input
+            type="text"
+            placeholder="your display name"
+            value={nameInput}
+            onChange={(e) => setNameInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void handleNameSubmit();
+            }}
+            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-gray-900"
+          />
+          <button
+            onClick={() => void handleNameSubmit()}
+            disabled={!nameInput.trim()}
+            className="w-full rounded-lg bg-gray-900 px-4 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
+          >
+            continue
+          </button>
+        </div>
+      </main>
+    );
+  }
 
   if (gameState.isLoading) {
     return (

@@ -28,13 +28,14 @@ export function PlayingRound({
   });
 
   // Host auto-ends when timer expires (skip if disabled — means we're already in reviewing)
+  // Skip for spectators — they should not trigger state transitions
   useEffect(() => {
-    if (disabled) return;
+    if (disabled || game.isSpectator) return;
     if (game.isHost && isExpired && !hasEndedRef.current) {
       hasEndedRef.current = true;
       endAnswering.mutate({ sessionToken, gameId: game.id });
     }
-  }, [disabled, game.isHost, isExpired, sessionToken, game.id, endAnswering]);
+  }, [disabled, game.isHost, game.isSpectator, isExpired, sessionToken, game.id, endAnswering]);
 
   // Clear duplicate error after 2 seconds
   useEffect(() => {
@@ -67,44 +68,52 @@ export function PlayingRound({
           </span>
         </div>
 
-        <AnswerInput
-          onSubmit={handleSubmit}
-          disabled={inputDisabled}
-          onInputChange={() => setDuplicateError(null)}
-        />
-
-        {duplicateError && (
-          <p className="text-sm text-red-600">{duplicateError}</p>
-        )}
-
-        {answers.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <p className="text-sm text-gray-500">
-              your answers ({answers.length})
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {answers.map((a, i) => (
-                <span
-                  key={i}
-                  className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700"
-                >
-                  {a.text}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {isExpired && !game.isHost && !disabled && (
+        {game.isSpectator ? (
           <p className="text-center text-gray-500">
-            time's up! waiting for host...
+            you are spectating — answers are hidden until review
           </p>
-        )}
+        ) : (
+          <>
+            <AnswerInput
+              onSubmit={handleSubmit}
+              disabled={inputDisabled}
+              onInputChange={() => setDuplicateError(null)}
+            />
 
-        {disabled && (
-          <p className="text-center text-gray-500">
-            submitting answers...
-          </p>
+            {duplicateError && (
+              <p className="text-sm text-red-600">{duplicateError}</p>
+            )}
+
+            {answers.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <p className="text-sm text-gray-500">
+                  your answers ({answers.length})
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {answers.map((a, i) => (
+                    <span
+                      key={i}
+                      className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700"
+                    >
+                      {a.text}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {isExpired && !game.isHost && !disabled && (
+              <p className="text-center text-gray-500">
+                time's up! waiting for host...
+              </p>
+            )}
+
+            {disabled && (
+              <p className="text-center text-gray-500">
+                submitting answers...
+              </p>
+            )}
+          </>
         )}
       </div>
     </main>

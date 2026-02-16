@@ -9,7 +9,11 @@ import {
   disputeVotes,
   players,
 } from "~/server/db/schema";
-import { getPlayerBySession, requireHost } from "~/server/api/lib/session";
+import {
+  getPlayerBySession,
+  requireHost,
+  requirePlayer,
+} from "~/server/api/lib/session";
 
 function generateCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no I/1/O/0
@@ -90,7 +94,13 @@ export const gameRouter = createTRPCRouter({
         ),
       });
 
-      if (!existing) {
+      if (existing && existing.isSpectator) {
+        // Upgrade spectator to player
+        await ctx.db
+          .update(gamePlayers)
+          .set({ isSpectator: false })
+          .where(eq(gamePlayers.id, existing.id));
+      } else if (!existing) {
         await ctx.db.insert(gamePlayers).values({
           gameId: game.id,
           playerId: player.id,
@@ -126,6 +136,11 @@ export const gameRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Game not found" });
       }
 
+      const myEntry = game.gamePlayers.find(
+        (gp) => gp.playerId === player.id,
+      );
+      const isSpectator = !myEntry || myEntry.isSpectator;
+
       return {
         id: game.id,
         code: game.code,
@@ -135,13 +150,22 @@ export const gameRouter = createTRPCRouter({
         startedAt: game.startedAt,
         endedAt: game.endedAt,
         isHost: game.hostPlayerId === player.id,
+        isSpectator,
         hostPlayerId: game.hostPlayerId,
-        players: game.gamePlayers.map((gp) => ({
-          id: gp.player.id,
-          displayName: gp.player.displayName,
-          score: gp.score,
-          isHost: gp.player.id === game.hostPlayerId,
-        })),
+        players: game.gamePlayers
+          .filter((gp) => !gp.isSpectator)
+          .map((gp) => ({
+            id: gp.player.id,
+            displayName: gp.player.displayName,
+            score: gp.score,
+            isHost: gp.player.id === game.hostPlayerId,
+          })),
+        spectators: game.gamePlayers
+          .filter((gp) => gp.isSpectator)
+          .map((gp) => ({
+            id: gp.player.id,
+            displayName: gp.player.displayName,
+          })),
         myPlayerId: player.id,
       };
     }),
@@ -211,6 +235,7 @@ export const gameRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const player = await getPlayerBySession(ctx.db, input.sessionToken);
+      await requirePlayer(ctx.db, input.gameId, player.id);
 
       const game = await ctx.db.query.games.findFirst({
         where: eq(games.id, input.gameId),
@@ -347,7 +372,16 @@ export const gameRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      await getPlayerBySession(ctx.db, input.sessionToken);
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+
+      // Look up the answer to get gameId for requirePlayer check
+      const answer = await ctx.db.query.answers.findFirst({
+        where: eq(answers.id, input.answerId),
+      });
+      if (!answer) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Answer not found" });
+      }
+      await requirePlayer(ctx.db, answer.gameId, player.id);
 
       await ctx.db
         .update(answers)
@@ -375,6 +409,7 @@ export const gameRouter = createTRPCRouter({
       if (!answer) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Answer not found" });
       }
+      await requirePlayer(ctx.db, answer.gameId, player.id);
       if (answer.playerId === player.id) {
         throw new TRPCError({
           code: "FORBIDDEN",
@@ -463,6 +498,92 @@ export const gameRouter = createTRPCRouter({
         .update(games)
         .set({ status: "finished" })
         .where(eq(games.id, input.gameId));
+
+      return { success: true };
+    }),
+
+  spectate: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        code: z.string().min(1),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+      const code = input.code.toUpperCase();
+
+      const game = await ctx.db.query.games.findFirst({
+        where: eq(games.code, code),
+      });
+
+      if (!game) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Game not found" });
+      }
+
+      // Idempotent — skip if already in game
+      const existing = await ctx.db.query.gamePlayers.findFirst({
+        where: and(
+          eq(gamePlayers.gameId, game.id),
+          eq(gamePlayers.playerId, player.id),
+        ),
+      });
+
+      if (!existing) {
+        await ctx.db.insert(gamePlayers).values({
+          gameId: game.id,
+          playerId: player.id,
+          isSpectator: true,
+        });
+      }
+
+      return { success: true };
+    }),
+
+  joinAsPlayer: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        gameId: z.number(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+
+      const game = await ctx.db.query.games.findFirst({
+        where: eq(games.id, input.gameId),
+      });
+
+      if (!game) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Game not found" });
+      }
+
+      if (game.status !== "lobby" && game.status !== "playing") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This game is no longer accepting players",
+        });
+      }
+
+      const existing = await ctx.db.query.gamePlayers.findFirst({
+        where: and(
+          eq(gamePlayers.gameId, game.id),
+          eq(gamePlayers.playerId, player.id),
+        ),
+      });
+
+      if (existing && existing.isSpectator) {
+        await ctx.db
+          .update(gamePlayers)
+          .set({ isSpectator: false })
+          .where(eq(gamePlayers.id, existing.id));
+      } else if (!existing) {
+        await ctx.db.insert(gamePlayers).values({
+          gameId: game.id,
+          playerId: player.id,
+          isSpectator: false,
+        });
+      }
 
       return { success: true };
     }),

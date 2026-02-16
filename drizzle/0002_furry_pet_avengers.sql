@@ -1,0 +1,1 @@
+ALTER TABLE "naming-things_game_player" ADD COLUMN "isSpectator" boolean DEFAULT false NOT NULL;

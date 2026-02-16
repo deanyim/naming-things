@@ -21,10 +21,12 @@ export function DisputeAnswerCard({
   answer,
   sessionToken,
   myPlayerId,
+  isSpectator,
 }: {
   answer: Answer;
   sessionToken: string;
   myPlayerId: number;
+  isSpectator?: boolean;
 }) {
   const utils = api.useUtils();
   const castVote = api.game.castVote.useMutation({
@@ -37,6 +39,8 @@ export function DisputeAnswerCard({
   const isOwnAnswer = answer.playerId === myPlayerId;
   const acceptVotes = answer.disputeVotes.filter((v) => v.accept).length;
   const rejectVotes = answer.disputeVotes.filter((v) => !v.accept).length;
+
+  const showVoteButtons = !isOwnAnswer && !isSpectator;
 
   return (
     <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-3">
@@ -51,7 +55,7 @@ export function DisputeAnswerCard({
       </div>
 
       <div className="mt-2 flex items-center gap-3">
-        {!isOwnAnswer ? (
+        {showVoteButtons ? (
           <>
             <button
               onClick={() =>

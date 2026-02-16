@@ -56,6 +56,7 @@ export function ReviewPhase({
                         answer={answer}
                         sessionToken={sessionToken}
                         myPlayerId={game.myPlayerId}
+                        isSpectator={game.isSpectator}
                       />
                     );
                   }
@@ -74,7 +75,7 @@ export function ReviewPhase({
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        {answer.status === "accepted" && (
+                        {answer.status === "accepted" && !game.isSpectator && (
                           <button
                             onClick={() =>
                               disputeAnswer.mutate({
@@ -137,9 +138,15 @@ export function ReviewPhase({
           </button>
         )}
 
-        {!game.isHost && (
+        {!game.isHost && !game.isSpectator && (
           <p className="text-center text-gray-500">
             review answers above. the host will finalize scores.
+          </p>
+        )}
+
+        {game.isSpectator && (
+          <p className="text-center text-gray-400">
+            you are spectating this review
           </p>
         )}
       </div>

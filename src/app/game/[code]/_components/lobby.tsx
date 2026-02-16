@@ -51,6 +51,10 @@ export function Lobby({
     }
   };
 
+  const joinAsPlayer = api.game.joinAsPlayer.useMutation({
+    onSuccess: () => utils.game.getState.invalidate(),
+  });
+
   const handleStart = () => {
     if (!game.category && !category.trim()) {
       setError("Set a topic first");
@@ -81,7 +85,7 @@ export function Lobby({
 
         <ShareCode code={game.code} />
 
-        <PlayerList players={game.players} />
+        <PlayerList players={game.players} spectators={game.spectators} />
 
         {/* Topic — visible to all, editable by host */}
         {game.isHost ? (
@@ -149,6 +153,19 @@ export function Lobby({
             {error && (
               <p className="text-center text-sm text-red-600">{error}</p>
             )}
+          </div>
+        ) : game.isSpectator ? (
+          <div className="flex w-full flex-col items-center gap-3">
+            <p className="text-center text-gray-500">you are spectating</p>
+            <button
+              onClick={() =>
+                joinAsPlayer.mutate({ sessionToken, gameId: game.id })
+              }
+              disabled={joinAsPlayer.isPending}
+              className="w-full rounded-lg border border-gray-900 px-4 py-3 font-medium text-gray-900 transition hover:bg-gray-100 disabled:opacity-50"
+            >
+              {joinAsPlayer.isPending ? "joining..." : "join as player"}
+            </button>
           </div>
         ) : (
           <div className="flex w-full flex-col items-center gap-4">

@@ -33,3 +33,23 @@ export async function requireHost(db: DB, gameId: number, playerId: number) {
   }
   return game;
 }
+
+export async function requirePlayer(
+  db: DB,
+  gameId: number,
+  playerId: number,
+) {
+  const gp = await db.query.gamePlayers.findFirst({
+    where: and(
+      eq(gamePlayers.gameId, gameId),
+      eq(gamePlayers.playerId, playerId),
+    ),
+  });
+  if (!gp || gp.isSpectator) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Spectators cannot perform this action",
+    });
+  }
+  return gp;
+}

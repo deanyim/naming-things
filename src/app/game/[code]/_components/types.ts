@@ -7,6 +7,7 @@ export interface GameState {
   startedAt: Date | null;
   endedAt: Date | null;
   isHost: boolean;
+  isSpectator: boolean;
   hostPlayerId: number;
   myPlayerId: number;
   players: {
@@ -14,5 +15,9 @@ export interface GameState {
     displayName: string;
     score: number;
     isHost: boolean;
+  }[];
+  spectators: {
+    id: number;
+    displayName: string;
   }[];
 }

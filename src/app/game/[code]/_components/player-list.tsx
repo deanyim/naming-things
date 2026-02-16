@@ -7,7 +7,18 @@ interface Player {
   isHost: boolean;
 }
 
-export function PlayerList({ players }: { players: Player[] }) {
+interface Spectator {
+  id: number;
+  displayName: string;
+}
+
+export function PlayerList({
+  players,
+  spectators,
+}: {
+  players: Player[];
+  spectators?: Spectator[];
+}) {
   return (
     <div className="flex flex-col gap-2">
       <p className="text-sm font-medium text-gray-500">
@@ -26,6 +37,24 @@ export function PlayerList({ players }: { players: Player[] }) {
           </span>
         ))}
       </div>
+
+      {spectators && spectators.length > 0 && (
+        <>
+          <p className="mt-2 text-sm font-medium text-gray-400">
+            spectating ({spectators.length})
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {spectators.map((s) => (
+              <span
+                key={s.id}
+                className="rounded-full bg-gray-50 px-3 py-1 text-sm text-gray-400"
+              >
+                {s.displayName}
+              </span>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
