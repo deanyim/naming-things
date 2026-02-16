@@ -1,29 +1,73 @@
-# Create T3 App
+# Naming Things
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+A [T3 Stack](https://create.t3.gg/) project built with Next.js, tRPC, Drizzle ORM, Tailwind CSS, and PostgreSQL.
 
-## What's next? How do I make an app with this?
+## Prerequisites
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+- [Node.js](https://nodejs.org/) (v18+)
+- [PostgreSQL](https://www.postgresql.org/) (v14+)
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+## Database Setup
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
+### Install PostgreSQL (macOS)
+
+```bash
+brew install postgresql@17
+brew services start postgresql@17
+```
+
+### Create the database
+
+```bash
+createdb naming-things
+```
+
+### Configure the connection
+
+Copy the example env file and update the connection string:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and set `DATABASE_URL` to match your local PostgreSQL setup:
+
+```
+DATABASE_URL="postgresql://<your-user>@localhost:5432/naming-things"
+```
+
+### Push the schema
+
+```bash
+npm run db:push
+```
+
+### Other database commands
+
+```bash
+npm run db:generate   # Generate migration files
+npm run db:migrate    # Run migrations
+npm run db:studio     # Open Drizzle Studio (GUI)
+```
+
+## Getting Started
+
+```bash
+npm install
+npm run db:push
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Tech Stack
+
+- [Next.js](https://nextjs.org) (App Router)
 - [tRPC](https://trpc.io)
+- [Drizzle ORM](https://orm.drizzle.team)
+- [PostgreSQL](https://www.postgresql.org/)
+- [Tailwind CSS](https://tailwindcss.com)
 
-## Learn More
+## Deployment
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
-
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
-
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
-
-## How do I deploy this?
-
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+Follow the T3 deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify), and [Docker](https://create.t3.gg/en/deployment/docker).
