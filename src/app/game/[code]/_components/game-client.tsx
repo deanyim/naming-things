@@ -123,7 +123,7 @@ export function GameClient({ code }: { code: string }) {
         <ReviewPhase game={game} sessionToken={sessionToken} />
       )}
       {game.status === "finished" && (
-        <FinalScoreboard game={game} />
+        <FinalScoreboard game={game} sessionToken={sessionToken} />
       )}
     </>
   );

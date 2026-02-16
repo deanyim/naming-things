@@ -267,4 +267,90 @@ test.describe("Game flow", () => {
     await hostContext.close();
     await playerContext.close();
   });
+
+  test("final scoreboard shows expandable answers with common/disputed badges", async ({
+    browser,
+  }) => {
+    test.setTimeout(90000);
+
+    const hostContext = await browser.newContext();
+    const hostPage = await hostContext.newPage();
+    const playerContext = await browser.newContext();
+    const playerPage = await playerContext.newPage();
+
+    await setupPlayer(hostPage, "Host");
+    const code = await createGame(hostPage);
+
+    await setupPlayer(playerPage, "Player");
+    await joinGame(playerPage, code);
+    await expect(hostPage.getByText("Player")).toBeVisible();
+
+    // Start with shortest timer
+    await hostPage.getByPlaceholder("category").fill("fruits");
+    await hostPage.locator("select").selectOption("30");
+    await hostPage.getByRole("button", { name: "start round" }).click();
+
+    await expect(hostPage.getByText("fruits")).toBeVisible({ timeout: 5000 });
+    await expect(playerPage.getByText("fruits")).toBeVisible({ timeout: 5000 });
+
+    // Both submit a common answer
+    await hostPage.getByPlaceholder("type an answer").fill("apple");
+    await hostPage.getByRole("button", { name: "add" }).click();
+    await playerPage.getByPlaceholder("type an answer").fill("apple");
+    await playerPage.getByRole("button", { name: "add" }).click();
+
+    // Each submits a unique answer
+    await hostPage.getByPlaceholder("type an answer").fill("mango");
+    await hostPage.getByRole("button", { name: "add" }).click();
+    await playerPage.getByPlaceholder("type an answer").fill("banana");
+    await playerPage.getByRole("button", { name: "add" }).click();
+
+    // Wait for review phase
+    await expect(
+      hostPage.getByRole("heading", { name: "review answers" }),
+    ).toBeVisible({ timeout: 35000 });
+
+    // Host finishes the game
+    await hostPage.getByRole("button", { name: /finish/i }).click();
+
+    // Wait for final scores
+    await expect(hostPage.getByText("final scores")).toBeVisible({
+      timeout: 10000,
+    });
+
+    // Each player row should have a dropdown arrow
+    const hostRow = hostPage.getByText("Host").locator("..");
+    await expect(hostRow).toBeVisible();
+
+    // Click on Host's row to expand — find the button containing "Host"
+    const hostButton = hostPage.locator("button", { hasText: "Host" });
+    await hostButton.click();
+
+    // Should see Host's answers: "apple" (common) and "mango"
+    await expect(hostPage.getByText("apple")).toBeVisible({ timeout: 3000 });
+    await expect(hostPage.getByText("mango")).toBeVisible();
+
+    // "apple" should have a "common" badge
+    const appleRow = hostPage.locator("li", { hasText: "apple" });
+    await expect(appleRow.getByText("common")).toBeVisible();
+
+    // Collapse Host's row
+    await hostButton.click();
+    // "mango" should no longer be visible (it was only in Host's expanded list)
+    await expect(hostPage.locator("li", { hasText: "mango" })).not.toBeVisible();
+
+    // Expand Player's row
+    const playerButton = hostPage.locator("button", { hasText: "Player" });
+    await playerButton.click();
+
+    // Should see Player's answers: "apple" (common) and "banana"
+    await expect(
+      hostPage.locator("li", { hasText: "banana" }),
+    ).toBeVisible({ timeout: 3000 });
+    const playerAppleRow = hostPage.locator("li", { hasText: "apple" });
+    await expect(playerAppleRow.getByText("common")).toBeVisible();
+
+    await hostContext.close();
+    await playerContext.close();
+  });
 });

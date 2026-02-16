@@ -1,13 +1,52 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { api } from "~/trpc/react";
 import type { GameState } from "./types";
 
-export function FinalScoreboard({ game }: { game: GameState }) {
+interface PlayerAnswer {
+  text: string;
+  isCommon: boolean;
+  wasDisputed: boolean;
+  status: "accepted" | "disputed" | "rejected";
+}
+
+export function FinalScoreboard({
+  game,
+  sessionToken,
+}: {
+  game: GameState;
+  sessionToken: string;
+}) {
   const router = useRouter();
+  const [expandedPlayer, setExpandedPlayer] = useState<number | null>(null);
+
+  const answersQuery = api.game.getAllAnswers.useQuery(
+    { sessionToken, gameId: game.id },
+    { enabled: !!sessionToken },
+  );
 
   const sorted = [...game.players].sort((a, b) => b.score - a.score);
   const topScore = sorted[0]?.score ?? 0;
+
+  // Build per-player answer lists from grouped data
+  const playerAnswers = new Map<number, PlayerAnswer[]>();
+  if (answersQuery.data) {
+    for (const group of answersQuery.data) {
+      for (const answer of group.answers) {
+        if (!playerAnswers.has(answer.playerId)) {
+          playerAnswers.set(answer.playerId, []);
+        }
+        playerAnswers.get(answer.playerId)!.push({
+          text: answer.text,
+          isCommon: group.isCommon,
+          wasDisputed: answer.disputeVotes.length > 0,
+          status: answer.status,
+        });
+      }
+    }
+  }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-white px-4">
@@ -16,28 +55,95 @@ export function FinalScoreboard({ game }: { game: GameState }) {
         <p className="text-sm text-gray-500">{game.category}</p>
 
         <div className="w-full space-y-3">
-          {sorted.map((player, i) => (
-            <div
-              key={player.id}
-              className={`flex items-center justify-between rounded-lg p-4 ${
-                player.score === topScore && topScore > 0
-                  ? "border-2 border-yellow-400 bg-yellow-50"
-                  : "border border-gray-200 bg-gray-50"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-lg font-bold text-gray-400">
-                  {i + 1}
-                </span>
-                <span className="font-medium text-gray-900">
-                  {player.displayName}
-                </span>
+          {sorted.map((player, i) => {
+            const isTop = player.score === topScore && topScore > 0;
+            const isExpanded = expandedPlayer === player.id;
+            const answers = playerAnswers.get(player.id) ?? [];
+
+            return (
+              <div key={player.id}>
+                <button
+                  onClick={() =>
+                    setExpandedPlayer(isExpanded ? null : player.id)
+                  }
+                  className={`flex w-full items-center justify-between rounded-lg p-4 text-left transition ${
+                    isTop
+                      ? "border-2 border-yellow-400 bg-yellow-50"
+                      : "border border-gray-200 bg-gray-50"
+                  } ${isExpanded ? "rounded-b-none" : ""}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg font-bold text-gray-400">
+                      {i + 1}
+                    </span>
+                    <span className="font-medium text-gray-900">
+                      {player.displayName}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl font-bold text-gray-900">
+                      {player.score}
+                    </span>
+                    <span
+                      className={`text-gray-400 transition ${isExpanded ? "rotate-180" : ""}`}
+                    >
+                      ▼
+                    </span>
+                  </div>
+                </button>
+
+                {isExpanded && (
+                  <div
+                    className={`rounded-b-lg border border-t-0 px-4 py-3 ${
+                      isTop
+                        ? "border-yellow-400 bg-yellow-50/50"
+                        : "border-gray-200 bg-gray-50/50"
+                    }`}
+                  >
+                    {answers.length === 0 ? (
+                      <p className="text-sm text-gray-400">no answers</p>
+                    ) : (
+                      <ul className="space-y-1.5">
+                        {answers.map((answer, j) => (
+                          <li
+                            key={j}
+                            className="flex items-center justify-between text-sm"
+                          >
+                            <span
+                              className={
+                                answer.status === "rejected"
+                                  ? "text-gray-400 line-through"
+                                  : "text-gray-700"
+                              }
+                            >
+                              {answer.text}
+                            </span>
+                            <span className="flex gap-1.5">
+                              {answer.isCommon && (
+                                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
+                                  common
+                                </span>
+                              )}
+                              {answer.wasDisputed && (
+                                <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs text-orange-700">
+                                  disputed
+                                </span>
+                              )}
+                              {answer.status === "rejected" && (
+                                <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-700">
+                                  rejected
+                                </span>
+                              )}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
               </div>
-              <span className="text-xl font-bold text-gray-900">
-                {player.score}
-              </span>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <button
