@@ -124,14 +124,14 @@ export function FinalScoreboard({
                                   common
                                 </span>
                               )}
-                              {answer.wasDisputed && (
-                                <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs text-orange-700">
-                                  disputed
+                              {answer.wasDisputed && answer.status === "accepted" && (
+                                <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700">
+                                  disputed — kept
                                 </span>
                               )}
-                              {answer.status === "rejected" && (
+                              {answer.wasDisputed && answer.status === "rejected" && (
                                 <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-700">
-                                  rejected
+                                  disputed — rejected
                                 </span>
                               )}
                             </span>
