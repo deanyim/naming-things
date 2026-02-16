@@ -31,20 +31,26 @@ async function joinGame(page: Page, code: string) {
 }
 
 /**
- * Helper: host sets topic and starts the round.
+ * Helper: host sets topic, timer, and starts the round.
  */
 async function setTopicAndStart(
   page: Page,
   topic: string,
   timerSeconds = 10,
 ) {
+  // Set topic
   await page.getByPlaceholder("topic").fill(topic);
-  await page.getByRole("button", { name: "set" }).click();
-  // Wait for topic to be confirmed in the lobby
+  await page.getByRole("button", { name: "set" }).first().click();
   await expect(page.getByText(`topic: ${topic}`)).toBeVisible({
     timeout: 5000,
   });
+  // Set timer
   await page.locator("input[type=number]").fill(String(timerSeconds));
+  await page.getByRole("button", { name: "set" }).nth(1).click();
+  await expect(page.getByText(`timer: ${timerSeconds}s`)).toBeVisible({
+    timeout: 5000,
+  });
+  // Start
   await page.getByRole("button", { name: "start round" }).click();
 }
 

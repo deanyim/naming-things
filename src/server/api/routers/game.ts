@@ -190,12 +190,31 @@ export const gameRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  start: publicProcedure
+  setTimer: publicProcedure
     .input(
       z.object({
         sessionToken: z.string().min(1),
         gameId: z.number(),
         timerSeconds: z.number().min(10).max(3600),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+      await requireHost(ctx.db, input.gameId, player.id);
+
+      await ctx.db
+        .update(games)
+        .set({ timerSeconds: input.timerSeconds })
+        .where(eq(games.id, input.gameId));
+
+      return { success: true };
+    }),
+
+  start: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        gameId: z.number(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -210,13 +229,12 @@ export const gameRouter = createTRPCRouter({
       }
 
       const now = new Date();
-      const endedAt = new Date(now.getTime() + input.timerSeconds * 1000);
+      const endedAt = new Date(now.getTime() + game.timerSeconds * 1000);
 
       await ctx.db
         .update(games)
         .set({
           status: "playing",
-          timerSeconds: input.timerSeconds,
           startedAt: now,
           endedAt,
         })
