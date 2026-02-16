@@ -86,8 +86,10 @@ test.describe("Spectator mode", () => {
       timeout: 5000,
     });
 
-    // Host starts round
-    await hostPage.getByPlaceholder("category").fill("animals");
+    // Host starts round (set topic first, then start)
+    await hostPage.getByPlaceholder("topic").fill("animals");
+    await hostPage.getByRole("button", { name: "set" }).click();
+    await expect(hostPage.getByText("topic: animals")).toBeVisible({ timeout: 5000 });
     await hostPage.getByRole("button", { name: "start round" }).click();
     await expect(hostPage.getByText("animals")).toBeVisible({ timeout: 5000 });
 

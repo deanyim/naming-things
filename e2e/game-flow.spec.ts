@@ -321,6 +321,10 @@ test.describe("Game flow", () => {
       hostPage.getByRole("heading", { name: "review answers" }),
     ).toBeVisible({ timeout: 15000 });
 
+    // Wait for both players' answers to appear before finishing
+    await expect(hostPage.getByText("banana")).toBeVisible({ timeout: 10000 });
+    await expect(hostPage.getByText("mango")).toBeVisible({ timeout: 5000 });
+
     // Host finishes the game
     await hostPage.getByRole("button", { name: /finish/i }).click();
 
@@ -329,16 +333,13 @@ test.describe("Game flow", () => {
       timeout: 10000,
     });
 
-    // Each player row should have a dropdown arrow
-    const hostRow = hostPage.getByText("Host").locator("..");
-    await expect(hostRow).toBeVisible();
-
-    // Click on Host's row to expand — find the button containing "Host"
+    // Click on Host's row to expand
     const hostButton = hostPage.locator("button", { hasText: "Host" });
+    await expect(hostButton).toBeVisible();
     await hostButton.click();
 
     // Should see Host's answers: "apple" (common) and "mango"
-    await expect(hostPage.getByText("apple")).toBeVisible({ timeout: 3000 });
+    await expect(hostPage.getByText("apple")).toBeVisible({ timeout: 5000 });
     await expect(hostPage.getByText("mango")).toBeVisible();
 
     // "apple" should have a "common" badge

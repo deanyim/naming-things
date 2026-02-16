@@ -24,11 +24,12 @@ export function FinalScoreboard({
 
   const answersQuery = api.game.getAllAnswers.useQuery(
     { sessionToken, gameId: game.id },
-    { enabled: !!sessionToken },
+    { enabled: !!sessionToken, staleTime: 0 },
   );
 
   const sorted = [...game.players].sort((a, b) => b.score - a.score);
   const topScore = sorted[0]?.score ?? 0;
+
 
   // Build per-player answer lists from grouped data
   const playerAnswers = new Map<number, PlayerAnswer[]>();
