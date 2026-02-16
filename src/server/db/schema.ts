@@ -10,6 +10,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
+
 export const createTable = pgTableCreator((name) => `naming-things_${name}`);
 
 // Legacy (will be removed)
@@ -67,7 +68,7 @@ export const games = createTable(
   "game",
   (d) => ({
     id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
-    code: d.varchar({ length: 6 }).notNull().unique(),
+    code: d.varchar({ length: 6 }).notNull(),
     hostPlayerId: d.integer().notNull(),
     status: gameStatusEnum().default("lobby").notNull(),
     category: d.varchar({ length: 256 }),
@@ -78,10 +79,9 @@ export const games = createTable(
       .timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
-    rematchCode: d.varchar({ length: 6 }),
     updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
   }),
-  (t) => [uniqueIndex("code_idx").on(t.code)],
+  (t) => [index("code_idx").on(t.code)],
 );
 
 export const gamesRelations = relations(games, ({ one, many }) => ({

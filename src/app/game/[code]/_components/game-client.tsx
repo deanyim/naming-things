@@ -83,12 +83,15 @@ export function GameClient({ code }: { code: string }) {
     spectate,
   ]);
 
-  // Auto-navigate to rematch when rematchCode appears
+  // Reset refs when game ID changes (e.g. rematch creates new game with same code)
+  const prevGameIdRef = useRef<number | undefined>(undefined);
   useEffect(() => {
-    if (game?.rematchCode) {
-      router.push(`/game/${game.rematchCode}`);
+    if (game?.id !== undefined && prevGameIdRef.current !== undefined && game.id !== prevGameIdRef.current) {
+      hasSubmittedRef.current = false;
+      hasSpectatedRef.current = false;
     }
-  }, [game?.rematchCode, router]);
+    prevGameIdRef.current = game?.id;
+  }, [game?.id]);
 
   // Batch-submit local answers when game transitions to reviewing (skip for spectators)
   useEffect(() => {

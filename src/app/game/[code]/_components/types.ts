@@ -8,7 +8,6 @@ export interface GameState {
   endedAt: Date | null;
   isHost: boolean;
   isSpectator: boolean;
-  rematchCode: string | null;
   hostPlayerId: number;
   myPlayerId: number;
   players: {

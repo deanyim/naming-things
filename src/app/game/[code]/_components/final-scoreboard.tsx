@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
 import type { GameState } from "./types";
 
+
 interface PlayerAnswer {
   text: string;
   isCommon: boolean;
@@ -21,7 +22,12 @@ export function FinalScoreboard({
 }) {
   const router = useRouter();
   const [expandedPlayer, setExpandedPlayer] = useState<number | null>(null);
-  const createRematch = api.game.createRematch.useMutation();
+  const utils = api.useUtils();
+  const createRematch = api.game.createRematch.useMutation({
+    onSuccess: () => {
+      void utils.game.getState.invalidate();
+    },
+  });
 
   const answersQuery = api.game.getAllAnswers.useQuery(
     { sessionToken, gameId: game.id },
@@ -154,17 +160,17 @@ export function FinalScoreboard({
           </p>
         )}
 
-        {game.rematchCode ? (
-          <p className="text-sm text-gray-500">redirecting to rematch...</p>
-        ) : game.isHost ? (
+        {game.isHost ? (
           <button
             onClick={() =>
               createRematch.mutate({ sessionToken, gameId: game.id })
             }
-            disabled={createRematch.isPending}
+            disabled={createRematch.isPending || createRematch.isSuccess}
             className="w-full rounded-lg bg-gray-900 px-4 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
           >
-            {createRematch.isPending ? "creating..." : "rematch"}
+            {createRematch.isPending || createRematch.isSuccess
+              ? "starting rematch..."
+              : "rematch"}
           </button>
         ) : (
           <p className="text-sm text-gray-500">

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, desc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import {
@@ -73,6 +73,7 @@ export const gameRouter = createTRPCRouter({
 
       const game = await ctx.db.query.games.findFirst({
         where: eq(games.code, code),
+        orderBy: desc(games.id),
       });
 
       if (!game) {
@@ -123,6 +124,7 @@ export const gameRouter = createTRPCRouter({
 
       const game = await ctx.db.query.games.findFirst({
         where: eq(games.code, code),
+        orderBy: desc(games.id),
         with: {
           gamePlayers: {
             with: {
@@ -151,7 +153,6 @@ export const gameRouter = createTRPCRouter({
         endedAt: game.endedAt,
         isHost: game.hostPlayerId === player.id,
         isSpectator,
-        rematchCode: game.rematchCode ?? null,
         hostPlayerId: game.hostPlayerId,
         players: game.gamePlayers
           .filter((gp) => !gp.isSpectator)
@@ -534,6 +535,7 @@ export const gameRouter = createTRPCRouter({
 
       const game = await ctx.db.query.games.findFirst({
         where: eq(games.code, code),
+        orderBy: desc(games.id),
       });
 
       if (!game) {
@@ -625,34 +627,26 @@ export const gameRouter = createTRPCRouter({
         });
       }
 
-      // Idempotent: if rematch already created, return existing code
-      if (game.rematchCode) {
-        return { code: game.rematchCode };
+      // Idempotent: if a newer game already exists with same code, rematch was already created
+      const newest = await ctx.db.query.games.findFirst({
+        where: eq(games.code, game.code),
+        orderBy: desc(games.id),
+      });
+      if (newest && newest.id !== game.id) {
+        return { code: game.code };
       }
 
-      // Generate unique code
-      let code = generateCode();
-      let attempts = 0;
-      while (attempts < 10) {
-        const existing = await ctx.db.query.games.findFirst({
-          where: eq(games.code, code),
-        });
-        if (!existing) break;
-        code = generateCode();
-        attempts++;
-      }
-
-      // Create new game
+      // Create new game with same code
       const [newGame] = await ctx.db
         .insert(games)
         .values({
-          code,
+          code: game.code,
           hostPlayerId: player.id,
           status: "lobby",
         })
         .returning();
 
-      // Copy all players/spectators from old game
+      // Copy all players/spectators from old game with reset scores
       const oldPlayers = await ctx.db.query.gamePlayers.findMany({
         where: eq(gamePlayers.gameId, input.gameId),
       });
@@ -668,12 +662,6 @@ export const gameRouter = createTRPCRouter({
         );
       }
 
-      // Set rematchCode on old game
-      await ctx.db
-        .update(games)
-        .set({ rematchCode: code })
-        .where(eq(games.id, input.gameId));
-
-      return { code };
+      return { code: game.code };
     }),
 });

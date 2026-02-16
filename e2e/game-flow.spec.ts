@@ -373,7 +373,7 @@ test.describe("Game flow", () => {
     await playerContext.close();
   });
 
-  test("host can rematch and all players auto-navigate to new game", async ({
+  test("host can rematch and all players see new lobby at same URL", async ({
     browser,
   }) => {
     test.setTimeout(120000);
@@ -424,25 +424,23 @@ test.describe("Game flow", () => {
     // Host clicks rematch
     await hostPage.getByRole("button", { name: "rematch" }).click();
 
-    // Both should auto-navigate to a new game URL (different code)
-    const notOriginalCode = (url: URL) => {
-      const match = url.pathname.match(/\/game\/([A-Z0-9]{6})$/);
-      return !!match && match[1] !== code;
-    };
-    await hostPage.waitForURL(notOriginalCode, { timeout: 15000 });
-    await playerPage.waitForURL(notOriginalCode, { timeout: 15000 });
+    // URL should NOT change — same code, same URL
+    const expectedUrl = `/game/${code}`;
 
-    const newHostCode = hostPage.url().split("/game/")[1]!;
-    const newPlayerCode = playerPage.url().split("/game/")[1]!;
+    // Both should see the lobby at the same URL (polled via getState)
+    await expect(hostPage.getByText("lobby")).toBeVisible({ timeout: 15000 });
+    await expect(playerPage.getByText("lobby")).toBeVisible({ timeout: 15000 });
 
-    // Both should be at the same new game code
-    expect(newHostCode).toBe(newPlayerCode);
+    // URL should still contain the original game code
+    expect(hostPage.url()).toContain(expectedUrl);
+    expect(playerPage.url()).toContain(expectedUrl);
 
-    // Both should see the lobby with both players
-    await expect(hostPage.getByText("lobby")).toBeVisible({ timeout: 10000 });
+    // Both players should be listed in the new lobby
     await expect(hostPage.getByText("players (2)")).toBeVisible({ timeout: 5000 });
+    await expect(playerPage.getByText("players (2)")).toBeVisible({ timeout: 5000 });
 
-    await expect(playerPage.getByText("lobby")).toBeVisible({ timeout: 10000 });
+    // Game code should still be visible
+    await expect(hostPage.getByText(code)).toBeVisible();
 
     await hostContext.close();
     await playerContext.close();
