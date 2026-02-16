@@ -146,18 +146,44 @@ export const gameRouter = createTRPCRouter({
       };
     }),
 
-  start: publicProcedure
+  setCategory: publicProcedure
     .input(
       z.object({
         sessionToken: z.string().min(1),
         gameId: z.number(),
         category: z.string().min(1).max(256),
-        timerSeconds: z.number().min(10).max(3600),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       const player = await getPlayerBySession(ctx.db, input.sessionToken);
       await requireHost(ctx.db, input.gameId, player.id);
+
+      await ctx.db
+        .update(games)
+        .set({ category: input.category })
+        .where(eq(games.id, input.gameId));
+
+      return { success: true };
+    }),
+
+  start: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        gameId: z.number(),
+        timerSeconds: z.number().min(10).max(3600),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+      const game = await requireHost(ctx.db, input.gameId, player.id);
+
+      if (!game.category) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Set a category before starting",
+        });
+      }
 
       const now = new Date();
       const endedAt = new Date(now.getTime() + input.timerSeconds * 1000);
@@ -166,7 +192,6 @@ export const gameRouter = createTRPCRouter({
         .update(games)
         .set({
           status: "playing",
-          category: input.category,
           timerSeconds: input.timerSeconds,
           startedAt: now,
           endedAt,

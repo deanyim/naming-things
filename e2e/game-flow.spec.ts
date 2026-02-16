@@ -30,6 +30,24 @@ async function joinGame(page: Page, code: string) {
   await page.waitForURL(/\/game\/[A-Z0-9]{6}$/);
 }
 
+/**
+ * Helper: host sets topic and starts the round.
+ */
+async function setTopicAndStart(
+  page: Page,
+  topic: string,
+  timerSeconds = 10,
+) {
+  await page.getByPlaceholder("topic").fill(topic);
+  await page.getByRole("button", { name: "set" }).click();
+  // Wait for topic to be confirmed in the lobby
+  await expect(page.getByText(`topic: ${topic}`)).toBeVisible({
+    timeout: 5000,
+  });
+  await page.locator("input[type=number]").fill(String(timerSeconds));
+  await page.getByRole("button", { name: "start round" }).click();
+}
+
 test.describe("Game flow", () => {
   test("submitting an answer should NOT end the game early", async ({
     browser,
@@ -54,8 +72,7 @@ test.describe("Game flow", () => {
     await expect(hostPage.getByText("Player")).toBeVisible();
 
     // --- Host starts the round ---
-    await hostPage.getByPlaceholder("category").fill("fruits");
-    await hostPage.getByRole("button", { name: "start round" }).click();
+    await setTopicAndStart(hostPage, "fruits");
 
     // Wait for playing state - host should see the category and a timer
     await expect(hostPage.getByText("fruits")).toBeVisible({ timeout: 5000 });
@@ -124,8 +141,7 @@ test.describe("Game flow", () => {
     await joinGame(playerPage, code);
 
     // Start round
-    await hostPage.getByPlaceholder("category").fill("animals");
-    await hostPage.getByRole("button", { name: "start round" }).click();
+    await setTopicAndStart(hostPage, "animals");
     await expect(hostPage.getByText("animals")).toBeVisible({ timeout: 5000 });
 
     // Submit answers - should appear instantly (no server round-trip)
@@ -163,8 +179,7 @@ test.describe("Game flow", () => {
     await setupPlayer(playerPage, "Player");
     await joinGame(playerPage, code);
 
-    await hostPage.getByPlaceholder("category").fill("colors");
-    await hostPage.getByRole("button", { name: "start round" }).click();
+    await setTopicAndStart(hostPage, "colors");
     await expect(hostPage.getByText("colors")).toBeVisible({ timeout: 5000 });
 
     // Submit an answer
@@ -215,10 +230,8 @@ test.describe("Game flow", () => {
     await joinGame(playerPage, code);
     await expect(hostPage.getByText("Player")).toBeVisible();
 
-    // Start with the shortest timer (30s)
-    await hostPage.getByPlaceholder("category").fill("fruits");
-    await hostPage.locator("input[type=number]").fill("10");
-    await hostPage.getByRole("button", { name: "start round" }).click();
+    // Start with 10s timer
+    await setTopicAndStart(hostPage, "fruits");
 
     await expect(hostPage.getByText("fruits")).toBeVisible({ timeout: 5000 });
     await expect(playerPage.getByText("fruits")).toBeVisible({ timeout: 5000 });
@@ -285,10 +298,8 @@ test.describe("Game flow", () => {
     await joinGame(playerPage, code);
     await expect(hostPage.getByText("Player")).toBeVisible();
 
-    // Start with shortest timer
-    await hostPage.getByPlaceholder("category").fill("fruits");
-    await hostPage.locator("input[type=number]").fill("10");
-    await hostPage.getByRole("button", { name: "start round" }).click();
+    // Start with 10s timer
+    await setTopicAndStart(hostPage, "fruits");
 
     await expect(hostPage.getByText("fruits")).toBeVisible({ timeout: 5000 });
     await expect(playerPage.getByText("fruits")).toBeVisible({ timeout: 5000 });
@@ -308,7 +319,7 @@ test.describe("Game flow", () => {
     // Wait for review phase
     await expect(
       hostPage.getByRole("heading", { name: "review answers" }),
-    ).toBeVisible({ timeout: 35000 });
+    ).toBeVisible({ timeout: 15000 });
 
     // Host finishes the game
     await hostPage.getByRole("button", { name: /finish/i }).click();
