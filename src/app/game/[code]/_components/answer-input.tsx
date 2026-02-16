@@ -5,9 +5,11 @@ import { useState } from "react";
 export function AnswerInput({
   onSubmit,
   disabled,
+  onInputChange,
 }: {
   onSubmit: (text: string) => void;
   disabled: boolean;
+  onInputChange?: () => void;
 }) {
   const [text, setText] = useState("");
 
@@ -23,7 +25,10 @@ export function AnswerInput({
       <input
         type="text"
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => {
+          setText(e.target.value);
+          onInputChange?.();
+        }}
         placeholder="type an answer..."
         disabled={disabled}
         autoFocus

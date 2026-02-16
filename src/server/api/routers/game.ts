@@ -176,12 +176,12 @@ export const gameRouter = createTRPCRouter({
       return { startedAt: now, endedAt };
     }),
 
-  submitAnswer: publicProcedure
+  submitAnswersBatch: publicProcedure
     .input(
       z.object({
         sessionToken: z.string().min(1),
         gameId: z.number(),
-        text: z.string().min(1).max(256),
+        answers: z.array(z.object({ text: z.string().min(1).max(256) })),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -191,71 +191,50 @@ export const gameRouter = createTRPCRouter({
         where: eq(games.id, input.gameId),
       });
 
-      if (!game || game.status !== "playing") {
+      if (!game || (game.status !== "playing" && game.status !== "reviewing")) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Game is not in playing state",
+          message: "Game is not accepting answers",
         });
       }
 
-      // Enforce timer
-      if (game.endedAt && new Date() > game.endedAt) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Time is up!",
-        });
+      if (input.answers.length === 0) {
+        return { inserted: 0 };
       }
 
-      const normalizedText = input.text.trim().toLowerCase();
-
-      // Prevent same-player duplicates
-      const existing = await ctx.db.query.answers.findFirst({
+      // Get existing answers for this player to dedupe
+      const existing = await ctx.db.query.answers.findMany({
         where: and(
           eq(answers.gameId, input.gameId),
           eq(answers.playerId, player.id),
-          eq(answers.normalizedText, normalizedText),
         ),
       });
+      const existingNormalized = new Set(existing.map((a) => a.normalizedText));
 
-      if (existing) {
-        throw new TRPCError({
-          code: "CONFLICT",
-          message: "You already submitted this answer",
-        });
-      }
+      // Dedupe within batch and against existing
+      const seen = new Set<string>();
+      const toInsert: { gameId: number; playerId: number; text: string; normalizedText: string }[] = [];
 
-      const [answer] = await ctx.db
-        .insert(answers)
-        .values({
+      for (const item of input.answers) {
+        const text = item.text.trim();
+        const normalizedText = text.toLowerCase();
+        if (!text || seen.has(normalizedText) || existingNormalized.has(normalizedText)) {
+          continue;
+        }
+        seen.add(normalizedText);
+        toInsert.push({
           gameId: input.gameId,
           playerId: player.id,
-          text: input.text.trim(),
+          text,
           normalizedText,
-        })
-        .returning();
+        });
+      }
 
-      return answer!;
-    }),
+      if (toInsert.length > 0) {
+        await ctx.db.insert(answers).values(toInsert);
+      }
 
-  getMyAnswers: publicProcedure
-    .input(
-      z.object({
-        sessionToken: z.string().min(1),
-        gameId: z.number(),
-      }),
-    )
-    .query(async ({ ctx, input }) => {
-      const player = await getPlayerBySession(ctx.db, input.sessionToken);
-
-      const myAnswers = await ctx.db.query.answers.findMany({
-        where: and(
-          eq(answers.gameId, input.gameId),
-          eq(answers.playerId, player.id),
-        ),
-        orderBy: (answers, { desc }) => [desc(answers.createdAt)],
-      });
-
-      return myAnswers;
+      return { inserted: toInsert.length };
     }),
 
   endAnswering: publicProcedure

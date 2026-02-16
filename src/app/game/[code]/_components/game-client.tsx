@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "~/hooks/use-session";
 import { api } from "~/trpc/react";
@@ -9,9 +9,28 @@ import { PlayingRound } from "./playing-round";
 import { ReviewPhase } from "./review-phase";
 import { FinalScoreboard } from "./final-scoreboard";
 
+function loadLocalAnswers(gameId: number): { text: string }[] | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(`naming-things-answers-${gameId}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { text: string }[];
+    return parsed.length > 0 ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function clearLocalAnswers(gameId: number) {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(`naming-things-answers-${gameId}`);
+}
+
 export function GameClient({ code }: { code: string }) {
   const router = useRouter();
-  const { sessionToken, displayName, login, isReady } = useSession();
+  const { sessionToken, displayName, isReady } = useSession();
+  const [isSubmittingAnswers, setIsSubmittingAnswers] = useState(false);
+  const hasSubmittedRef = useRef(false);
 
   // Auto-login on mount if we have a saved display name
   const ensureSession = api.player.ensureSession.useMutation();
@@ -29,6 +48,39 @@ export function GameClient({ code }: { code: string }) {
       refetchInterval: 2000,
     },
   );
+
+  const submitBatch = api.game.submitAnswersBatch.useMutation();
+
+  // Batch-submit local answers when game transitions to reviewing
+  const game = gameState.data;
+  useEffect(() => {
+    if (!game || game.status !== "reviewing" || hasSubmittedRef.current) return;
+
+    const localAnswers = loadLocalAnswers(game.id);
+    if (!localAnswers) {
+      // Nothing to submit
+      return;
+    }
+
+    hasSubmittedRef.current = true;
+    setIsSubmittingAnswers(true);
+
+    submitBatch
+      .mutateAsync({
+        sessionToken,
+        gameId: game.id,
+        answers: localAnswers.map((a) => ({ text: a.text })),
+      })
+      .then(() => {
+        clearLocalAnswers(game.id);
+      })
+      .catch((err) => {
+        console.error("Failed to submit answers batch:", err);
+      })
+      .finally(() => {
+        setIsSubmittingAnswers(false);
+      });
+  }, [game?.status, game?.id, sessionToken, submitBatch]);
 
   if (!isReady) return null;
 
@@ -54,7 +106,6 @@ export function GameClient({ code }: { code: string }) {
     );
   }
 
-  const game = gameState.data;
   if (!game) return null;
 
   return (
@@ -65,7 +116,10 @@ export function GameClient({ code }: { code: string }) {
       {game.status === "playing" && (
         <PlayingRound game={game} sessionToken={sessionToken} />
       )}
-      {game.status === "reviewing" && (
+      {game.status === "reviewing" && isSubmittingAnswers && (
+        <PlayingRound game={game} sessionToken={sessionToken} disabled />
+      )}
+      {game.status === "reviewing" && !isSubmittingAnswers && (
         <ReviewPhase game={game} sessionToken={sessionToken} />
       )}
       {game.status === "finished" && (

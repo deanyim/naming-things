@@ -1,49 +1,56 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { api } from "~/trpc/react";
 import { useCountdown } from "~/hooks/use-countdown";
+import { useLocalAnswers } from "~/hooks/use-local-answers";
 import { AnswerInput } from "./answer-input";
-import { MyAnswersList } from "./my-answers-list";
 import type { GameState } from "./types";
 
 export function PlayingRound({
   game,
   sessionToken,
+  disabled,
 }: {
   game: GameState;
   sessionToken: string;
+  disabled?: boolean;
 }) {
   const { secondsRemaining, isExpired } = useCountdown(game.endedAt);
   const hasEndedRef = useRef(false);
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
 
   const utils = api.useUtils();
-
-  const myAnswers = api.game.getMyAnswers.useQuery(
-    { sessionToken, gameId: game.id },
-    { refetchInterval: 3000 },
-  );
-
-  const submitAnswer = api.game.submitAnswer.useMutation({
-    onSuccess: () => utils.game.getMyAnswers.invalidate(),
-  });
+  const { answers, addAnswer } = useLocalAnswers(game.id);
 
   const endAnswering = api.game.endAnswering.useMutation({
     onSuccess: () => utils.game.getState.invalidate(),
   });
 
-  // Host auto-ends when timer expires
+  // Host auto-ends when timer expires (skip if disabled — means we're already in reviewing)
   useEffect(() => {
+    if (disabled) return;
     if (game.isHost && isExpired && !hasEndedRef.current) {
       hasEndedRef.current = true;
       endAnswering.mutate({ sessionToken, gameId: game.id });
     }
-  }, [game.isHost, isExpired, sessionToken, game.id, endAnswering]);
+  }, [disabled, game.isHost, isExpired, sessionToken, game.id, endAnswering]);
+
+  // Clear duplicate error after 2 seconds
+  useEffect(() => {
+    if (!duplicateError) return;
+    const timer = setTimeout(() => setDuplicateError(null), 2000);
+    return () => clearTimeout(timer);
+  }, [duplicateError]);
 
   const handleSubmit = (text: string) => {
-    submitAnswer.mutate({ sessionToken, gameId: game.id, text });
+    const added = addAnswer(text);
+    if (!added) {
+      setDuplicateError("you already have that answer");
+    }
   };
 
+  const inputDisabled = isExpired || !!disabled;
   const isUrgent = secondsRemaining <= 10 && secondsRemaining > 0;
 
   return (
@@ -60,17 +67,43 @@ export function PlayingRound({
           </span>
         </div>
 
-        <AnswerInput onSubmit={handleSubmit} disabled={isExpired} />
+        <AnswerInput
+          onSubmit={handleSubmit}
+          disabled={inputDisabled}
+          onInputChange={() => setDuplicateError(null)}
+        />
 
-        {submitAnswer.error && (
-          <p className="text-sm text-red-600">{submitAnswer.error.message}</p>
+        {duplicateError && (
+          <p className="text-sm text-red-600">{duplicateError}</p>
         )}
 
-        <MyAnswersList answers={myAnswers.data ?? []} />
+        {answers.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-gray-500">
+              your answers ({answers.length})
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {answers.map((a, i) => (
+                <span
+                  key={i}
+                  className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700"
+                >
+                  {a.text}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
-        {isExpired && !game.isHost && (
+        {isExpired && !game.isHost && !disabled && (
           <p className="text-center text-gray-500">
             time's up! waiting for host...
+          </p>
+        )}
+
+        {disabled && (
+          <p className="text-center text-gray-500">
+            submitting answers...
           </p>
         )}
       </div>
