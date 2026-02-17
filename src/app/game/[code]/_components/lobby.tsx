@@ -193,6 +193,11 @@ export function Lobby({
     onSuccess: () => utils.game.getState.invalidate(),
   });
 
+  const kickPlayerMutation = api.game.kickPlayer.useMutation({
+    onSuccess: () => utils.game.getState.invalidate(),
+    onError: (err) => setError(err.message),
+  });
+
   const handleStart = () => {
     if (!game.category && !category.trim()) {
       setError("Set a topic first");
@@ -229,7 +234,18 @@ export function Lobby({
 
         <ShareCode code={game.code} />
 
-        <PlayerList players={game.players} spectators={game.spectators} />
+        <PlayerList
+          players={game.players}
+          spectators={game.spectators}
+          isHost={game.isHost}
+          onKick={(playerId) =>
+            kickPlayerMutation.mutate({
+              sessionToken,
+              gameId: game.id,
+              playerId,
+            })
+          }
+        />
 
         {/* Topic & timer — visible to all, editable by host */}
         {game.isHost ? (

@@ -609,6 +609,44 @@ export const gameRouter = createTRPCRouter({
       return { success: true };
     }),
 
+  kickPlayer: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        gameId: z.number(),
+        playerId: z.number(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+      const game = await requireHost(ctx.db, input.gameId, player.id);
+
+      if (game.status !== "lobby") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Can only kick players during lobby",
+        });
+      }
+
+      if (input.playerId === player.id) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Cannot kick yourself",
+        });
+      }
+
+      await ctx.db
+        .delete(gamePlayers)
+        .where(
+          and(
+            eq(gamePlayers.gameId, input.gameId),
+            eq(gamePlayers.playerId, input.playerId),
+          ),
+        );
+
+      return { success: true };
+    }),
+
   createRematch: publicProcedure
     .input(
       z.object({

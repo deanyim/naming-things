@@ -15,9 +15,13 @@ interface Spectator {
 export function PlayerList({
   players,
   spectators,
+  isHost,
+  onKick,
 }: {
   players: Player[];
   spectators?: Spectator[];
+  isHost?: boolean;
+  onKick?: (playerId: number) => void;
 }) {
   return (
     <div className="flex flex-col gap-2">
@@ -28,11 +32,20 @@ export function PlayerList({
         {players.map((p) => (
           <span
             key={p.id}
-            className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700"
+            className="flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700"
           >
             {p.displayName}
             {p.isHost && (
               <span className="ml-1 text-xs text-gray-400">(host)</span>
+            )}
+            {isHost && !p.isHost && onKick && (
+              <button
+                onClick={() => onKick(p.id)}
+                className="ml-1 text-gray-400 hover:text-red-500"
+                aria-label={`Kick ${p.displayName}`}
+              >
+                x
+              </button>
             )}
           </span>
         ))}
@@ -47,9 +60,18 @@ export function PlayerList({
             {spectators.map((s) => (
               <span
                 key={s.id}
-                className="rounded-full bg-gray-50 px-3 py-1 text-sm text-gray-400"
+                className="flex items-center rounded-full bg-gray-50 px-3 py-1 text-sm text-gray-400"
               >
                 {s.displayName}
+                {isHost && onKick && (
+                  <button
+                    onClick={() => onKick(s.id)}
+                    className="ml-1 text-gray-400 hover:text-red-500"
+                    aria-label={`Kick ${s.displayName}`}
+                  >
+                    x
+                  </button>
+                )}
               </span>
             ))}
           </div>
