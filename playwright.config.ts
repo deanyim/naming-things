@@ -14,4 +14,10 @@ export default defineConfig({
       use: { browserName: "chromium" },
     },
   ],
+  webServer: {
+    command: "NODE_ENV=production PORT=3001 npx tsx server.ts",
+    url: "http://localhost:3001",
+    reuseExistingServer: true,
+    timeout: 30000,
+  },
 });
