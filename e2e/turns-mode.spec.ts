@@ -288,6 +288,34 @@ test.describe("Turns mode", () => {
     await playerContext.close();
   });
 
+  test("cannot start with fewer than 2 players", async ({ browser }) => {
+    const hostContext = await browser.newContext();
+    const hostPage = await hostContext.newPage();
+    await setupPlayer(hostPage, "Zara");
+    await createGame(hostPage);
+
+    await selectTurnsMode(hostPage);
+
+    // Set a topic so that isn't the reason the button is disabled
+    await hostPage.getByPlaceholder("e.g. types of cheese").fill("fruits");
+    await hostPage.getByRole("button", { name: "set" }).first().click();
+    await expect(hostPage.getByText("topic: fruits")).toBeVisible({
+      timeout: 5000,
+    });
+
+    // Start button should be disabled
+    await expect(
+      hostPage.getByRole("button", { name: "start round" }),
+    ).toBeDisabled();
+
+    // Helper message should be visible
+    await expect(
+      hostPage.getByText("need at least 2 players"),
+    ).toBeVisible();
+
+    await hostContext.close();
+  });
+
   test("rematch preserves turns mode", async ({ browser }) => {
     test.setTimeout(30000);
 

@@ -361,8 +361,8 @@ export const gameRouter = createTRPCRouter({
       const now = new Date();
 
       if (game.mode === "turns") {
-        // Get first non-spectator player (lowest gamePlayers.id)
-        const firstPlayer = await ctx.db.query.gamePlayers.findFirst({
+        // Get all non-spectator players ordered by id
+        const activePlayers = await ctx.db.query.gamePlayers.findMany({
           where: and(
             eq(gamePlayers.gameId, input.gameId),
             eq(gamePlayers.isSpectator, false),
@@ -370,12 +370,14 @@ export const gameRouter = createTRPCRouter({
           orderBy: asc(gamePlayers.id),
         });
 
-        if (!firstPlayer) {
+        if (activePlayers.length < 2) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: "Need at least one player to start",
+            message: "Need at least 2 players to start last one standing",
           });
         }
+
+        const firstPlayer = activePlayers[0]!
 
         const deadline = new Date(now.getTime() + game.turnTimerSeconds * 1000);
 

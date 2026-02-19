@@ -244,6 +244,7 @@ export function Lobby({
   };
 
   const topicSet = !!game.category;
+  const needMorePlayers = game.mode === "turns" && game.players.length < 2;
   const timerChanged = timerSeconds !== game.timerSeconds;
   const turnTimerChanged = turnTimerValue !== game.turnTimerSeconds;
 
@@ -417,11 +418,17 @@ export function Lobby({
 
             <button
               onClick={handleStart}
-              disabled={startGame.isPending || !topicSet}
+              disabled={startGame.isPending || !topicSet || needMorePlayers}
               className="w-full rounded-lg bg-gray-900 px-4 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
             >
               {startGame.isPending ? "starting..." : "start round"}
             </button>
+
+            {needMorePlayers && (
+              <p className="text-center text-sm text-gray-500">
+                need at least 2 players
+              </p>
+            )}
 
             {error && (
               <p className="text-center text-sm text-red-600">{error}</p>
