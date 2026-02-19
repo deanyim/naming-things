@@ -34,9 +34,12 @@ export function FinalScoreboard({
     { enabled: !!sessionToken, staleTime: 0 },
   );
 
+  const isTurnsMode = game.mode === "turns";
   const sorted = [...game.players].sort((a, b) => b.score - a.score);
   const topScore = sorted[0]?.score ?? 0;
-
+  const turnsWinner = isTurnsMode
+    ? game.players.find((p) => !p.isEliminated)
+    : null;
 
   // Build per-player answer lists from grouped data
   const playerAnswers = new Map<number, PlayerAnswer[]>();
@@ -61,6 +64,14 @@ export function FinalScoreboard({
       <div className="flex w-full max-w-sm flex-col items-center gap-8">
         <h2 className="text-2xl font-bold text-gray-900">final scores</h2>
         <p className="text-sm text-gray-500">{game.category}</p>
+
+        {turnsWinner && (
+          <div className="w-full rounded-lg border-2 border-yellow-400 bg-yellow-50 p-4 text-center">
+            <p className="text-lg font-bold text-gray-900">
+              {turnsWinner.displayName} is the last one standing!
+            </p>
+          </div>
+        )}
 
         <div className="w-full space-y-3">
           {sorted.map((player, i) => {
@@ -127,7 +138,7 @@ export function FinalScoreboard({
                               {answer.text}
                             </span>
                             <span className="flex gap-1.5">
-                              {answer.isCommon && (
+                              {!isTurnsMode && answer.isCommon && (
                                 <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
                                   common
                                 </span>

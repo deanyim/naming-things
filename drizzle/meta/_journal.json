@@ -36,6 +36,13 @@
       "when": 1771220102423,
       "tag": "0004_known_black_tom",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1771463118971,
+      "tag": "0005_stale_hemingway",
+      "breakpoints": true
     }
   ]
 }

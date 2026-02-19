@@ -42,6 +42,8 @@ export const answerStatusEnum = pgEnum("answer_status", [
   "rejected",
 ]);
 
+export const gameModeEnum = pgEnum("game_mode", ["classic", "turns"]);
+
 // Players
 export const players = createTable(
   "player",
@@ -72,7 +74,11 @@ export const games = createTable(
     hostPlayerId: d.integer().notNull(),
     status: gameStatusEnum().default("lobby").notNull(),
     category: d.varchar({ length: 256 }),
+    mode: gameModeEnum().default("classic").notNull(),
     timerSeconds: d.integer().default(60).notNull(),
+    turnTimerSeconds: d.integer().default(5).notNull(),
+    currentTurnPlayerId: d.integer(),
+    currentTurnDeadline: d.timestamp({ withTimezone: true }),
     startedAt: d.timestamp({ withTimezone: true }),
     endedAt: d.timestamp({ withTimezone: true }),
     createdAt: d
@@ -102,6 +108,7 @@ export const gamePlayers = createTable(
     playerId: d.integer().notNull(),
     score: d.integer().default(0).notNull(),
     isSpectator: d.boolean().default(false).notNull(),
+    isEliminated: d.boolean().default(false).notNull(),
     joinedAt: d
       .timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)

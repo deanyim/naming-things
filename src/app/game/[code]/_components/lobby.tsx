@@ -8,105 +8,96 @@ import type { GameState } from "./types";
 
 const TOPIC_SUGGESTIONS = [
   "types of cheese",
-  "things in a toolbox",
+  "harry potter characters",
   "cartoon characters",
   "pizza toppings",
   "dog breeds",
   "board games",
-  "things in a fridge",
+  "periodic table elements",
   "famous landmarks",
   "ice cream flavors",
-  "superheroes",
+  "marvel characters",
   "breakfast foods",
   "musical instruments",
-  "halloween costumes",
+  "snack foods",
   "vegetables",
   "olympic sports",
-  "things in a backpack",
-  "movie genres",
+  "nfl teams",
+  "animated movies",
   "birds",
   "cocktails",
-  "things in a hospital",
+  "u.s. presidents",
   "candy bars",
-  "dance moves",
-  "things in space",
+  "world capitals",
+  "tv shows",
   "card games",
   "desserts",
   "mythical creatures",
   "pasta shapes",
-  "things in a classroom",
-  "emojis",
+  "nba teams",
+  "body parts",
   "types of fish",
-  "things in a garage",
+  "greek gods",
   "disney movies",
   "fast food chains",
   "currencies",
   "yoga poses",
   "video game characters",
-  "ball sports",
-  "salad ingredients",
-  "things in a museum",
+  "taylor swift songs",
+  "countries in africa",
   "sandwich types",
-  "things at a campsite",
-  "tv show genres",
+  "corporate logos",
+  "shakespeare plays",
   "national parks",
-  "sushi rolls",
-  "things in an office",
+  "children's books",
+  "pokémon",
   "fairy tale characters",
-  "types of hats",
+  "star wars characters",
   "rock bands",
   "fruits",
-  "things in a bathroom",
-  "types of shoes",
+  "horror movies",
+  "game of thrones characters",
   "animals at a zoo",
-  "soup varieties",
-  "things in a gym",
-  "types of trees",
-  "baked goods",
-  "things in a library",
-  "types of weather",
-  "things at an airport",
-  "types of dances",
+  "comedians",
+  "simpsons characters",
+  "toys",
+  "christmas songs",
+  "action movies",
+  "rom-coms",
+  "countries in asia",
+  "premier league clubs",
   "car brands",
   "herbs and spices",
-  "things in a kitchen",
-  "winter sports",
+  "rappers",
+  "dances",
   "rides at a theme park",
-  "things that slither",
+  "apps",
   "countries in europe",
   "baby names",
-  "things on a pizza menu",
+  "world flags",
   "u.s. states",
-  "planet earth animals",
-  "things in a toolshed",
+  "countries of the world",
+  "90s tv shows",
   "languages",
-  "types of sandwiches",
+  "mlb teams",
   "insects",
   "flowers",
-  "things in a wallet",
+  "musicals",
   "cereals",
   "reptiles",
-  "modes of transportation",
-  "things at a playground",
+  "the office characters",
   "farm animals",
-  "things in a pencil case",
-  "snack foods",
+  "oscar best picture winners",
   "ocean creatures",
-  "things in a first aid kit",
   "cat breeds",
-  "things at a carnival",
-  "camping gear",
-  "asian cuisines",
-  "things in a suitcase",
-  "nuts",
-  "berries",
-  "things at a baseball game",
+  "super smash bros. characters",
+  "nhl teams",
   "kitchen utensils",
   "dinosaurs",
-  "furniture",
-  "things in a vending machine",
-  "bodies of water",
-  "martial arts",
+  "comedies",
+  "superheroes",
+  "candy",
+  "video games",
 ];
 
 function formatTimer(seconds: number): string {
@@ -135,6 +126,7 @@ export function Lobby({
       ? "minutes"
       : "seconds",
   );
+  const [turnTimerValue, setTurnTimerValue] = useState(game.turnTimerSeconds);
   const [error, setError] = useState("");
 
   // Keep local category in sync with server state (for non-host players)
@@ -155,6 +147,16 @@ export function Lobby({
   });
 
   const setTimerMutation = api.game.setTimer.useMutation({
+    onSuccess: () => utils.game.getState.invalidate(),
+    onError: (err) => setError(err.message),
+  });
+
+  const setModeMutation = api.game.setMode.useMutation({
+    onSuccess: () => utils.game.getState.invalidate(),
+    onError: (err) => setError(err.message),
+  });
+
+  const setTurnTimerMutation = api.game.setTurnTimer.useMutation({
     onSuccess: () => utils.game.getState.invalidate(),
     onError: (err) => setError(err.message),
   });
@@ -189,6 +191,20 @@ export function Lobby({
     }
   };
 
+  const saveTurnTimer = () => {
+    if (turnTimerValue < 3 || turnTimerValue > 30) {
+      setError("Turn timer must be between 3 and 30 seconds");
+      return;
+    }
+    if (turnTimerValue !== game.turnTimerSeconds) {
+      setTurnTimerMutation.mutate({
+        sessionToken,
+        gameId: game.id,
+        turnTimerSeconds: turnTimerValue,
+      });
+    }
+  };
+
   const joinAsPlayer = api.game.joinAsPlayer.useMutation({
     onSuccess: () => utils.game.getState.invalidate(),
   });
@@ -208,8 +224,11 @@ export function Lobby({
       saveCategory();
     }
     // Save timer if it hasn't been saved yet
-    if (timerSeconds !== game.timerSeconds) {
+    if (game.mode === "classic" && timerSeconds !== game.timerSeconds) {
       saveTimer();
+    }
+    if (game.mode === "turns" && turnTimerValue !== game.turnTimerSeconds) {
+      saveTurnTimer();
     }
     setError("");
     startGame.mutate({
@@ -226,6 +245,7 @@ export function Lobby({
 
   const topicSet = !!game.category;
   const timerChanged = timerSeconds !== game.timerSeconds;
+  const turnTimerChanged = turnTimerValue !== game.turnTimerSeconds;
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-white px-4">
@@ -250,6 +270,47 @@ export function Lobby({
         {/* Topic & timer — visible to all, editable by host */}
         {game.isHost ? (
           <div className="flex w-full flex-col gap-4">
+            {/* Mode selector */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-500">mode</label>
+              <div className="flex flex-1 gap-2">
+                <button
+                  onClick={() =>
+                    game.mode !== "classic" &&
+                    setModeMutation.mutate({
+                      sessionToken,
+                      gameId: game.id,
+                      mode: "classic",
+                    })
+                  }
+                  className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                    game.mode === "classic"
+                      ? "border-gray-900 bg-gray-900 text-white"
+                      : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  classic
+                </button>
+                <button
+                  onClick={() =>
+                    game.mode !== "turns" &&
+                    setModeMutation.mutate({
+                      sessionToken,
+                      gameId: game.id,
+                      mode: "turns",
+                    })
+                  }
+                  className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                    game.mode === "turns"
+                      ? "border-gray-900 bg-gray-900 text-white"
+                      : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  last one standing
+                </button>
+              </div>
+            </div>
+
             <div className="flex w-full items-center gap-2">
               <label className="text-sm text-gray-500">topic</label>
               <input
@@ -288,39 +349,71 @@ export function Lobby({
               </p>
             )}
 
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-500">timer</label>
-              <input
-                type="number"
-                min={1}
-                value={timerValue}
-                onChange={(e) => setTimerValue(Math.max(1, Number(e.target.value)))}
-                className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-gray-900 outline-none focus:border-gray-900"
-              />
-              <select
-                value={timerUnit}
-                onChange={(e) =>
-                  setTimerUnit(e.target.value as "seconds" | "minutes")
-                }
-                className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900 outline-none focus:border-gray-900"
-              >
-                <option value="seconds">seconds</option>
-                <option value="minutes">minutes</option>
-              </select>
-              <button
-                onClick={saveTimer}
-                disabled={
-                  setTimerMutation.isPending || !timerChanged
-                }
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-50"
-              >
-                {setTimerMutation.isPending ? "..." : "set"}
-              </button>
-            </div>
+            {game.mode === "classic" ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-gray-500">timer</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={timerValue}
+                    onChange={(e) => setTimerValue(Math.max(1, Number(e.target.value)))}
+                    className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-gray-900 outline-none focus:border-gray-900"
+                  />
+                  <select
+                    value={timerUnit}
+                    onChange={(e) =>
+                      setTimerUnit(e.target.value as "seconds" | "minutes")
+                    }
+                    className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900 outline-none focus:border-gray-900"
+                  >
+                    <option value="seconds">seconds</option>
+                    <option value="minutes">minutes</option>
+                  </select>
+                  <button
+                    onClick={saveTimer}
+                    disabled={
+                      setTimerMutation.isPending || !timerChanged
+                    }
+                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-50"
+                  >
+                    {setTimerMutation.isPending ? "..." : "set"}
+                  </button>
+                </div>
 
-            <p className="text-center text-sm text-gray-500">
-              timer: <span className="font-medium text-gray-900">{formatTimer(game.timerSeconds)}</span>
-            </p>
+                <p className="text-center text-sm text-gray-500">
+                  timer: <span className="font-medium text-gray-900">{formatTimer(game.timerSeconds)}</span>
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-gray-500">turn timer</label>
+                  <input
+                    type="number"
+                    min={3}
+                    max={30}
+                    value={turnTimerValue}
+                    onChange={(e) => setTurnTimerValue(Math.max(3, Math.min(30, Number(e.target.value))))}
+                    className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-gray-900 outline-none focus:border-gray-900"
+                  />
+                  <span className="text-sm text-gray-500">seconds</span>
+                  <button
+                    onClick={saveTurnTimer}
+                    disabled={
+                      setTurnTimerMutation.isPending || !turnTimerChanged
+                    }
+                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-50"
+                  >
+                    {setTurnTimerMutation.isPending ? "..." : "set"}
+                  </button>
+                </div>
+
+                <p className="text-center text-sm text-gray-500">
+                  turn timer: <span className="font-medium text-gray-900">{game.turnTimerSeconds}s</span>
+                </p>
+              </>
+            )}
 
             <button
               onClick={handleStart}
@@ -349,13 +442,19 @@ export function Lobby({
           </div>
         ) : (
           <div className="flex w-full flex-col items-center gap-4">
+            <p className="text-sm text-gray-500">
+              mode: <span className="font-medium text-gray-900">{game.mode === "classic" ? "classic" : "last one standing"}</span>
+            </p>
             {topicSet ? (
               <p className="text-sm text-gray-500">
                 topic: <span className="font-medium text-gray-900">{game.category}</span>
               </p>
             ) : null}
             <p className="text-sm text-gray-500">
-              timer: <span className="font-medium text-gray-900">{formatTimer(game.timerSeconds)}</span>
+              {game.mode === "classic"
+                ? <>timer: <span className="font-medium text-gray-900">{formatTimer(game.timerSeconds)}</span></>
+                : <>turn timer: <span className="font-medium text-gray-900">{game.turnTimerSeconds}s</span></>
+              }
             </p>
             <p className="text-center text-gray-500">
               waiting for the host to start...

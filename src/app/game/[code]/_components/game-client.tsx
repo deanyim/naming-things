@@ -6,6 +6,7 @@ import { useSession } from "~/hooks/use-session";
 import { api } from "~/trpc/react";
 import { Lobby } from "./lobby";
 import { PlayingRound } from "./playing-round";
+import { TurnsRound } from "./turns-round";
 import { ReviewPhase } from "./review-phase";
 import { FinalScoreboard } from "./final-scoreboard";
 
@@ -93,10 +94,11 @@ export function GameClient({ code }: { code: string }) {
     prevGameIdRef.current = game?.id;
   }, [game?.id]);
 
-  // Batch-submit local answers when game transitions to reviewing (skip for spectators)
+  // Batch-submit local answers when game transitions to reviewing (skip for spectators, skip for turns mode)
   useEffect(() => {
     if (!game || game.status !== "reviewing" || hasSubmittedRef.current) return;
     if (game.isSpectator) return;
+    if (game.mode === "turns") return;
 
     const localAnswers = loadLocalAnswers(game.id);
     if (!localAnswers) {
@@ -121,7 +123,7 @@ export function GameClient({ code }: { code: string }) {
       .finally(() => {
         setIsSubmittingAnswers(false);
       });
-  }, [game?.status, game?.id, game?.isSpectator, sessionToken, submitBatch]);
+  }, [game?.status, game?.id, game?.isSpectator, game?.mode, sessionToken, submitBatch]);
 
   if (!isReady) return null;
 
@@ -190,8 +192,11 @@ export function GameClient({ code }: { code: string }) {
       {game.status === "lobby" && (
         <Lobby game={game} sessionToken={sessionToken} />
       )}
-      {game.status === "playing" && (
+      {game.status === "playing" && game.mode === "classic" && (
         <PlayingRound game={game} sessionToken={sessionToken} />
+      )}
+      {game.status === "playing" && game.mode === "turns" && (
+        <TurnsRound game={game} sessionToken={sessionToken} />
       )}
       {game.status === "reviewing" && isSubmittingAnswers && (
         <PlayingRound game={game} sessionToken={sessionToken} disabled />

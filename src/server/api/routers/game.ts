@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { eq, and, sql, desc } from "drizzle-orm";
+import { eq, and, sql, desc, asc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import {
@@ -7,13 +7,15 @@ import {
   gamePlayers,
   answers,
   disputeVotes,
-  players,
 } from "~/server/db/schema";
 import {
   getPlayerBySession,
   requireHost,
   requirePlayer,
 } from "~/server/api/lib/session";
+import { type db as dbType } from "~/server/db";
+
+type DB = typeof dbType;
 
 function generateCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no I/1/O/0
@@ -22,6 +24,58 @@ function generateCode(): string {
     code += chars[Math.floor(Math.random() * chars.length)];
   }
   return code;
+}
+
+async function advanceTurn(db: DB, gameId: number, currentTurnPlayerId: number, turnTimerSeconds: number) {
+  // Get ALL non-spectator players ordered by gamePlayers.id (need full list for ordering)
+  const allPlayers = await db.query.gamePlayers.findMany({
+    where: and(
+      eq(gamePlayers.gameId, gameId),
+      eq(gamePlayers.isSpectator, false),
+    ),
+    orderBy: asc(gamePlayers.id),
+  });
+
+  const alivePlayers = allPlayers.filter((p) => !p.isEliminated);
+
+  if (alivePlayers.length <= 1) {
+    // Game over
+    await db
+      .update(games)
+      .set({
+        status: "finished",
+        endedAt: new Date(),
+        currentTurnPlayerId: null,
+        currentTurnDeadline: null,
+      })
+      .where(eq(games.id, gameId));
+    return;
+  }
+
+  // Find next alive player after current in the full player order (cycling)
+  const currentIndex = allPlayers.findIndex(
+    (p) => p.playerId === currentTurnPlayerId,
+  );
+
+  let nextPlayer = alivePlayers[0]!; // fallback to first alive
+  for (let i = 1; i <= allPlayers.length; i++) {
+    const candidate = allPlayers[(currentIndex + i) % allPlayers.length]!;
+    if (!candidate.isEliminated) {
+      nextPlayer = candidate;
+      break;
+    }
+  }
+
+  const now = new Date();
+  const deadline = new Date(now.getTime() + turnTimerSeconds * 1000);
+
+  await db
+    .update(games)
+    .set({
+      currentTurnPlayerId: nextPlayer.playerId,
+      currentTurnDeadline: deadline,
+    })
+    .where(eq(games.id, gameId));
 }
 
 export const gameRouter = createTRPCRouter({
@@ -143,12 +197,31 @@ export const gameRouter = createTRPCRouter({
       );
       const isSpectator = !myEntry || myEntry.isSpectator;
 
+      // Build turnsHistory for turns mode
+      let turnsHistory: { text: string; playerDisplayName: string }[] | null = null;
+      if (game.mode === "turns" && game.status !== "lobby") {
+        const allAnswers = await ctx.db.query.answers.findMany({
+          where: eq(answers.gameId, game.id),
+          with: { player: true },
+          orderBy: asc(answers.id),
+        });
+        turnsHistory = allAnswers.map((a) => ({
+          text: a.text,
+          playerDisplayName: a.player.displayName,
+        }));
+      }
+
       return {
         id: game.id,
         code: game.code,
         status: game.status,
+        mode: game.mode,
         category: game.category,
         timerSeconds: game.timerSeconds,
+        turnTimerSeconds: game.turnTimerSeconds,
+        currentTurnPlayerId: game.currentTurnPlayerId,
+        currentTurnDeadline: game.currentTurnDeadline,
+        turnsHistory,
         startedAt: game.startedAt,
         endedAt: game.endedAt,
         isHost: game.hostPlayerId === player.id,
@@ -161,6 +234,7 @@ export const gameRouter = createTRPCRouter({
             displayName: gp.player.displayName,
             score: gp.score,
             isHost: gp.player.id === game.hostPlayerId,
+            isEliminated: gp.isEliminated,
           })),
         spectators: game.gamePlayers
           .filter((gp) => gp.isSpectator)
@@ -212,6 +286,60 @@ export const gameRouter = createTRPCRouter({
       return { success: true };
     }),
 
+  setMode: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        gameId: z.number(),
+        mode: z.enum(["classic", "turns"]),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+      const game = await requireHost(ctx.db, input.gameId, player.id);
+
+      if (game.status !== "lobby") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Can only change mode in lobby",
+        });
+      }
+
+      await ctx.db
+        .update(games)
+        .set({ mode: input.mode })
+        .where(eq(games.id, input.gameId));
+
+      return { success: true };
+    }),
+
+  setTurnTimer: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        gameId: z.number(),
+        turnTimerSeconds: z.number().min(3).max(30),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+      const game = await requireHost(ctx.db, input.gameId, player.id);
+
+      if (game.status !== "lobby") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Can only change turn timer in lobby",
+        });
+      }
+
+      await ctx.db
+        .update(games)
+        .set({ turnTimerSeconds: input.turnTimerSeconds })
+        .where(eq(games.id, input.gameId));
+
+      return { success: true };
+    }),
+
   start: publicProcedure
     .input(
       z.object({
@@ -231,6 +359,40 @@ export const gameRouter = createTRPCRouter({
       }
 
       const now = new Date();
+
+      if (game.mode === "turns") {
+        // Get first non-spectator player (lowest gamePlayers.id)
+        const firstPlayer = await ctx.db.query.gamePlayers.findFirst({
+          where: and(
+            eq(gamePlayers.gameId, input.gameId),
+            eq(gamePlayers.isSpectator, false),
+          ),
+          orderBy: asc(gamePlayers.id),
+        });
+
+        if (!firstPlayer) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Need at least one player to start",
+          });
+        }
+
+        const deadline = new Date(now.getTime() + game.turnTimerSeconds * 1000);
+
+        await ctx.db
+          .update(games)
+          .set({
+            status: "playing",
+            startedAt: now,
+            currentTurnPlayerId: firstPlayer.playerId,
+            currentTurnDeadline: deadline,
+          })
+          .where(eq(games.id, input.gameId));
+
+        return { startedAt: now, endedAt: null };
+      }
+
+      // Classic mode
       const endedAt = new Date(now.getTime() + game.timerSeconds * 1000);
 
       await ctx.db
@@ -243,6 +405,144 @@ export const gameRouter = createTRPCRouter({
         .where(eq(games.id, input.gameId));
 
       return { startedAt: now, endedAt };
+    }),
+
+  submitTurnAnswer: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        gameId: z.number(),
+        text: z.string().min(1).max(256),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+      await requirePlayer(ctx.db, input.gameId, player.id);
+
+      const game = await ctx.db.query.games.findFirst({
+        where: eq(games.id, input.gameId),
+      });
+
+      if (!game || game.status !== "playing" || game.mode !== "turns") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Game is not in turns playing state",
+        });
+      }
+
+      if (game.currentTurnPlayerId !== player.id) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "It's not your turn",
+        });
+      }
+
+      const text = input.text.trim();
+      const normalizedText = text.toLowerCase();
+
+      // Check for duplicate against all prior answers in this game
+      const existingAnswer = await ctx.db.query.answers.findFirst({
+        where: and(
+          eq(answers.gameId, input.gameId),
+          eq(answers.normalizedText, normalizedText),
+        ),
+      });
+
+      if (existingAnswer) {
+        // Duplicate — eliminate the player
+        await ctx.db
+          .update(gamePlayers)
+          .set({ isEliminated: true })
+          .where(
+            and(
+              eq(gamePlayers.gameId, input.gameId),
+              eq(gamePlayers.playerId, player.id),
+            ),
+          );
+
+        await advanceTurn(ctx.db, input.gameId, player.id, game.turnTimerSeconds);
+        return { success: false as const, reason: "duplicate" as const };
+      }
+
+      // Unique answer — insert and score
+      await ctx.db.insert(answers).values({
+        gameId: input.gameId,
+        playerId: player.id,
+        text,
+        normalizedText,
+      });
+
+      await ctx.db
+        .update(gamePlayers)
+        .set({ score: sql`${gamePlayers.score} + 1` })
+        .where(
+          and(
+            eq(gamePlayers.gameId, input.gameId),
+            eq(gamePlayers.playerId, player.id),
+          ),
+        );
+
+      await advanceTurn(ctx.db, input.gameId, player.id, game.turnTimerSeconds);
+      return { success: true as const };
+    }),
+
+  timeoutTurn: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        gameId: z.number(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await getPlayerBySession(ctx.db, input.sessionToken);
+
+      // Atomic guard: only process if deadline has passed
+      const game = await ctx.db.query.games.findFirst({
+        where: eq(games.id, input.gameId),
+      });
+
+      if (!game || game.status !== "playing" || game.mode !== "turns") {
+        return { success: false };
+      }
+
+      if (!game.currentTurnPlayerId || !game.currentTurnDeadline) {
+        return { success: false };
+      }
+
+      if (new Date(game.currentTurnDeadline).getTime() > Date.now()) {
+        return { success: false };
+      }
+
+      // Atomic update: only succeed if currentTurnPlayerId hasn't changed
+      const result = await ctx.db
+        .update(games)
+        .set({ currentTurnDeadline: null })
+        .where(
+          and(
+            eq(games.id, input.gameId),
+            eq(games.currentTurnPlayerId, game.currentTurnPlayerId),
+            sql`${games.currentTurnDeadline} <= NOW()`,
+          ),
+        )
+        .returning();
+
+      if (result.length === 0) {
+        return { success: false };
+      }
+
+      // Eliminate the timed-out player
+      await ctx.db
+        .update(gamePlayers)
+        .set({ isEliminated: true })
+        .where(
+          and(
+            eq(gamePlayers.gameId, input.gameId),
+            eq(gamePlayers.playerId, game.currentTurnPlayerId),
+          ),
+        );
+
+      await advanceTurn(ctx.db, input.gameId, game.currentTurnPlayerId, game.turnTimerSeconds);
+      return { success: true };
     }),
 
   submitAnswersBatch: publicProcedure
@@ -674,13 +974,15 @@ export const gameRouter = createTRPCRouter({
         return { code: game.code };
       }
 
-      // Create new game with same code
+      // Create new game with same code, preserving mode
       const [newGame] = await ctx.db
         .insert(games)
         .values({
           code: game.code,
           hostPlayerId: player.id,
           status: "lobby",
+          mode: game.mode,
+          turnTimerSeconds: game.turnTimerSeconds,
         })
         .returning();
 
@@ -696,6 +998,7 @@ export const gameRouter = createTRPCRouter({
             playerId: gp.playerId,
             score: 0,
             isSpectator: gp.isSpectator,
+            isEliminated: false,
           })),
         );
       }
