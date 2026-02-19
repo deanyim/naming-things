@@ -103,7 +103,7 @@ test.describe("Game flow", () => {
     // NOT have transitioned to the review phase.
 
     // Wait a moment to let any erroneous state transition propagate
-    await hostPage.waitForTimeout(3000);
+    await hostPage.waitForTimeout(1000);
 
     // The game should still be in playing mode - the answer input should still exist
     await expect(
@@ -166,7 +166,7 @@ test.describe("Game flow", () => {
     // Refresh page - answers should survive via localStorage
     await hostPage.reload();
     await expect(hostPage.getByText("animals")).toBeVisible({ timeout: 5000 });
-    await expect(hostPage.getByText("cat")).toBeVisible({ timeout: 3000 });
+    await expect(hostPage.getByText("cat")).toBeVisible({ timeout: 1500 });
     await expect(hostPage.getByText("dog")).toBeVisible();
     await expect(hostPage.getByText("your answers (2)")).toBeVisible();
 
@@ -329,15 +329,15 @@ test.describe("Game flow", () => {
     ).toBeVisible({ timeout: 15000 });
 
     // Wait for both players' answers to appear before finishing
-    await expect(hostPage.getByText("banana")).toBeVisible({ timeout: 10000 });
-    await expect(hostPage.getByText("mango")).toBeVisible({ timeout: 5000 });
+    await expect(hostPage.getByText("banana")).toBeVisible({ timeout: 5000 });
+    await expect(hostPage.getByText("mango")).toBeVisible({ timeout: 3000 });
 
     // Host finishes the game
     await hostPage.getByRole("button", { name: /finish/i }).click();
 
     // Wait for final scores
     await expect(hostPage.getByText("final scores")).toBeVisible({
-      timeout: 10000,
+      timeout: 5000,
     });
 
     // Click on Host's row to expand
@@ -408,17 +408,17 @@ test.describe("Game flow", () => {
     ).toBeVisible({ timeout: 15000 });
 
     // Wait for answers to appear before finishing
-    await expect(hostPage.getByText("dog")).toBeVisible({ timeout: 10000 });
+    await expect(hostPage.getByText("dog")).toBeVisible({ timeout: 5000 });
 
     // Host finishes the game
     await hostPage.getByRole("button", { name: /finish/i }).click();
 
     // Wait for final scores on both pages
     await expect(hostPage.getByText("final scores")).toBeVisible({
-      timeout: 10000,
+      timeout: 5000,
     });
     await expect(playerPage.getByText("final scores")).toBeVisible({
-      timeout: 10000,
+      timeout: 5000,
     });
 
     // Host clicks rematch
@@ -428,8 +428,8 @@ test.describe("Game flow", () => {
     const expectedUrl = `/game/${code}`;
 
     // Both should see the lobby at the same URL (polled via getState)
-    await expect(hostPage.getByText("lobby")).toBeVisible({ timeout: 15000 });
-    await expect(playerPage.getByText("lobby")).toBeVisible({ timeout: 15000 });
+    await expect(hostPage.getByText("lobby")).toBeVisible({ timeout: 8000 });
+    await expect(playerPage.getByText("lobby")).toBeVisible({ timeout: 8000 });
 
     // URL should still contain the original game code
     expect(hostPage.url()).toContain(expectedUrl);

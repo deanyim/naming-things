@@ -48,7 +48,7 @@ export function GameClient({ code }: { code: string }) {
     { sessionToken, code },
     {
       enabled: isReady && !!sessionToken && !!displayName,
-      refetchInterval: 2000,
+      refetchInterval: 500,
     },
   );
 

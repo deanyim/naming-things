@@ -175,14 +175,14 @@ test.describe("Turns mode", () => {
 
     // Quinn answers "banana"
     await expect(playerPage.getByText("your turn!")).toBeVisible({
-      timeout: 10000,
+      timeout: 5000,
     });
     await playerPage.getByPlaceholder("type an answer").fill("banana");
     await playerPage.getByRole("button", { name: "add" }).click();
 
     // Rex submits duplicate "apple" — should be eliminated
     await expect(player2Page.getByText("your turn!")).toBeVisible({
-      timeout: 10000,
+      timeout: 5000,
     });
     await player2Page.getByPlaceholder("type an answer").fill("apple");
     await player2Page.getByRole("button", { name: "add" }).click();
@@ -230,7 +230,7 @@ test.describe("Turns mode", () => {
 
     // Quinn's turn — let it timeout
     await expect(playerPage.getByText("your turn!")).toBeVisible({
-      timeout: 10000,
+      timeout: 5000,
     });
 
     // Quinn should be eliminated after timeout
@@ -240,7 +240,7 @@ test.describe("Turns mode", () => {
 
     // Game should continue — Rex should get a turn
     await expect(player2Page.getByText("your turn!")).toBeVisible({
-      timeout: 10000,
+      timeout: 5000,
     });
 
     await hostContext.close();
@@ -276,7 +276,7 @@ test.describe("Turns mode", () => {
 
     // Quinn times out — gets eliminated, Zara is last one standing
     await expect(hostPage.getByText("final scores")).toBeVisible({
-      timeout: 10000,
+      timeout: 8000,
     });
 
     // Winner banner should show
