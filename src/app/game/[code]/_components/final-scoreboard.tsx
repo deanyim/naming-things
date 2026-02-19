@@ -7,6 +7,7 @@ import type { GameState } from "./types";
 
 
 interface PlayerAnswer {
+  id: number;
   text: string;
   isCommon: boolean;
   wasDisputed: boolean;
@@ -35,7 +36,20 @@ export function FinalScoreboard({
   );
 
   const isTurnsMode = game.mode === "turns";
-  const sorted = [...game.players].sort((a, b) => b.score - a.score);
+  const sorted = [...game.players].sort((a, b) => {
+    if (isTurnsMode) {
+      // Non-eliminated (winner) first
+      if (a.isEliminated !== b.isEliminated) {
+        return a.isEliminated ? 1 : -1;
+      }
+      // Both eliminated: most recently eliminated first
+      if (a.eliminatedAt && b.eliminatedAt) {
+        return new Date(b.eliminatedAt).getTime() - new Date(a.eliminatedAt).getTime();
+      }
+      // Fall back to score
+    }
+    return b.score - a.score;
+  });
   const topScore = sorted[0]?.score ?? 0;
   const turnsWinner = isTurnsMode
     ? game.players.find((p) => !p.isEliminated)
@@ -50,6 +64,7 @@ export function FinalScoreboard({
           playerAnswers.set(answer.playerId, []);
         }
         playerAnswers.get(answer.playerId)!.push({
+          id: answer.id,
           text: answer.text,
           isCommon: group.isCommon,
           wasDisputed: answer.disputeVotes.length > 0,
@@ -77,7 +92,9 @@ export function FinalScoreboard({
           {sorted.map((player, i) => {
             const isTop = player.score === topScore && topScore > 0;
             const isExpanded = expandedPlayer === player.id;
-            const answers = playerAnswers.get(player.id) ?? [];
+            const answers = (playerAnswers.get(player.id) ?? []).sort((a, b) =>
+              isTurnsMode ? b.id - a.id : 0,
+            );
 
             return (
               <div key={player.id}>

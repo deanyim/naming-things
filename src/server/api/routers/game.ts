@@ -237,6 +237,7 @@ export const gameRouter = createTRPCRouter({
             score: gp.score,
             isHost: gp.player.id === game.hostPlayerId,
             isEliminated: gp.isEliminated,
+            eliminatedAt: gp.eliminatedAt,
           })),
         spectators: game.gamePlayers
           .filter((gp) => gp.isSpectator)
@@ -462,7 +463,7 @@ export const gameRouter = createTRPCRouter({
         // Duplicate — eliminate the player
         await ctx.db
           .update(gamePlayers)
-          .set({ isEliminated: true })
+          .set({ isEliminated: true, eliminatedAt: new Date() })
           .where(
             and(
               eq(gamePlayers.gameId, input.gameId),
@@ -545,7 +546,7 @@ export const gameRouter = createTRPCRouter({
       // Eliminate the timed-out player
       await ctx.db
         .update(gamePlayers)
-        .set({ isEliminated: true })
+        .set({ isEliminated: true, eliminatedAt: new Date() })
         .where(
           and(
             eq(gamePlayers.gameId, input.gameId),

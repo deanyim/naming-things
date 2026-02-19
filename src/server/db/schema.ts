@@ -109,6 +109,7 @@ export const gamePlayers = createTable(
     score: d.integer().default(0).notNull(),
     isSpectator: d.boolean().default(false).notNull(),
     isEliminated: d.boolean().default(false).notNull(),
+    eliminatedAt: d.timestamp({ withTimezone: true }),
     joinedAt: d
       .timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)

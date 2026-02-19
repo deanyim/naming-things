@@ -1,0 +1,1 @@
+ALTER TABLE "naming-things_game_player" ADD COLUMN "eliminatedAt" timestamp with time zone;

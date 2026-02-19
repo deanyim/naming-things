@@ -21,6 +21,7 @@ export interface GameState {
     score: number;
     isHost: boolean;
     isEliminated: boolean;
+    eliminatedAt: Date | null;
   }[];
   spectators: {
     id: number;
