@@ -145,8 +145,8 @@ export function TurnsRound({
             <p className="mb-2 text-sm text-gray-500">
               answers ({game.turnsHistory.length})
             </p>
-            <div className="max-h-60 space-y-1 overflow-y-auto">
-              {game.turnsHistory.map((entry, i) => (
+            <div className="max-h-96 space-y-1 overflow-y-auto">
+              {[...game.turnsHistory].reverse().map((entry, i) => (
                 <div
                   key={i}
                   className="flex items-center justify-between text-sm"
