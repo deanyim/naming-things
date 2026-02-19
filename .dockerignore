@@ -1,0 +1,6 @@
+node_modules
+.next
+.git
+test-results
+e2e
+.claude

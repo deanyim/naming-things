@@ -74,7 +74,7 @@ test.describe("Spectator mode", () => {
     const playerPage = await playerContext.newPage();
     await setupPlayer(playerPage, "Player");
     await joinGame(playerPage, code);
-    await expect(hostPage.getByText("Player")).toBeVisible();
+    await expect(hostPage.getByText("players (2)")).toBeVisible({ timeout: 5000 });
 
     // Spectator joins directly
     const spectatorContext = await browser.newContext();

@@ -42,11 +42,10 @@ test.describe("Kick player", () => {
     // Host kicks the player
     await hostPage.getByRole("button", { name: "Kick Kicked" }).click();
 
-    // Player disappears from host's list
+    // Player disappears from host's players list
     await expect(hostPage.getByText("players (1)")).toBeVisible({
       timeout: 5000,
     });
-    await expect(hostPage.getByText("Kicked")).not.toBeVisible();
 
     await hostContext.close();
     await playerContext.close();

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "~/hooks/use-session";
+import { useGameSocket } from "~/hooks/use-game-socket";
 import { api } from "~/trpc/react";
 import { Lobby } from "./lobby";
 import { PlayingRound } from "./playing-round";
@@ -35,6 +36,8 @@ export function GameClient({ code }: { code: string }) {
   const hasSpectatedRef = useRef(false);
   const [nameInput, setNameInput] = useState("");
 
+  useGameSocket(code);
+
   // Auto-login on mount if we have a saved display name
   const ensureSession = api.player.ensureSession.useMutation();
   useEffect(() => {
@@ -48,7 +51,7 @@ export function GameClient({ code }: { code: string }) {
     { sessionToken, code },
     {
       enabled: isReady && !!sessionToken && !!displayName,
-      refetchInterval: 500,
+      refetchInterval: 5000,
     },
   );
 

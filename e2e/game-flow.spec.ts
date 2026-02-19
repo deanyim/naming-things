@@ -76,7 +76,7 @@ test.describe("Game flow", () => {
     await joinGame(playerPage, code);
 
     // Both should see each other in the lobby
-    await expect(hostPage.getByText("Player")).toBeVisible();
+    await expect(hostPage.getByText("players (2)")).toBeVisible({ timeout: 5000 });
 
     // --- Host starts the round ---
     await setTopicAndStart(hostPage, "fruits");
@@ -235,7 +235,7 @@ test.describe("Game flow", () => {
 
     await setupPlayer(playerPage, "Player");
     await joinGame(playerPage, code);
-    await expect(hostPage.getByText("Player")).toBeVisible();
+    await expect(hostPage.getByText("players (2)")).toBeVisible({ timeout: 5000 });
 
     // Start with 10s timer
     await setTopicAndStart(hostPage, "fruits");
@@ -303,7 +303,7 @@ test.describe("Game flow", () => {
 
     await setupPlayer(playerPage, "Player");
     await joinGame(playerPage, code);
-    await expect(hostPage.getByText("Player")).toBeVisible();
+    await expect(hostPage.getByText("players (2)")).toBeVisible({ timeout: 5000 });
 
     // Start with 10s timer
     await setTopicAndStart(hostPage, "fruits");
@@ -388,7 +388,7 @@ test.describe("Game flow", () => {
 
     await setupPlayer(playerPage, "Player");
     await joinGame(playerPage, code);
-    await expect(hostPage.getByText("Player")).toBeVisible();
+    await expect(hostPage.getByText("players (2)")).toBeVisible({ timeout: 5000 });
 
     // Start with 10s timer
     await setTopicAndStart(hostPage, "animals");

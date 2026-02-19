@@ -13,6 +13,7 @@ import {
   requireHost,
   requirePlayer,
 } from "~/server/api/lib/session";
+import { notify } from "~/server/ws/notify";
 import { type db as dbType } from "~/server/db";
 
 type DB = typeof dbType;
@@ -162,6 +163,7 @@ export const gameRouter = createTRPCRouter({
         });
       }
 
+      notify(code);
       return { code: game.code };
     }),
 
@@ -256,13 +258,14 @@ export const gameRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const player = await getPlayerBySession(ctx.db, input.sessionToken);
-      await requireHost(ctx.db, input.gameId, player.id);
+      const game = await requireHost(ctx.db, input.gameId, player.id);
 
       await ctx.db
         .update(games)
         .set({ category: input.category })
         .where(eq(games.id, input.gameId));
 
+      notify(game.code);
       return { success: true };
     }),
 
@@ -276,13 +279,14 @@ export const gameRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const player = await getPlayerBySession(ctx.db, input.sessionToken);
-      await requireHost(ctx.db, input.gameId, player.id);
+      const game = await requireHost(ctx.db, input.gameId, player.id);
 
       await ctx.db
         .update(games)
         .set({ timerSeconds: input.timerSeconds })
         .where(eq(games.id, input.gameId));
 
+      notify(game.code);
       return { success: true };
     }),
 
@@ -310,6 +314,7 @@ export const gameRouter = createTRPCRouter({
         .set({ mode: input.mode })
         .where(eq(games.id, input.gameId));
 
+      notify(game.code);
       return { success: true };
     }),
 
@@ -337,6 +342,7 @@ export const gameRouter = createTRPCRouter({
         .set({ turnTimerSeconds: input.turnTimerSeconds })
         .where(eq(games.id, input.gameId));
 
+      notify(game.code);
       return { success: true };
     }),
 
@@ -391,6 +397,7 @@ export const gameRouter = createTRPCRouter({
           })
           .where(eq(games.id, input.gameId));
 
+        notify(game.code);
         return { startedAt: now, endedAt: null };
       }
 
@@ -406,6 +413,7 @@ export const gameRouter = createTRPCRouter({
         })
         .where(eq(games.id, input.gameId));
 
+      notify(game.code);
       return { startedAt: now, endedAt };
     }),
 
@@ -463,6 +471,7 @@ export const gameRouter = createTRPCRouter({
           );
 
         await advanceTurn(ctx.db, input.gameId, player.id, game.turnTimerSeconds);
+        notify(game.code);
         return { success: false as const, reason: "duplicate" as const };
       }
 
@@ -485,6 +494,7 @@ export const gameRouter = createTRPCRouter({
         );
 
       await advanceTurn(ctx.db, input.gameId, player.id, game.turnTimerSeconds);
+      notify(game.code);
       return { success: true as const };
     }),
 
@@ -544,6 +554,7 @@ export const gameRouter = createTRPCRouter({
         );
 
       await advanceTurn(ctx.db, input.gameId, game.currentTurnPlayerId, game.turnTimerSeconds);
+      notify(game.code);
       return { success: true };
     }),
 
@@ -606,6 +617,7 @@ export const gameRouter = createTRPCRouter({
         await ctx.db.insert(answers).values(toInsert);
       }
 
+      notify(game.code);
       return { inserted: toInsert.length };
     }),
 
@@ -632,6 +644,7 @@ export const gameRouter = createTRPCRouter({
         .set({ status: "reviewing" })
         .where(eq(games.id, input.gameId));
 
+      notify(game.code);
       return { success: true };
     }),
 
@@ -705,11 +718,16 @@ export const gameRouter = createTRPCRouter({
       }
       await requirePlayer(ctx.db, answer.gameId, player.id);
 
+      const game = await ctx.db.query.games.findFirst({
+        where: eq(games.id, answer.gameId),
+      });
+
       await ctx.db
         .update(answers)
         .set({ status: "disputed" })
         .where(eq(answers.id, input.answerId));
 
+      if (game) notify(game.code);
       return { success: true };
     }),
 
@@ -739,6 +757,10 @@ export const gameRouter = createTRPCRouter({
         });
       }
 
+      const game = await ctx.db.query.games.findFirst({
+        where: eq(games.id, answer.gameId),
+      });
+
       // Upsert vote
       await ctx.db
         .insert(disputeVotes)
@@ -752,6 +774,7 @@ export const gameRouter = createTRPCRouter({
           set: { accept: input.accept },
         });
 
+      if (game) notify(game.code);
       return { success: true };
     }),
 
@@ -764,7 +787,7 @@ export const gameRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const player = await getPlayerBySession(ctx.db, input.sessionToken);
-      await requireHost(ctx.db, input.gameId, player.id);
+      const game = await requireHost(ctx.db, input.gameId, player.id);
 
       // Resolve disputed answers
       const allAnswers = await ctx.db.query.answers.findMany({
@@ -821,6 +844,7 @@ export const gameRouter = createTRPCRouter({
         .set({ status: "finished" })
         .where(eq(games.id, input.gameId));
 
+      notify(game.code);
       return { success: true };
     }),
 
@@ -860,6 +884,7 @@ export const gameRouter = createTRPCRouter({
         });
       }
 
+      notify(code);
       return { success: true };
     }),
 
@@ -908,6 +933,7 @@ export const gameRouter = createTRPCRouter({
         });
       }
 
+      notify(game.code);
       return { success: true };
     }),
 
@@ -946,6 +972,7 @@ export const gameRouter = createTRPCRouter({
           ),
         );
 
+      notify(game.code);
       return { success: true };
     }),
 
@@ -1005,6 +1032,7 @@ export const gameRouter = createTRPCRouter({
         );
       }
 
+      notify(game.code);
       return { code: game.code };
     }),
 });

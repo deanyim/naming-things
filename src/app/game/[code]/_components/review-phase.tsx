@@ -15,7 +15,7 @@ export function ReviewPhase({
 
   const allAnswers = api.game.getAllAnswers.useQuery(
     { sessionToken, gameId: game.id },
-    { refetchInterval: 500 },
+    { refetchInterval: 5000 },
   );
 
   const disputeAnswer = api.game.disputeAnswer.useMutation({
