@@ -288,6 +288,78 @@ test.describe("Turns mode", () => {
     await playerContext.close();
   });
 
+  test("final scoreboard lists players in reverse elimination order with answers newest-first", async ({
+    browser,
+  }) => {
+    test.setTimeout(60000);
+
+    const hostContext = await browser.newContext();
+    const hostPage = await hostContext.newPage();
+    await setupPlayer(hostPage, "Zara");
+    const code = await createGame(hostPage);
+
+    const playerContext = await browser.newContext();
+    const playerPage = await playerContext.newPage();
+    await setupPlayer(playerPage, "Quinn");
+    await joinGame(playerPage, code);
+
+    const player2Context = await browser.newContext();
+    const player2Page = await player2Context.newPage();
+    await setupPlayer(player2Page, "Rex");
+    await joinGame(player2Page, code);
+    await expect(hostPage.getByText("Rex")).toBeVisible();
+
+    await selectTurnsMode(hostPage);
+    await setTopicAndStartTurns(hostPage, "fruits", 5);
+
+    // Round 1: Zara answers "apple"
+    await expect(hostPage.getByText("your turn!")).toBeVisible({ timeout: 5000 });
+    await hostPage.getByPlaceholder("type an answer").fill("apple");
+    await hostPage.getByRole("button", { name: "add" }).click();
+
+    // Round 1: Quinn answers "banana"
+    await expect(playerPage.getByText("your turn!")).toBeVisible({ timeout: 5000 });
+    await playerPage.getByPlaceholder("type an answer").fill("banana");
+    await playerPage.getByRole("button", { name: "add" }).click();
+
+    // Round 1: Rex submits duplicate "apple" — eliminated first
+    await expect(player2Page.getByText("your turn!")).toBeVisible({ timeout: 5000 });
+    await player2Page.getByPlaceholder("type an answer").fill("apple");
+    await player2Page.getByRole("button", { name: "add" }).click();
+    await expect(player2Page.getByText("you've been eliminated")).toBeVisible({ timeout: 5000 });
+
+    // Round 2: Zara answers "cherry"
+    await expect(hostPage.getByText("your turn!")).toBeVisible({ timeout: 5000 });
+    await hostPage.getByPlaceholder("type an answer").fill("cherry");
+    await hostPage.getByRole("button", { name: "add" }).click();
+
+    // Round 2: Quinn times out — eliminated second
+    // Wait for game to finish (Zara is last one standing)
+    await expect(hostPage.getByText("final scores")).toBeVisible({ timeout: 20000 });
+
+    // Verify order: Zara (winner) #1, Quinn (eliminated second) #2, Rex (eliminated first) #3
+    const nameOrder = await hostPage
+      .locator(".space-y-3 .font-medium.text-gray-900")
+      .allTextContents();
+    expect(nameOrder).toEqual(["Zara", "Quinn", "Rex"]);
+
+    // Verify Zara's answers are newest-first: expand Zara's row
+    await hostPage.locator("button").filter({ hasText: /Zara/ }).click();
+    const zaraAnswers = await hostPage
+      .locator("ul")
+      .first()
+      .locator("li")
+      .allTextContents();
+    // "cherry" (most recent) should come before "apple"
+    const cherryIdx = zaraAnswers.findIndex((t) => t.includes("cherry"));
+    const appleIdx = zaraAnswers.findIndex((t) => t.includes("apple"));
+    expect(cherryIdx).toBeLessThan(appleIdx);
+
+    await hostContext.close();
+    await playerContext.close();
+    await player2Context.close();
+  });
+
   test("cannot start with fewer than 2 players", async ({ browser }) => {
     const hostContext = await browser.newContext();
     const hostPage = await hostContext.newPage();
