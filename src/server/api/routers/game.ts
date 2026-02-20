@@ -27,9 +27,20 @@ function generateCode(): string {
   return code;
 }
 
-async function advanceTurn(db: DB, gameId: number, currentTurnPlayerId: number, turnTimerSeconds: number) {
+type AdvanceTurnResult = {
+  nextPlayerId: number | null;
+  nextDeadline: Date | null;
+  gameFinished: boolean;
+};
+
+async function advanceTurn(
+  dbOrTx: DB | Parameters<Parameters<DB["transaction"]>[0]>[0],
+  gameId: number,
+  currentTurnPlayerId: number,
+  turnTimerSeconds: number,
+): Promise<AdvanceTurnResult> {
   // Get ALL non-spectator players ordered by gamePlayers.id (need full list for ordering)
-  const allPlayers = await db.query.gamePlayers.findMany({
+  const allPlayers = await dbOrTx.query.gamePlayers.findMany({
     where: and(
       eq(gamePlayers.gameId, gameId),
       eq(gamePlayers.isSpectator, false),
@@ -41,7 +52,7 @@ async function advanceTurn(db: DB, gameId: number, currentTurnPlayerId: number, 
 
   if (alivePlayers.length <= 1) {
     // Game over
-    await db
+    await dbOrTx
       .update(games)
       .set({
         status: "finished",
@@ -50,7 +61,7 @@ async function advanceTurn(db: DB, gameId: number, currentTurnPlayerId: number, 
         currentTurnDeadline: null,
       })
       .where(eq(games.id, gameId));
-    return;
+    return { nextPlayerId: null, nextDeadline: null, gameFinished: true };
   }
 
   // Find next alive player after current in the full player order (cycling)
@@ -70,13 +81,15 @@ async function advanceTurn(db: DB, gameId: number, currentTurnPlayerId: number, 
   const now = new Date();
   const deadline = new Date(now.getTime() + turnTimerSeconds * 1000);
 
-  await db
+  await dbOrTx
     .update(games)
     .set({
       currentTurnPlayerId: nextPlayer.playerId,
       currentTurnDeadline: deadline,
     })
     .where(eq(games.id, gameId));
+
+  return { nextPlayerId: nextPlayer.playerId, nextDeadline: deadline, gameFinished: false };
 }
 
 export const gameRouter = createTRPCRouter({
@@ -430,40 +443,68 @@ export const gameRouter = createTRPCRouter({
       const player = await getPlayerBySession(ctx.db, input.sessionToken);
       await requirePlayer(ctx.db, input.gameId, player.id);
 
-      const game = await ctx.db.query.games.findFirst({
-        where: eq(games.id, input.gameId),
-      });
-
-      if (!game || game.status !== "playing" || game.mode !== "turns") {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Game is not in turns playing state",
+      const result = await ctx.db.transaction(async (tx) => {
+        const game = await tx.query.games.findFirst({
+          where: eq(games.id, input.gameId),
         });
-      }
 
-      if (game.currentTurnPlayerId !== player.id) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "It's not your turn",
+        if (!game || game.status !== "playing" || game.mode !== "turns") {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Game is not in turns playing state",
+          });
+        }
+
+        if (game.currentTurnPlayerId !== player.id) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "It's not your turn",
+          });
+        }
+
+        const text = input.text.trim();
+        const normalizedText = text.toLowerCase();
+
+        // Check for duplicate against all prior answers in this game
+        const existingAnswer = await tx.query.answers.findFirst({
+          where: and(
+            eq(answers.gameId, input.gameId),
+            eq(answers.normalizedText, normalizedText),
+          ),
         });
-      }
 
-      const text = input.text.trim();
-      const normalizedText = text.toLowerCase();
+        if (existingAnswer) {
+          // Duplicate — eliminate the player
+          await tx
+            .update(gamePlayers)
+            .set({ isEliminated: true, eliminatedAt: new Date() })
+            .where(
+              and(
+                eq(gamePlayers.gameId, input.gameId),
+                eq(gamePlayers.playerId, player.id),
+              ),
+            );
 
-      // Check for duplicate against all prior answers in this game
-      const existingAnswer = await ctx.db.query.answers.findFirst({
-        where: and(
-          eq(answers.gameId, input.gameId),
-          eq(answers.normalizedText, normalizedText),
-        ),
-      });
+          const turnResult = await advanceTurn(tx, input.gameId, player.id, game.turnTimerSeconds);
+          return {
+            success: false as const,
+            reason: "duplicate" as const,
+            ...turnResult,
+            gameCode: game.code,
+          };
+        }
 
-      if (existingAnswer) {
-        // Duplicate — eliminate the player
-        await ctx.db
+        // Unique answer — insert and score
+        await tx.insert(answers).values({
+          gameId: input.gameId,
+          playerId: player.id,
+          text,
+          normalizedText,
+        });
+
+        await tx
           .update(gamePlayers)
-          .set({ isEliminated: true, eliminatedAt: new Date() })
+          .set({ score: sql`${gamePlayers.score} + 1` })
           .where(
             and(
               eq(gamePlayers.gameId, input.gameId),
@@ -471,32 +512,22 @@ export const gameRouter = createTRPCRouter({
             ),
           );
 
-        await advanceTurn(ctx.db, input.gameId, player.id, game.turnTimerSeconds);
-        notify(game.code);
-        return { success: false as const, reason: "duplicate" as const };
-      }
-
-      // Unique answer — insert and score
-      await ctx.db.insert(answers).values({
-        gameId: input.gameId,
-        playerId: player.id,
-        text,
-        normalizedText,
+        const turnResult = await advanceTurn(tx, input.gameId, player.id, game.turnTimerSeconds);
+        return {
+          success: true as const,
+          ...turnResult,
+          gameCode: game.code,
+        };
       });
 
-      await ctx.db
-        .update(gamePlayers)
-        .set({ score: sql`${gamePlayers.score} + 1` })
-        .where(
-          and(
-            eq(gamePlayers.gameId, input.gameId),
-            eq(gamePlayers.playerId, player.id),
-          ),
-        );
-
-      await advanceTurn(ctx.db, input.gameId, player.id, game.turnTimerSeconds);
-      notify(game.code);
-      return { success: true as const };
+      notify(result.gameCode);
+      return {
+        success: result.success,
+        reason: result.success ? undefined : result.reason,
+        nextPlayerId: result.nextPlayerId,
+        nextDeadline: result.nextDeadline,
+        gameFinished: result.gameFinished,
+      };
     }),
 
   timeoutTurn: publicProcedure

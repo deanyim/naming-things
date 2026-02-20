@@ -429,4 +429,46 @@ test.describe("Turns mode", () => {
     await hostContext.close();
     await playerContext.close();
   });
+
+  test("optimistic UI: answer appears in history within 200ms of clicking add", async ({
+    browser,
+  }) => {
+    const hostContext = await browser.newContext();
+    const hostPage = await hostContext.newPage();
+    await setupPlayer(hostPage, "Zara");
+    const code = await createGame(hostPage);
+
+    const playerContext = await browser.newContext();
+    const playerPage = await playerContext.newPage();
+    await setupPlayer(playerPage, "Quinn");
+    await joinGame(playerPage, code);
+    await expect(hostPage.getByText("Quinn")).toBeVisible();
+
+    await selectTurnsMode(hostPage);
+    await setTopicAndStartTurns(hostPage, "fruits", 10);
+
+    // Wait for host's turn
+    await expect(hostPage.getByText("your turn!")).toBeVisible({
+      timeout: 5000,
+    });
+
+    await hostPage.getByPlaceholder("type an answer").fill("mango");
+    const before = Date.now();
+    await hostPage.getByRole("button", { name: "add" }).click();
+
+    // Answer should appear in history almost instantly (optimistic update)
+    await expect(hostPage.getByText("mango")).toBeVisible({ timeout: 200 });
+    const elapsed = Date.now() - before;
+
+    // "your turn!" should be gone, replaced by waiting state
+    await expect(hostPage.getByText("your turn!")).not.toBeVisible({
+      timeout: 200,
+    });
+
+    // Sanity: elapsed time should be well under 500ms
+    expect(elapsed).toBeLessThan(500);
+
+    await hostContext.close();
+    await playerContext.close();
+  });
 });

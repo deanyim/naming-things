@@ -18,15 +18,69 @@ export function TurnsRound({
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
 
   const utils = api.useUtils();
+  const queryInput = { sessionToken, code: game.code };
+
+  const myPlayer = game.players.find((p) => p.id === game.myPlayerId);
 
   const submitTurnAnswer = api.game.submitTurnAnswer.useMutation({
+    onMutate: async (variables) => {
+      // Cancel outgoing refetches so they don't overwrite our optimistic update
+      await utils.game.getState.cancel(queryInput);
+
+      // Snapshot current data for rollback
+      const previousData = utils.game.getState.getData(queryInput);
+
+      // Optimistically update: append answer to history, clear current turn
+      utils.game.getState.setData(queryInput, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          currentTurnPlayerId: null,
+          turnsHistory: [
+            ...(old.turnsHistory ?? []),
+            {
+              text: variables.text,
+              playerDisplayName: myPlayer?.displayName ?? "",
+            },
+          ],
+        };
+      });
+
+      return { previousData };
+    },
     onSuccess: (result) => {
-      void utils.game.getState.invalidate();
       if (!result.success && result.reason === "duplicate") {
         setDuplicateError("already used — you're eliminated!");
       }
+
+      // Merge returned turn state into cache
+      utils.game.getState.setData(queryInput, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          status: result.gameFinished ? "finished" as const : old.status,
+          currentTurnPlayerId: result.nextPlayerId,
+          currentTurnDeadline: result.nextDeadline,
+          players: result.success
+            ? old.players.map((p) =>
+                p.id === game.myPlayerId ? { ...p, score: p.score + 1 } : p,
+              )
+            : old.players.map((p) =>
+                p.id === game.myPlayerId
+                  ? { ...p, isEliminated: true, eliminatedAt: new Date() }
+                  : p,
+              ),
+        };
+      });
+
+      // Still invalidate so other data eventually refreshes
+      void utils.game.getState.invalidate(queryInput);
     },
-    onError: (err) => {
+    onError: (err, _variables, context) => {
+      // Rollback optimistic update
+      if (context?.previousData) {
+        utils.game.getState.setData(queryInput, context.previousData);
+      }
       setDuplicateError(err.message);
     },
   });
@@ -56,7 +110,6 @@ export function TurnsRound({
   const currentPlayer = game.players.find(
     (p) => p.id === game.currentTurnPlayerId,
   );
-  const myPlayer = game.players.find((p) => p.id === game.myPlayerId);
   const isEliminated = myPlayer?.isEliminated ?? false;
 
   const handleSubmit = (text: string) => {
