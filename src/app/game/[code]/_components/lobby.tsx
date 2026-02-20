@@ -140,25 +140,82 @@ export function Lobby({
     timerUnit === "minutes" ? timerValue * 60 : timerValue;
 
   const utils = api.useUtils();
+  const queryInput = { sessionToken, code: game.code };
+
+  const setModeMutation = api.game.setMode.useMutation({
+    onMutate: async (variables) => {
+      await utils.game.getState.cancel(queryInput);
+      const previousData = utils.game.getState.getData(queryInput);
+      utils.game.getState.setData(queryInput, (old) => {
+        if (!old) return old;
+        return { ...old, mode: variables.mode };
+      });
+      return { previousData };
+    },
+    onSuccess: () => utils.game.getState.invalidate(queryInput),
+    onError: (err, _variables, context) => {
+      if (context?.previousData) {
+        utils.game.getState.setData(queryInput, context.previousData);
+      }
+      setError(err.message);
+    },
+  });
 
   const setCategoryMutation = api.game.setCategory.useMutation({
-    onSuccess: () => utils.game.getState.invalidate(),
-    onError: (err) => setError(err.message),
+    onMutate: async (variables) => {
+      await utils.game.getState.cancel(queryInput);
+      const previousData = utils.game.getState.getData(queryInput);
+      utils.game.getState.setData(queryInput, (old) => {
+        if (!old) return old;
+        return { ...old, category: variables.category };
+      });
+      return { previousData };
+    },
+    onSuccess: () => utils.game.getState.invalidate(queryInput),
+    onError: (err, _variables, context) => {
+      if (context?.previousData) {
+        utils.game.getState.setData(queryInput, context.previousData);
+      }
+      setError(err.message);
+    },
   });
 
   const setTimerMutation = api.game.setTimer.useMutation({
-    onSuccess: () => utils.game.getState.invalidate(),
-    onError: (err) => setError(err.message),
-  });
-
-  const setModeMutation = api.game.setMode.useMutation({
-    onSuccess: () => utils.game.getState.invalidate(),
-    onError: (err) => setError(err.message),
+    onMutate: async (variables) => {
+      await utils.game.getState.cancel(queryInput);
+      const previousData = utils.game.getState.getData(queryInput);
+      utils.game.getState.setData(queryInput, (old) => {
+        if (!old) return old;
+        return { ...old, timerSeconds: variables.timerSeconds };
+      });
+      return { previousData };
+    },
+    onSuccess: () => utils.game.getState.invalidate(queryInput),
+    onError: (err, _variables, context) => {
+      if (context?.previousData) {
+        utils.game.getState.setData(queryInput, context.previousData);
+      }
+      setError(err.message);
+    },
   });
 
   const setTurnTimerMutation = api.game.setTurnTimer.useMutation({
-    onSuccess: () => utils.game.getState.invalidate(),
-    onError: (err) => setError(err.message),
+    onMutate: async (variables) => {
+      await utils.game.getState.cancel(queryInput);
+      const previousData = utils.game.getState.getData(queryInput);
+      utils.game.getState.setData(queryInput, (old) => {
+        if (!old) return old;
+        return { ...old, turnTimerSeconds: variables.turnTimerSeconds };
+      });
+      return { previousData };
+    },
+    onSuccess: () => utils.game.getState.invalidate(queryInput),
+    onError: (err, _variables, context) => {
+      if (context?.previousData) {
+        utils.game.getState.setData(queryInput, context.previousData);
+      }
+      setError(err.message);
+    },
   });
 
   const startGame = api.game.start.useMutation({
