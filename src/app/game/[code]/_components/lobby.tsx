@@ -235,8 +235,8 @@ export function Lobby({
   };
 
   const saveTimer = () => {
-    if (timerSeconds < 10 || timerSeconds > 3600) {
-      setError("Timer must be between 10 seconds and 60 minutes");
+    if (timerSeconds < 10 || timerSeconds > 7200) {
+      setError("Timer must be between 10 seconds and 120 minutes");
       return;
     }
     if (timerSeconds !== game.timerSeconds) {

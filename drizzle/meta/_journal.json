@@ -50,6 +50,13 @@
       "when": 1771539798980,
       "tag": "0006_pale_captain_universe",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1771713631683,
+      "tag": "0007_supreme_power_pack",
+      "breakpoints": true
     }
   ]
 }

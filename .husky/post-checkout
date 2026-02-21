@@ -1,0 +1,5 @@
+# Auto-install deps in new worktrees
+if [ "$3" = "1" ] && [ ! -d "node_modules" ]; then
+  echo "New worktree detected — running npm install..."
+  npm install
+fi

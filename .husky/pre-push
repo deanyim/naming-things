@@ -1,0 +1,3 @@
+# Sync .claude/ across worktrees
+MAIN_DIR=$(basename "$(git worktree list | head -1 | awk '{print $1}')")
+~/go/bin/dot-claude-sync push "$MAIN_DIR" --force

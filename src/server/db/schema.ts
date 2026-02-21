@@ -79,6 +79,9 @@ export const games = createTable(
     turnTimerSeconds: d.integer().default(5).notNull(),
     currentTurnPlayerId: d.integer(),
     currentTurnDeadline: d.timestamp({ withTimezone: true }),
+    isPaused: d.boolean().default(false).notNull(),
+    pausedAt: d.timestamp({ withTimezone: true }),
+    pausedTimeRemainingMs: d.integer(),
     startedAt: d.timestamp({ withTimezone: true }),
     endedAt: d.timestamp({ withTimezone: true }),
     createdAt: d

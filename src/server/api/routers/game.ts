@@ -239,6 +239,8 @@ export const gameRouter = createTRPCRouter({
         turnsHistory,
         startedAt: game.startedAt,
         endedAt: game.endedAt,
+        isPaused: game.isPaused,
+        pausedTimeRemainingMs: game.pausedTimeRemainingMs,
         isHost: game.hostPlayerId === player.id,
         isSpectator,
         hostPlayerId: game.hostPlayerId,
@@ -288,7 +290,7 @@ export const gameRouter = createTRPCRouter({
       z.object({
         sessionToken: z.string().min(1),
         gameId: z.number(),
-        timerSeconds: z.number().min(10).max(3600),
+        timerSeconds: z.number().min(10).max(7200),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -455,6 +457,13 @@ export const gameRouter = createTRPCRouter({
           });
         }
 
+        if (game.isPaused) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Game is paused",
+          });
+        }
+
         if (game.currentTurnPlayerId !== player.id) {
           throw new TRPCError({
             code: "BAD_REQUEST",
@@ -546,6 +555,10 @@ export const gameRouter = createTRPCRouter({
       });
 
       if (!game || game.status !== "playing" || game.mode !== "turns") {
+        return { success: false };
+      }
+
+      if (game.isPaused) {
         return { success: false };
       }
 
@@ -668,6 +681,13 @@ export const gameRouter = createTRPCRouter({
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Game is not in playing state",
+        });
+      }
+
+      if (game.isPaused) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Game is paused",
         });
       }
 
@@ -1003,6 +1023,161 @@ export const gameRouter = createTRPCRouter({
             eq(gamePlayers.playerId, input.playerId),
           ),
         );
+
+      notify(game.code);
+      return { success: true };
+    }),
+
+  pauseGame: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        gameId: z.number(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+      const game = await requireHost(ctx.db, input.gameId, player.id);
+
+      if (game.status !== "playing") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Game is not in playing state",
+        });
+      }
+
+      if (game.isPaused) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Game is already paused",
+        });
+      }
+
+      const now = Date.now();
+      let timeRemainingMs: number;
+
+      if (game.mode === "classic") {
+        if (!game.endedAt) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Classic game missing endedAt",
+          });
+        }
+        timeRemainingMs = new Date(game.endedAt).getTime() - now;
+      } else {
+        if (!game.currentTurnDeadline) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Turns game missing currentTurnDeadline",
+          });
+        }
+        timeRemainingMs = new Date(game.currentTurnDeadline).getTime() - now;
+      }
+
+      // Clamp to at least 0
+      timeRemainingMs = Math.max(0, timeRemainingMs);
+
+      const updateFields: Record<string, unknown> = {
+        isPaused: true,
+        pausedAt: new Date(),
+        pausedTimeRemainingMs: timeRemainingMs,
+      };
+
+      // Null out the deadline so countdown hooks stop
+      if (game.mode === "classic") {
+        updateFields.endedAt = null;
+      } else {
+        updateFields.currentTurnDeadline = null;
+      }
+
+      await ctx.db
+        .update(games)
+        .set(updateFields)
+        .where(eq(games.id, input.gameId));
+
+      notify(game.code);
+      return { success: true };
+    }),
+
+  resumeGame: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        gameId: z.number(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+      const game = await requireHost(ctx.db, input.gameId, player.id);
+
+      if (!game.isPaused) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Game is not paused",
+        });
+      }
+
+      if (game.pausedTimeRemainingMs == null) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Missing pausedTimeRemainingMs",
+        });
+      }
+
+      const now = new Date();
+      const newDeadline = new Date(now.getTime() + game.pausedTimeRemainingMs);
+
+      const updateFields: Record<string, unknown> = {
+        isPaused: false,
+        pausedAt: null,
+        pausedTimeRemainingMs: null,
+      };
+
+      if (game.mode === "classic") {
+        updateFields.endedAt = newDeadline;
+      } else {
+        updateFields.currentTurnDeadline = newDeadline;
+      }
+
+      await ctx.db
+        .update(games)
+        .set(updateFields)
+        .where(eq(games.id, input.gameId));
+
+      notify(game.code);
+      return { success: true };
+    }),
+
+  terminateGame: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        gameId: z.number(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+      const game = await requireHost(ctx.db, input.gameId, player.id);
+
+      if (game.status !== "playing") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Game is not in playing state",
+        });
+      }
+
+      await ctx.db
+        .update(games)
+        .set({
+          status: game.mode === "classic" ? "reviewing" : "finished",
+          isPaused: false,
+          pausedAt: null,
+          pausedTimeRemainingMs: null,
+          endedAt: new Date(),
+          currentTurnDeadline: null,
+          currentTurnPlayerId: null,
+        })
+        .where(eq(games.id, input.gameId));
 
       notify(game.code);
       return { success: true };

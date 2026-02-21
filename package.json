@@ -12,7 +12,8 @@
     "dev": "next dev --turbo",
     "preview": "npm run build && npm start",
     "start": "tsx server.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/"
   },
   "dependencies": {
     "@t3-oss/env-nextjs": "^0.12.0",
@@ -39,9 +40,12 @@
     "@types/react-dom": "^19.0.0",
     "@types/ws": "^8.18.1",
     "drizzle-kit": "^0.30.5",
+    "eslint": "^9.39.3",
+    "eslint-plugin-react-hooks": "^7.0.1",
     "postcss": "^8.5.3",
     "tailwindcss": "^4.0.15",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.56.0"
   },
   "ct3aMetadata": {
     "initVersion": "7.40.0"

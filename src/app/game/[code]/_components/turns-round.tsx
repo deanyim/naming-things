@@ -4,6 +4,7 @@ import { useRef, useEffect, useState } from "react";
 import { api } from "~/trpc/react";
 import { useCountdown } from "~/hooks/use-countdown";
 import { AnswerInput } from "./answer-input";
+import { PauseOverlay } from "./pause-overlay";
 import type { GameState } from "./types";
 
 export function TurnsRound({
@@ -89,15 +90,19 @@ export function TurnsRound({
     onSuccess: () => void utils.game.getState.invalidate(),
   });
 
+  const pauseGame = api.game.pauseGame.useMutation({
+    onSuccess: () => utils.game.getState.invalidate(),
+  });
+
   // Timeout enforcement: when deadline passes, any client calls timeoutTurn
   useEffect(() => {
-    if (game.isSpectator) return;
+    if (game.isSpectator || game.isPaused) return;
     if (!isExpired || !game.currentTurnPlayerId) return;
     if (lastTimeoutTurnIdRef.current === game.currentTurnPlayerId) return;
 
     lastTimeoutTurnIdRef.current = game.currentTurnPlayerId;
     timeoutTurn.mutate({ sessionToken, gameId: game.id });
-  }, [isExpired, game.currentTurnPlayerId, game.isSpectator, sessionToken, game.id, timeoutTurn]);
+  }, [isExpired, game.currentTurnPlayerId, game.isSpectator, game.isPaused, sessionToken, game.id, timeoutTurn]);
 
   // Clear duplicate error after 3 seconds
   useEffect(() => {
@@ -126,15 +131,28 @@ export function TurnsRound({
       <div className="flex w-full max-w-sm flex-col items-center gap-6">
         <div className="flex w-full items-center justify-between">
           <h2 className="text-lg font-bold text-gray-900">{game.category}</h2>
-          <span
-            className={`font-mono text-2xl font-bold ${
-              secondsRemaining <= 2 && secondsRemaining > 0
-                ? "text-red-600"
-                : "text-gray-900"
-            }`}
-          >
-            {secondsRemaining}s
-          </span>
+          <div className="flex items-center gap-2">
+            {game.isHost && !game.isPaused && (
+              <button
+                onClick={() => pauseGame.mutate({ sessionToken, gameId: game.id })}
+                disabled={pauseGame.isPending}
+                className="rounded-lg border border-gray-300 px-2 py-1 text-sm text-gray-500 transition hover:bg-gray-100 disabled:opacity-50"
+              >
+                pause
+              </button>
+            )}
+            <span
+              className={`font-mono text-2xl font-bold ${
+                secondsRemaining <= 2 && secondsRemaining > 0 && !game.isPaused
+                  ? "text-red-600"
+                  : "text-gray-900"
+              }`}
+            >
+              {game.isPaused && game.pausedTimeRemainingMs != null
+                ? `${Math.ceil(game.pausedTimeRemainingMs / 1000)}s`
+                : `${secondsRemaining}s`}
+            </span>
+          </div>
         </div>
 
         {/* Player list with alive/eliminated status */}
@@ -175,7 +193,7 @@ export function TurnsRound({
             </p>
             <AnswerInput
               onSubmit={handleSubmit}
-              disabled={submitTurnAnswer.isPending || isExpired}
+              disabled={submitTurnAnswer.isPending || isExpired || game.isPaused}
               onInputChange={() => setDuplicateError(null)}
             />
             {duplicateError && (
@@ -214,6 +232,8 @@ export function TurnsRound({
           </div>
         )}
       </div>
+
+      <PauseOverlay game={game} sessionToken={sessionToken} />
     </main>
   );
 }

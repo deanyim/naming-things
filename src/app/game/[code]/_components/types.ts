@@ -11,6 +11,8 @@ export interface GameState {
   turnsHistory: { text: string; playerDisplayName: string }[] | null;
   startedAt: Date | null;
   endedAt: Date | null;
+  isPaused: boolean;
+  pausedTimeRemainingMs: number | null;
   isHost: boolean;
   isSpectator: boolean;
   hostPlayerId: number;
