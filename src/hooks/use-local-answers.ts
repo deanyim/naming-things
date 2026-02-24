@@ -53,6 +53,15 @@ export function useLocalAnswers(gameId: number) {
     [answers, gameId],
   );
 
+  const removeAnswer = useCallback(
+    (index: number) => {
+      const updated = answers.filter((_, i) => i !== index);
+      setAnswers(updated);
+      saveToStorage(gameId, updated);
+    },
+    [answers, gameId],
+  );
+
   const clearAnswers = useCallback(() => {
     setAnswers([]);
     if (typeof window !== "undefined") {
@@ -60,5 +69,5 @@ export function useLocalAnswers(gameId: number) {
     }
   }, [gameId]);
 
-  return { answers, addAnswer, clearAnswers };
+  return { answers, addAnswer, removeAnswer, clearAnswers };
 }

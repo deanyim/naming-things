@@ -210,6 +210,54 @@ test.describe("Game flow", () => {
     await playerContext.close();
   });
 
+  test("clicking an answer pill removes it", async ({ browser }) => {
+    test.setTimeout(60000);
+
+    const hostContext = await browser.newContext();
+    const hostPage = await hostContext.newPage();
+    await setupPlayer(hostPage, "Host");
+    const code = await createGame(hostPage);
+
+    const playerContext = await browser.newContext();
+    const playerPage = await playerContext.newPage();
+    await setupPlayer(playerPage, "Player");
+    await joinGame(playerPage, code);
+
+    await setTopicAndStart(hostPage, "colors", 30);
+    await expect(hostPage.getByText("colors")).toBeVisible({ timeout: 5000 });
+
+    // Submit three answers
+    await hostPage.getByPlaceholder("type an answer").fill("red");
+    await hostPage.getByRole("button", { name: "add" }).click();
+    await expect(hostPage.getByText("your answers (1)")).toBeVisible({ timeout: 2000 });
+
+    await hostPage.getByPlaceholder("type an answer").fill("blue");
+    await hostPage.getByRole("button", { name: "add" }).click();
+    await expect(hostPage.getByText("your answers (2)")).toBeVisible({ timeout: 2000 });
+
+    await hostPage.getByPlaceholder("type an answer").fill("green");
+    await hostPage.getByRole("button", { name: "add" }).click();
+    await expect(hostPage.getByText("your answers (3)")).toBeVisible({ timeout: 2000 });
+
+    // Click "blue" pill to remove it — the pill is a <button> containing "blue" and "×"
+    await hostPage.locator("button", { hasText: "blue" }).click();
+
+    // Should now have 2 answers, "blue" should be gone
+    await expect(hostPage.getByText("your answers (2)")).toBeVisible();
+    await expect(hostPage.locator("button", { hasText: "blue" })).not.toBeVisible();
+    await expect(hostPage.locator("button", { hasText: "red" })).toBeVisible();
+    await expect(hostPage.locator("button", { hasText: "green" })).toBeVisible();
+
+    // Removal should persist after refresh
+    await hostPage.reload();
+    await expect(hostPage.getByText("colors")).toBeVisible({ timeout: 5000 });
+    await expect(hostPage.getByText("your answers (2)")).toBeVisible();
+    await expect(hostPage.locator("button", { hasText: "blue" })).not.toBeVisible();
+
+    await hostContext.close();
+    await playerContext.close();
+  });
+
   test("no console errors during timer expiry and both players answers show in review", async ({
     browser,
   }) => {

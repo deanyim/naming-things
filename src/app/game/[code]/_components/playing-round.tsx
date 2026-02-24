@@ -22,7 +22,7 @@ export function PlayingRound({
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
 
   const utils = api.useUtils();
-  const { answers, addAnswer } = useLocalAnswers(game.id);
+  const { answers, addAnswer, removeAnswer } = useLocalAnswers(game.id);
 
   const endAnswering = api.game.endAnswering.useMutation({
     onSuccess: () => utils.game.getState.invalidate(),
@@ -119,12 +119,18 @@ export function PlayingRound({
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {answers.map((a, i) => (
-                    <span
+                    <button
                       key={i}
-                      className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700"
+                      type="button"
+                      disabled={inputDisabled}
+                      onClick={() => removeAnswer(i)}
+                      className="inline-flex cursor-pointer items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700 transition hover:bg-gray-200 disabled:cursor-default disabled:hover:bg-gray-100"
                     >
                       {a.text}
-                    </span>
+                      {!inputDisabled && (
+                        <span className="text-xs text-gray-400">&times;</span>
+                      )}
+                    </button>
                   ))}
                 </div>
               </div>
