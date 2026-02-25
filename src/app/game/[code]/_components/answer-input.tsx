@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export function AnswerInput({
   onSubmit,
@@ -12,17 +12,21 @@ export function AnswerInput({
   onInputChange?: () => void;
 }) {
   const [text, setText] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim() || disabled) return;
     onSubmit(text.trim());
     setText("");
+    // Re-focus input after submission — mobile browsers blur on form submit
+    inputRef.current?.focus();
   };
 
   return (
     <form onSubmit={handleSubmit} className="flex gap-2">
       <input
+        ref={inputRef}
         type="text"
         value={text}
         onChange={(e) => {
