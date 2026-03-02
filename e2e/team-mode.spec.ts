@@ -373,6 +373,84 @@ test.describe("Team mode", () => {
     await p2Context.close();
   });
 
+  test("team mode: rejected answers excluded from per-player contribution counts", async ({
+    browser,
+  }) => {
+    const hostContext = await browser.newContext();
+    const hostPage = await hostContext.newPage();
+    await setupPlayer(hostPage, "Alice");
+    const code = await createGame(hostPage);
+
+    const p2Context = await browser.newContext();
+    const p2Page = await p2Context.newPage();
+    await setupPlayer(p2Page, "Bob");
+    await joinGame(p2Page, code);
+
+    await expect(hostPage.getByText("players (2)")).toBeVisible({ timeout: 5000 });
+
+    // Enable team mode with 2 teams
+    await hostPage.getByRole("button", { name: "on", exact: true }).click();
+    await expect(hostPage.getByText("team 1 (1)")).toBeVisible({ timeout: 5000 });
+    await expect(hostPage.getByText("team 2 (1)")).toBeVisible();
+
+    await setTopicTimerAndStart(hostPage, "fruits", 60);
+
+    await expect(hostPage.getByText("fruits")).toBeVisible({ timeout: 5000 });
+    await expect(p2Page.getByText("fruits")).toBeVisible({ timeout: 5000 });
+
+    // Alice (team 1) submits 2 unique answers
+    await hostPage.getByPlaceholder("type an answer").fill("banana");
+    await hostPage.getByRole("button", { name: "add" }).click();
+    await expect(hostPage.getByText("banana")).toBeVisible({ timeout: 3000 });
+
+    await hostPage.getByPlaceholder("type an answer").fill("mango");
+    await hostPage.getByRole("button", { name: "add" }).click();
+    await expect(hostPage.getByText("mango")).toBeVisible({ timeout: 3000 });
+
+    // Bob (team 2) submits 1 unique answer
+    await p2Page.getByPlaceholder("type an answer").fill("grape");
+    await p2Page.getByRole("button", { name: "add" }).click();
+    await expect(p2Page.getByText("grape")).toBeVisible({ timeout: 3000 });
+
+    // Host pauses and terminates to go to review
+    await hostPage.getByRole("button", { name: "pause" }).click();
+    await expect(hostPage.getByText("game paused")).toBeVisible({ timeout: 5000 });
+    await hostPage.getByRole("button", { name: "end game" }).click();
+    await hostPage.getByText("are you sure?").waitFor({ timeout: 3000 });
+    await hostPage.locator("button.bg-red-600").click();
+
+    // Both should see review phase
+    await expect(hostPage.getByRole("heading", { name: "review answers" })).toBeVisible({ timeout: 5000 });
+    await expect(p2Page.getByRole("heading", { name: "review answers" })).toBeVisible({ timeout: 10000 });
+
+    // Bob disputes Alice's "mango" answer
+    // Find the answer card for "mango" and click dispute
+    const mangoCard = p2Page.locator("div").filter({ hasText: /^mango/ }).first();
+    await mangoCard.getByRole("button", { name: "dispute" }).click();
+
+    // "mango" should now show as disputed with voting buttons
+    await expect(p2Page.getByText("disputed")).toBeVisible({ timeout: 5000 });
+
+    // Bob votes to reject "mango"
+    await p2Page.getByRole("button", { name: /reject/ }).click();
+    await expect(p2Page.getByRole("button", { name: /reject \(1\)/ })).toBeVisible({ timeout: 5000 });
+
+    // Host finishes scoring — mango gets rejected (1 reject > 0 accept)
+    await hostPage.getByRole("button", { name: "finish & score" }).click();
+    await expect(hostPage.getByText("final scores")).toBeVisible({ timeout: 5000 });
+
+    // Expand team 1 — Alice should show (1) since mango was rejected
+    await hostPage.getByRole("button", { name: /team 1/ }).click();
+    await expect(hostPage.getByText("Alice (1)")).toBeVisible({ timeout: 5000 });
+
+    // Expand team 2 — Bob should show (1) for grape
+    await hostPage.getByRole("button", { name: /team 2/ }).click();
+    await expect(hostPage.getByText("Bob (1)")).toBeVisible({ timeout: 5000 });
+
+    await hostContext.close();
+    await p2Context.close();
+  });
+
   test("team mode toggle hidden when in turns mode", async ({
     browser,
   }) => {

@@ -299,7 +299,7 @@ function TeamScoreboard({
                     <p className="mb-2 text-xs text-gray-500">
                       {teamData.players
                         .map((p) => {
-                          const count = (playerAnswers.get(p.id) ?? []).length;
+                          const count = (playerAnswers.get(p.id) ?? []).filter((a) => a.status === "accepted").length;
                           return `${p.displayName} (${count})`;
                         })
                         .join(", ")}
