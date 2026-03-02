@@ -239,6 +239,8 @@ export const gameRouter = createTRPCRouter({
         turnsHistory,
         startedAt: game.startedAt,
         endedAt: game.endedAt,
+        isTeamMode: game.isTeamMode,
+        numTeams: game.numTeams,
         isPaused: game.isPaused,
         pausedTimeRemainingMs: game.pausedTimeRemainingMs,
         isHost: game.hostPlayerId === player.id,
@@ -253,6 +255,7 @@ export const gameRouter = createTRPCRouter({
             isHost: gp.player.id === game.hostPlayerId,
             isEliminated: gp.isEliminated,
             eliminatedAt: gp.eliminatedAt,
+            teamId: gp.teamId,
           })),
         spectators: game.gamePlayers
           .filter((gp) => gp.isSpectator)
@@ -362,6 +365,170 @@ export const gameRouter = createTRPCRouter({
       return { success: true };
     }),
 
+  setTeamMode: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        gameId: z.number(),
+        isTeamMode: z.boolean(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+      const game = await requireHost(ctx.db, input.gameId, player.id);
+
+      if (game.status !== "lobby") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Can only change team mode in lobby",
+        });
+      }
+
+      await ctx.db
+        .update(games)
+        .set({ isTeamMode: input.isTeamMode })
+        .where(eq(games.id, input.gameId));
+
+      if (input.isTeamMode) {
+        // Auto-assign existing players round-robin
+        const activePlayers = await ctx.db.query.gamePlayers.findMany({
+          where: and(
+            eq(gamePlayers.gameId, input.gameId),
+            eq(gamePlayers.isSpectator, false),
+          ),
+          orderBy: asc(gamePlayers.id),
+        });
+
+        for (let i = 0; i < activePlayers.length; i++) {
+          const teamId = (i % game.numTeams) + 1;
+          await ctx.db
+            .update(gamePlayers)
+            .set({ teamId })
+            .where(eq(gamePlayers.id, activePlayers[i]!.id));
+        }
+      } else {
+        // Clear all teamId values
+        await ctx.db
+          .update(gamePlayers)
+          .set({ teamId: null })
+          .where(eq(gamePlayers.gameId, input.gameId));
+      }
+
+      notify(game.code);
+      return { success: true };
+    }),
+
+  setNumTeams: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        gameId: z.number(),
+        numTeams: z.number().min(1),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+      const game = await requireHost(ctx.db, input.gameId, player.id);
+
+      if (game.status !== "lobby") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Can only change number of teams in lobby",
+        });
+      }
+
+      await ctx.db
+        .update(games)
+        .set({ numTeams: input.numTeams })
+        .where(eq(games.id, input.gameId));
+
+      // Reassign players round-robin with new team count
+      if (game.isTeamMode) {
+        const activePlayers = await ctx.db.query.gamePlayers.findMany({
+          where: and(
+            eq(gamePlayers.gameId, input.gameId),
+            eq(gamePlayers.isSpectator, false),
+          ),
+          orderBy: asc(gamePlayers.id),
+        });
+
+        for (let i = 0; i < activePlayers.length; i++) {
+          const teamId = (i % input.numTeams) + 1;
+          await ctx.db
+            .update(gamePlayers)
+            .set({ teamId })
+            .where(eq(gamePlayers.id, activePlayers[i]!.id));
+        }
+      }
+
+      notify(game.code);
+      return { success: true };
+    }),
+
+  setPlayerTeam: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        gameId: z.number(),
+        playerId: z.number(),
+        teamId: z.number().min(1),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+
+      const game = await ctx.db.query.games.findFirst({
+        where: eq(games.id, input.gameId),
+      });
+
+      if (!game) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Game not found" });
+      }
+
+      if (game.status !== "lobby") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Can only change teams in lobby",
+        });
+      }
+
+      if (!game.isTeamMode) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Team mode is not enabled",
+        });
+      }
+
+      if (input.teamId > game.numTeams) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invalid team number",
+        });
+      }
+
+      // Players can set their own team; host can set anyone's
+      const isHost = game.hostPlayerId === player.id;
+      if (!isHost && input.playerId !== player.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only the host can reassign other players",
+        });
+      }
+
+      await ctx.db
+        .update(gamePlayers)
+        .set({ teamId: input.teamId })
+        .where(
+          and(
+            eq(gamePlayers.gameId, input.gameId),
+            eq(gamePlayers.playerId, input.playerId),
+          ),
+        );
+
+      notify(game.code);
+      return { success: true };
+    }),
+
   start: publicProcedure
     .input(
       z.object({
@@ -378,6 +545,30 @@ export const gameRouter = createTRPCRouter({
           code: "BAD_REQUEST",
           message: "Set a category before starting",
         });
+      }
+
+      // Team mode validation
+      if (game.isTeamMode) {
+        const activePlayers = await ctx.db.query.gamePlayers.findMany({
+          where: and(
+            eq(gamePlayers.gameId, input.gameId),
+            eq(gamePlayers.isSpectator, false),
+          ),
+        });
+        const unassigned = activePlayers.filter((p) => !p.teamId);
+        if (unassigned.length > 0) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "All players must be assigned to a team",
+          });
+        }
+        const teamsWithPlayers = new Set(activePlayers.map((p) => p.teamId));
+        if (teamsWithPlayers.size === 0) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "At least one team must have players",
+          });
+        }
       }
 
       const now = new Date();
@@ -626,6 +817,13 @@ export const gameRouter = createTRPCRouter({
         });
       }
 
+      if (game.isTeamMode) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Use submitTeamAnswer in team mode",
+        });
+      }
+
       if (input.answers.length === 0) {
         return { inserted: 0 };
       }
@@ -664,6 +862,180 @@ export const gameRouter = createTRPCRouter({
 
       notify(game.code);
       return { inserted: toInsert.length };
+    }),
+
+  submitTeamAnswer: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        gameId: z.number(),
+        text: z.string().min(1).max(256),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+      const gp = await requirePlayer(ctx.db, input.gameId, player.id);
+
+      const game = await ctx.db.query.games.findFirst({
+        where: eq(games.id, input.gameId),
+      });
+
+      if (!game || game.status !== "playing" || !game.isTeamMode) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Game is not in team playing state",
+        });
+      }
+
+      if (game.isPaused) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Game is paused",
+        });
+      }
+
+      if (!gp.teamId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "You are not assigned to a team",
+        });
+      }
+
+      const text = input.text.trim();
+      const normalizedText = text.toLowerCase();
+
+      // Dedup against team's existing answers
+      const teamPlayerIds = await ctx.db.query.gamePlayers.findMany({
+        where: and(
+          eq(gamePlayers.gameId, input.gameId),
+          eq(gamePlayers.teamId, gp.teamId),
+        ),
+      });
+      const teamPlayerIdSet = new Set(teamPlayerIds.map((tp) => tp.playerId));
+
+      const existingAnswers = await ctx.db.query.answers.findMany({
+        where: eq(answers.gameId, input.gameId),
+      });
+
+      const duplicate = existingAnswers.find(
+        (a) => a.normalizedText === normalizedText && teamPlayerIdSet.has(a.playerId),
+      );
+
+      if (duplicate) {
+        return { success: false, reason: "duplicate" as const };
+      }
+
+      await ctx.db.insert(answers).values({
+        gameId: input.gameId,
+        playerId: player.id,
+        text,
+        normalizedText,
+      });
+
+      notify(game.code);
+      return { success: true };
+    }),
+
+  removeTeamAnswer: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        gameId: z.number(),
+        answerId: z.number(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+      const gp = await requirePlayer(ctx.db, input.gameId, player.id);
+
+      const game = await ctx.db.query.games.findFirst({
+        where: eq(games.id, input.gameId),
+      });
+
+      if (!game || game.status !== "playing" || !game.isTeamMode) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Game is not in team playing state",
+        });
+      }
+
+      if (game.isPaused) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Game is paused",
+        });
+      }
+
+      // Verify the answer belongs to the same team
+      const answer = await ctx.db.query.answers.findFirst({
+        where: eq(answers.id, input.answerId),
+      });
+
+      if (!answer || answer.gameId !== input.gameId) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Answer not found" });
+      }
+
+      const answerPlayerGp = await ctx.db.query.gamePlayers.findFirst({
+        where: and(
+          eq(gamePlayers.gameId, input.gameId),
+          eq(gamePlayers.playerId, answer.playerId),
+        ),
+      });
+
+      if (!answerPlayerGp || answerPlayerGp.teamId !== gp.teamId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Can only remove answers from your own team",
+        });
+      }
+
+      await ctx.db
+        .delete(answers)
+        .where(eq(answers.id, input.answerId));
+
+      notify(game.code);
+      return { success: true };
+    }),
+
+  getTeamAnswers: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        gameId: z.number(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+      const gp = await requirePlayer(ctx.db, input.gameId, player.id);
+
+      if (!gp.teamId) {
+        return [];
+      }
+
+      // Get all players on this team
+      const teamPlayers = await ctx.db.query.gamePlayers.findMany({
+        where: and(
+          eq(gamePlayers.gameId, input.gameId),
+          eq(gamePlayers.teamId, gp.teamId),
+        ),
+      });
+      const teamPlayerIds = teamPlayers.map((tp) => tp.playerId);
+
+      const teamAnswers = await ctx.db.query.answers.findMany({
+        where: eq(answers.gameId, input.gameId),
+        with: { player: true },
+        orderBy: asc(answers.createdAt),
+      });
+
+      return teamAnswers
+        .filter((a) => teamPlayerIds.includes(a.playerId))
+        .map((a) => ({
+          id: a.id,
+          text: a.text,
+          normalizedText: a.normalizedText,
+          playerDisplayName: a.player.displayName,
+          playerId: a.playerId,
+        }));
     }),
 
   endAnswering: publicProcedure
@@ -710,6 +1082,10 @@ export const gameRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       await getPlayerBySession(ctx.db, input.sessionToken);
 
+      const game = await ctx.db.query.games.findFirst({
+        where: eq(games.id, input.gameId),
+      });
+
       const allAnswers = await ctx.db.query.answers.findMany({
         where: eq(answers.gameId, input.gameId),
         with: {
@@ -718,6 +1094,17 @@ export const gameRouter = createTRPCRouter({
         },
       });
 
+      // Build player->team lookup for team mode
+      const playerTeamMap = new Map<number, number | null>();
+      if (game?.isTeamMode) {
+        const gps = await ctx.db.query.gamePlayers.findMany({
+          where: eq(gamePlayers.gameId, input.gameId),
+        });
+        for (const gp of gps) {
+          playerTeamMap.set(gp.playerId, gp.teamId);
+        }
+      }
+
       // Group by normalizedText
       const groups = new Map<
         string,
@@ -725,6 +1112,7 @@ export const gameRouter = createTRPCRouter({
           normalizedText: string;
           answers: typeof allAnswers;
           isCommon: boolean;
+          teamId: number | null;
         }
       >();
 
@@ -735,15 +1123,25 @@ export const gameRouter = createTRPCRouter({
             normalizedText: key,
             answers: [],
             isCommon: false,
+            teamId: game?.isTeamMode ? (playerTeamMap.get(answer.playerId) ?? null) : null,
           });
         }
         groups.get(key)!.answers.push(answer);
       }
 
-      // Mark common (2+ unique players)
+      // Mark common
       for (const group of groups.values()) {
-        const uniquePlayers = new Set(group.answers.map((a) => a.playerId));
-        group.isCommon = uniquePlayers.size >= 2;
+        if (game?.isTeamMode) {
+          // In team mode: common = 2+ unique teams
+          const uniqueTeams = new Set(
+            group.answers.map((a) => playerTeamMap.get(a.playerId)).filter((t) => t != null),
+          );
+          group.isCommon = uniqueTeams.size >= 2;
+        } else {
+          // Standard: common = 2+ unique players
+          const uniquePlayers = new Set(group.answers.map((a) => a.playerId));
+          group.isCommon = uniquePlayers.size >= 2;
+        }
       }
 
       return Array.from(groups.values()).sort((a, b) =>
@@ -872,22 +1270,59 @@ export const gameRouter = createTRPCRouter({
         ),
       });
 
-      const scoreMap = new Map<number, number>();
-      for (const a of acceptedAnswers) {
-        scoreMap.set(a.playerId, (scoreMap.get(a.playerId) ?? 0) + 1);
-      }
+      if (game.isTeamMode) {
+        // Team scoring: count unique accepted normalizedTexts per team
+        const gps = await ctx.db.query.gamePlayers.findMany({
+          where: and(
+            eq(gamePlayers.gameId, input.gameId),
+            eq(gamePlayers.isSpectator, false),
+          ),
+        });
+        const playerTeamMap = new Map<number, number | null>();
+        for (const gp of gps) {
+          playerTeamMap.set(gp.playerId, gp.teamId);
+        }
 
-      // Update scores
-      for (const [playerId, score] of scoreMap) {
-        await ctx.db
-          .update(gamePlayers)
-          .set({ score })
-          .where(
-            and(
-              eq(gamePlayers.gameId, input.gameId),
-              eq(gamePlayers.playerId, playerId),
-            ),
-          );
+        // Count unique answers per team
+        const teamAnswers = new Map<number, Set<string>>();
+        for (const a of acceptedAnswers) {
+          const teamId = playerTeamMap.get(a.playerId);
+          if (teamId == null) continue;
+          if (!teamAnswers.has(teamId)) {
+            teamAnswers.set(teamId, new Set());
+          }
+          teamAnswers.get(teamId)!.add(a.normalizedText);
+        }
+
+        // Write team score to all team members
+        for (const [teamId, uniqueAnswers] of teamAnswers) {
+          const score = uniqueAnswers.size;
+          const teamMembers = gps.filter((gp) => gp.teamId === teamId);
+          for (const member of teamMembers) {
+            await ctx.db
+              .update(gamePlayers)
+              .set({ score })
+              .where(eq(gamePlayers.id, member.id));
+          }
+        }
+      } else {
+        const scoreMap = new Map<number, number>();
+        for (const a of acceptedAnswers) {
+          scoreMap.set(a.playerId, (scoreMap.get(a.playerId) ?? 0) + 1);
+        }
+
+        // Update scores
+        for (const [playerId, score] of scoreMap) {
+          await ctx.db
+            .update(gamePlayers)
+            .set({ score })
+            .where(
+              and(
+                eq(gamePlayers.gameId, input.gameId),
+                eq(gamePlayers.playerId, playerId),
+              ),
+            );
+        }
       }
 
       // Set game to finished
@@ -1210,7 +1645,7 @@ export const gameRouter = createTRPCRouter({
         return { code: game.code };
       }
 
-      // Create new game with same code, preserving mode
+      // Create new game with same code, preserving mode and team settings
       const [newGame] = await ctx.db
         .insert(games)
         .values({
@@ -1219,10 +1654,12 @@ export const gameRouter = createTRPCRouter({
           status: "lobby",
           mode: game.mode,
           turnTimerSeconds: game.turnTimerSeconds,
+          isTeamMode: game.isTeamMode,
+          numTeams: game.numTeams,
         })
         .returning();
 
-      // Copy all players/spectators from old game with reset scores
+      // Copy all players/spectators from old game with reset scores, preserving teamId
       const oldPlayers = await ctx.db.query.gamePlayers.findMany({
         where: eq(gamePlayers.gameId, input.gameId),
       });
@@ -1235,6 +1672,7 @@ export const gameRouter = createTRPCRouter({
             score: 0,
             isSpectator: gp.isSpectator,
             isEliminated: false,
+            teamId: game.isTeamMode ? gp.teamId : null,
           })),
         );
       }

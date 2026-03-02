@@ -7,6 +7,7 @@ import { useGameSocket } from "~/hooks/use-game-socket";
 import { api } from "~/trpc/react";
 import { Lobby } from "./lobby";
 import { PlayingRound } from "./playing-round";
+import { TeamPlayingRound } from "./team-playing-round";
 import { TurnsRound } from "./turns-round";
 import { ReviewPhase } from "./review-phase";
 import { FinalScoreboard } from "./final-scoreboard";
@@ -97,11 +98,12 @@ export function GameClient({ code }: { code: string }) {
     prevGameIdRef.current = game?.id;
   }, [game?.id]);
 
-  // Batch-submit local answers when game transitions to reviewing (skip for spectators, skip for turns mode)
+  // Batch-submit local answers when game transitions to reviewing (skip for spectators, skip for turns mode, skip for team mode)
   useEffect(() => {
     if (!game || game.status !== "reviewing" || hasSubmittedRef.current) return;
     if (game.isSpectator) return;
     if (game.mode === "turns") return;
+    if (game.isTeamMode) return;
 
     const localAnswers = loadLocalAnswers(game.id);
     if (!localAnswers) {
@@ -195,13 +197,16 @@ export function GameClient({ code }: { code: string }) {
       {game.status === "lobby" && (
         <Lobby game={game} sessionToken={sessionToken} />
       )}
-      {game.status === "playing" && game.mode === "classic" && (
+      {game.status === "playing" && game.mode === "classic" && game.isTeamMode && (
+        <TeamPlayingRound game={game} sessionToken={sessionToken} />
+      )}
+      {game.status === "playing" && game.mode === "classic" && !game.isTeamMode && (
         <PlayingRound game={game} sessionToken={sessionToken} />
       )}
       {game.status === "playing" && game.mode === "turns" && (
         <TurnsRound game={game} sessionToken={sessionToken} />
       )}
-      {game.status === "reviewing" && isSubmittingAnswers && (
+      {game.status === "reviewing" && isSubmittingAnswers && !game.isTeamMode && (
         <PlayingRound game={game} sessionToken={sessionToken} disabled />
       )}
       {game.status === "reviewing" && !isSubmittingAnswers && (

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { api } from "~/trpc/react";
 import { ShareCode } from "./share-code";
 import { PlayerList } from "./player-list";
+import { TeamPlayerList } from "./team-player-list";
 import type { GameState } from "./types";
 
 const TOPIC_SUGGESTIONS = [
@@ -218,6 +219,49 @@ export function Lobby({
     },
   });
 
+  const setTeamModeMutation = api.game.setTeamMode.useMutation({
+    onMutate: async (variables) => {
+      await utils.game.getState.cancel(queryInput);
+      const previousData = utils.game.getState.getData(queryInput);
+      utils.game.getState.setData(queryInput, (old) => {
+        if (!old) return old;
+        return { ...old, isTeamMode: variables.isTeamMode };
+      });
+      return { previousData };
+    },
+    onSuccess: () => utils.game.getState.invalidate(queryInput),
+    onError: (err, _variables, context) => {
+      if (context?.previousData) {
+        utils.game.getState.setData(queryInput, context.previousData);
+      }
+      setError(err.message);
+    },
+  });
+
+  const setNumTeamsMutation = api.game.setNumTeams.useMutation({
+    onMutate: async (variables) => {
+      await utils.game.getState.cancel(queryInput);
+      const previousData = utils.game.getState.getData(queryInput);
+      utils.game.getState.setData(queryInput, (old) => {
+        if (!old) return old;
+        return { ...old, numTeams: variables.numTeams };
+      });
+      return { previousData };
+    },
+    onSuccess: () => utils.game.getState.invalidate(queryInput),
+    onError: (err, _variables, context) => {
+      if (context?.previousData) {
+        utils.game.getState.setData(queryInput, context.previousData);
+      }
+      setError(err.message);
+    },
+  });
+
+  const setPlayerTeamMutation = api.game.setPlayerTeam.useMutation({
+    onSuccess: () => utils.game.getState.invalidate(queryInput),
+    onError: (err) => setError(err.message),
+  });
+
   const startGame = api.game.start.useMutation({
     onSuccess: () => utils.game.getState.invalidate(),
     onError: (err) => setError(err.message),
@@ -300,10 +344,51 @@ export function Lobby({
     setCategory(pick);
   };
 
+  const handleSetPlayerTeam = (playerId: number, teamId: number) => {
+    setPlayerTeamMutation.mutate({
+      sessionToken,
+      gameId: game.id,
+      playerId,
+      teamId,
+    });
+  };
+
   const topicSet = !!game.category;
   const needMorePlayers = game.mode === "turns" && game.players.length < 2;
   const timerChanged = timerSeconds !== game.timerSeconds;
   const turnTimerChanged = turnTimerValue !== game.turnTimerSeconds;
+
+  const playerListSection = game.isTeamMode ? (
+    <TeamPlayerList
+      players={game.players}
+      spectators={game.spectators}
+      numTeams={game.numTeams}
+      isHost={game.isHost}
+      myPlayerId={game.myPlayerId}
+      isSpectator={game.isSpectator}
+      onSetTeam={handleSetPlayerTeam}
+      onKick={(playerId) =>
+        kickPlayerMutation.mutate({
+          sessionToken,
+          gameId: game.id,
+          playerId,
+        })
+      }
+    />
+  ) : (
+    <PlayerList
+      players={game.players}
+      spectators={game.spectators}
+      isHost={game.isHost}
+      onKick={(playerId) =>
+        kickPlayerMutation.mutate({
+          sessionToken,
+          gameId: game.id,
+          playerId,
+        })
+      }
+    />
+  );
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-white px-4">
@@ -312,18 +397,7 @@ export function Lobby({
 
         <ShareCode code={game.code} />
 
-        <PlayerList
-          players={game.players}
-          spectators={game.spectators}
-          isHost={game.isHost}
-          onKick={(playerId) =>
-            kickPlayerMutation.mutate({
-              sessionToken,
-              gameId: game.id,
-              playerId,
-            })
-          }
-        />
+        {playerListSection}
 
         {/* Topic & timer — visible to all, editable by host */}
         {game.isHost ? (
@@ -368,6 +442,70 @@ export function Lobby({
                 </button>
               </div>
             </div>
+
+            {/* Team mode toggle — only for classic mode */}
+            {game.mode === "classic" && (
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-500">teams</label>
+                <div className="flex flex-1 gap-2">
+                  <button
+                    onClick={() =>
+                      game.isTeamMode &&
+                      setTeamModeMutation.mutate({
+                        sessionToken,
+                        gameId: game.id,
+                        isTeamMode: false,
+                      })
+                    }
+                    className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                      !game.isTeamMode
+                        ? "border-gray-900 bg-gray-900 text-white"
+                        : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    off
+                  </button>
+                  <button
+                    onClick={() =>
+                      !game.isTeamMode &&
+                      setTeamModeMutation.mutate({
+                        sessionToken,
+                        gameId: game.id,
+                        isTeamMode: true,
+                      })
+                    }
+                    className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                      game.isTeamMode
+                        ? "border-gray-900 bg-gray-900 text-white"
+                        : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    on
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Number of teams — only when team mode is on */}
+            {game.mode === "classic" && game.isTeamMode && (
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-500"># teams</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={game.numTeams}
+                  onChange={(e) => {
+                    const val = Math.max(1, Number(e.target.value));
+                    setNumTeamsMutation.mutate({
+                      sessionToken,
+                      gameId: game.id,
+                      numTeams: val,
+                    });
+                  }}
+                  className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-gray-900 outline-none focus:border-gray-900"
+                />
+              </div>
+            )}
 
             <div className="flex w-full items-center gap-2">
               <label className="text-sm text-gray-500">topic</label>
@@ -509,6 +647,11 @@ export function Lobby({
             <p className="text-sm text-gray-500">
               mode: <span className="font-medium text-gray-900">{game.mode === "classic" ? "classic" : "last one standing"}</span>
             </p>
+            {game.isTeamMode && (
+              <p className="text-sm text-gray-500">
+                teams: <span className="font-medium text-gray-900">on ({game.numTeams} teams)</span>
+              </p>
+            )}
             {topicSet ? (
               <p className="text-sm text-gray-500">
                 topic: <span className="font-medium text-gray-900">{game.category}</span>

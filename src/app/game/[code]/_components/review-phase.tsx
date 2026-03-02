@@ -72,6 +72,9 @@ export function ReviewPhase({
                         </span>
                         <span className="ml-2 text-xs text-gray-400">
                           by {answer.player.displayName}
+                          {game.isTeamMode && group.teamId != null && (
+                            <> (team {group.teamId})</>
+                          )}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -102,7 +105,7 @@ export function ReviewPhase({
         {commonGroups.length > 0 && (
           <details className="w-full">
             <summary className="cursor-pointer text-sm font-semibold uppercase tracking-wide text-gray-500">
-              auto-accepted ({commonGroups.length})
+              {game.isTeamMode ? "shared across teams" : "auto-accepted"} ({commonGroups.length})
             </summary>
             <div className="mt-3 space-y-2">
               {commonGroups.map((group) => (

@@ -11,6 +11,8 @@ export interface GameState {
   turnsHistory: { text: string; playerDisplayName: string }[] | null;
   startedAt: Date | null;
   endedAt: Date | null;
+  isTeamMode: boolean;
+  numTeams: number;
   isPaused: boolean;
   pausedTimeRemainingMs: number | null;
   isHost: boolean;
@@ -24,6 +26,7 @@ export interface GameState {
     isHost: boolean;
     isEliminated: boolean;
     eliminatedAt: Date | null;
+    teamId: number | null;
   }[];
   spectators: {
     id: number;
