@@ -87,6 +87,7 @@ export const games = createTable(
     isTeamMode: d.boolean().default(false).notNull(),
     numTeams: d.integer().default(2).notNull(),
     autoClassificationEnabled: d.boolean().default(false).notNull(),
+    classifiedAt: d.timestamp({ withTimezone: true }),
     isPaused: d.boolean().default(false).notNull(),
     pausedAt: d.timestamp({ withTimezone: true }),
     pausedTimeRemainingMs: d.integer(),

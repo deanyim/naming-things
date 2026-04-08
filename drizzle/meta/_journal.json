@@ -71,6 +71,13 @@
       "when": 1775676158515,
       "tag": "0009_luxuriant_shriek",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1775681236800,
+      "tag": "0010_white_the_leader",
+      "breakpoints": true
     }
   ]
 }

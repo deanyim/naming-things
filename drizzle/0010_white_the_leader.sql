@@ -1,0 +1,1 @@
+ALTER TABLE "naming-things_game" ADD COLUMN "classifiedAt" timestamp with time zone;
