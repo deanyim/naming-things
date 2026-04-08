@@ -379,4 +379,93 @@ test.describe("Auto review", () => {
     await hostCtx.close();
     await p2Ctx.close();
   });
+
+  test("history page lists past rounds after finishing", async ({ browser }) => {
+    test.setTimeout(60000);
+
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    await setupPlayer(page, "Alice");
+    const code = await createGame(page);
+
+    // Play a quick round without auto review
+    await page.getByPlaceholder("e.g. types of cheese").fill("fruits");
+    await page.getByRole("button", { name: "set" }).first().click();
+    await expect(page.getByText("topic: fruits")).toBeVisible({ timeout: 5000 });
+    await page.locator("select").selectOption("seconds");
+    await page.locator("input[type=number]").fill("60");
+    await page.getByRole("button", { name: "start round" }).click();
+
+    await page.getByPlaceholder("type an answer").fill("banana");
+    await page.getByRole("button", { name: "add" }).click();
+
+    await pauseAndEndGame(page);
+
+    await expect(
+      page.getByRole("heading", { name: "review answers" }),
+    ).toBeVisible({ timeout: 10000 });
+
+    await page.getByRole("button", { name: "finish & score" }).click();
+    await expect(page.getByText("final scores")).toBeVisible({ timeout: 5000 });
+
+    // Navigate to history
+    await page.getByRole("button", { name: "view past rounds" }).click();
+    await expect(
+      page.getByRole("heading", { name: "game history" }),
+    ).toBeVisible({ timeout: 5000 });
+
+    // Should show the round we just played
+    await expect(page.getByText("fruits")).toBeVisible();
+    await expect(page.getByText("1 player")).toBeVisible();
+
+    await ctx.close();
+  });
+
+  test("debug page shows verification data for auto-classified game", async ({
+    browser,
+  }) => {
+    test.setTimeout(60000);
+
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    await setupPlayer(page, "Alice");
+    const code = await createGame(page);
+
+    await enableAutoReviewAndStart(page, "fruits");
+
+    await expect(page.getByText("fruits")).toBeVisible({ timeout: 5000 });
+
+    await page.getByPlaceholder("type an answer").fill("banana");
+    await page.getByRole("button", { name: "add" }).click();
+    await page.getByPlaceholder("type an answer").fill("zzinvalid");
+    await page.getByRole("button", { name: "add" }).click();
+
+    await pauseAndEndGame(page);
+
+    await expect(
+      page.getByRole("heading", { name: "review answers" }),
+    ).toBeVisible({ timeout: 10000 });
+
+    // Wait for classification to complete
+    await expect(page.getByText("auto-classified")).toBeVisible({ timeout: 15000 });
+
+    await page.getByRole("button", { name: "finish & score" }).click();
+    await expect(page.getByText("final scores")).toBeVisible({ timeout: 5000 });
+
+    // Navigate to debug via the link at the bottom
+    await page.getByRole("button", { name: "debug" }).click();
+    await expect(
+      page.getByRole("heading", { name: "verification debug" }),
+    ).toBeVisible({ timeout: 5000 });
+
+    // Should show both answers with their verification labels
+    await expect(page.getByText("banana")).toBeVisible();
+    await expect(page.getByText("zzinvalid")).toBeVisible();
+
+    // Should show both rows with verification data
+    await expect(page.getByRole("row", { name: /banana.*valid/ })).toBeVisible();
+    await expect(page.getByRole("row", { name: /zzinvalid.*invalid/ })).toBeVisible();
+
+    await ctx.close();
+  });
 });
