@@ -19,6 +19,7 @@ import {
 } from "~/server/api/lib/session";
 import { notify } from "~/server/ws/notify";
 import { type db as dbType } from "~/server/db";
+import type { CategoryFitResult } from "~/server/lib/verification/category-fit";
 
 type DB = typeof dbType;
 
@@ -94,6 +95,48 @@ async function advanceTurn(
     .where(eq(games.id, gameId));
 
   return { nextPlayerId: nextPlayer.playerId, nextDeadline: deadline, gameFinished: false };
+}
+
+async function classifyAnswers(
+  dbOrTx: DB | Parameters<Parameters<DB["transaction"]>[0]>[0],
+  gameId: number,
+  category: string,
+  results: CategoryFitResult[],
+) {
+  const resultMap = new Map(results.map((r) => [r.answerId, r]));
+  const allAnswers = await dbOrTx.query.answers.findMany({
+    where: eq(answers.gameId, gameId),
+    orderBy: asc(answers.createdAt),
+  });
+
+  for (const answer of allAnswers) {
+    const llm = resultMap.get(answer.id);
+    if (!llm) continue;
+
+    await dbOrTx
+      .insert(answerVerifications)
+      .values({
+        answerId: answer.id,
+        gameId,
+        label: llm.label,
+        confidence: Math.round(llm.confidence * 100),
+        reason: llm.reason,
+      })
+      .onConflictDoUpdate({
+        target: answerVerifications.answerId,
+        set: {
+          label: llm.label,
+          confidence: Math.round(llm.confidence * 100),
+          reason: llm.reason,
+        },
+      });
+
+    const newStatus = llm.label === "invalid" ? "rejected" : "accepted";
+    await dbOrTx
+      .update(answers)
+      .set({ status: newStatus })
+      .where(eq(answers.id, answer.id));
+  }
 }
 
 export const gameRouter = createTRPCRouter({
@@ -1101,6 +1144,24 @@ export const gameRouter = createTRPCRouter({
         .set({ status: "reviewing" })
         .where(eq(games.id, input.gameId));
 
+      // Run auto-classification if enabled
+      if (game.autoClassificationEnabled && game.category && env.OPENROUTER_API_KEY) {
+        const allAnswers = await ctx.db.query.answers.findMany({
+          where: eq(answers.gameId, input.gameId),
+          orderBy: asc(answers.createdAt),
+        });
+
+        const results = await judgeCategoryFit(
+          game.category,
+          allAnswers.map((a) => ({ answerId: a.id, text: a.text })),
+          { model: env.OPENROUTER_MODEL },
+        );
+
+        await ctx.db.transaction(async (tx) => {
+          await classifyAnswers(tx, input.gameId, game.category!, results);
+        });
+      }
+
       notify(game.code);
       return { success: true };
     }),
@@ -1180,81 +1241,6 @@ export const gameRouter = createTRPCRouter({
       return Array.from(groups.values()).sort((a, b) =>
         a.normalizedText.localeCompare(b.normalizedText),
       );
-    }),
-
-  runAutoClassification: publicProcedure
-    .input(
-      z.object({
-        sessionToken: z.string().min(1),
-        gameId: z.number(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const player = await getPlayerBySession(ctx.db, input.sessionToken);
-      const game = await requireHost(ctx.db, input.gameId, player.id);
-
-      if (game.status !== "reviewing") {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Auto-classification only runs during review",
-        });
-      }
-
-      if (!game.category) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Game has no category set",
-        });
-      }
-
-      const allAnswers = await ctx.db.query.answers.findMany({
-        where: eq(answers.gameId, input.gameId),
-        orderBy: asc(answers.createdAt),
-      });
-
-      const results = await judgeCategoryFit(
-        game.category,
-        allAnswers.map((a) => ({ answerId: a.id, text: a.text })),
-        { model: env.OPENROUTER_MODEL },
-      );
-
-      const resultMap = new Map(results.map((r) => [r.answerId, r]));
-
-      await ctx.db.transaction(async (tx) => {
-        for (const answer of allAnswers) {
-          const llm = resultMap.get(answer.id);
-          if (!llm) continue;
-
-          // Log the LLM result
-          await tx
-            .insert(answerVerifications)
-            .values({
-              answerId: answer.id,
-              gameId: input.gameId,
-              label: llm.label,
-              confidence: Math.round(llm.confidence * 100),
-              reason: llm.reason,
-            })
-            .onConflictDoUpdate({
-              target: answerVerifications.answerId,
-              set: {
-                label: llm.label,
-                confidence: Math.round(llm.confidence * 100),
-                reason: llm.reason,
-              },
-            });
-
-          // Update answer status based on LLM judgment
-          const newStatus = llm.label === "valid" ? "accepted" : llm.label === "invalid" ? "rejected" : "accepted";
-          await tx
-            .update(answers)
-            .set({ status: newStatus })
-            .where(eq(answers.id, answer.id));
-        }
-      });
-
-      notify(game.code);
-      return { success: true, classified: allAnswers.length };
     }),
 
   disputeAnswer: publicProcedure

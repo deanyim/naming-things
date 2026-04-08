@@ -78,7 +78,7 @@ export function ReviewPhase({
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        {answer.status === "accepted" && !game.isSpectator && (
+                        {!game.isSpectator && (
                           <button
                             onClick={() =>
                               disputeAnswer.mutate({
