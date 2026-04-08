@@ -1,0 +1,15 @@
+export const CATEGORY_FIT_PROMPT = [
+  "You are judging whether each answer fits its requested category in a party game.",
+  "Return a JSON object with a decisions array.",
+  "Each decision needs: answerId, label, confidence (0-1), reason (one sentence).",
+  "Use these labels exactly: valid, invalid, ambiguous.",
+  "Prefer ambiguous when the category is subjective or policy-dependent.",
+].join("\n");
+
+export function buildCategoryFitPrompt(
+  items: { answerId: number; category: string; candidate_answer: string }[],
+) {
+  return [CATEGORY_FIT_PROMPT, "", "Items:", JSON.stringify(items, null, 2)].join(
+    "\n",
+  );
+}
