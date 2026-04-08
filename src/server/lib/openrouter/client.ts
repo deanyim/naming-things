@@ -43,7 +43,7 @@ export type OpenRouterJsonCallResult<T> = {
   totalTokens: number | null;
 };
 
-function stripMarkdownFences(text: string) {
+export function stripMarkdownFences(text: string) {
   const trimmed = text.trim();
   if (!trimmed.startsWith("```")) return trimmed;
 
@@ -54,7 +54,7 @@ function stripMarkdownFences(text: string) {
   return withoutPrefix.replace(/```$/, "").trim();
 }
 
-function extractJsonText(text: string) {
+export function extractJsonText(text: string) {
   const trimmed = stripMarkdownFences(text);
   try {
     JSON.parse(trimmed);
