@@ -455,6 +455,80 @@ test.describe("Team mode", () => {
     await p2Context.close();
   });
 
+  test("team mode with auto review: classification runs at transition and rejects invalid answers", async ({
+    browser,
+  }) => {
+    test.setTimeout(60000);
+
+    const hostContext = await browser.newContext();
+    const hostPage = await hostContext.newPage();
+    await setupPlayer(hostPage, "Alice");
+    const code = await createGame(hostPage);
+
+    const p2Context = await browser.newContext();
+    const p2Page = await p2Context.newPage();
+    await setupPlayer(p2Page, "Bob");
+    await joinGame(p2Page, code);
+
+    await expect(hostPage.getByText("players (2)")).toBeVisible({ timeout: 5000 });
+
+    // Enable team mode
+    await teamsSection(hostPage).getByRole("button", { name: "on" }).click();
+    await expect(hostPage.getByText("team 1 (1)")).toBeVisible({ timeout: 5000 });
+
+    // Enable auto review
+    const autoReviewSection = hostPage.locator("div").filter({ hasText: /^auto review/ });
+    await autoReviewSection.getByRole("button", { name: "on" }).click();
+    await expect(autoReviewSection.getByRole("button", { name: "on" })).toHaveClass(/bg-gray-900/, { timeout: 5000 });
+
+    await setTopicTimerAndStart(hostPage, "fruits", 60);
+
+    await expect(hostPage.getByText("fruits")).toBeVisible({ timeout: 5000 });
+    await expect(p2Page.getByText("fruits")).toBeVisible({ timeout: 5000 });
+
+    // Alice submits valid answers
+    await hostPage.getByPlaceholder("type an answer").fill("banana");
+    await hostPage.getByRole("button", { name: "add" }).click();
+    await expect(hostPage.getByText("banana")).toBeVisible({ timeout: 3000 });
+
+    // Bob submits an invalid answer (contains "zzinvalid" for mock)
+    await p2Page.getByPlaceholder("type an answer").fill("zzinvalid");
+    await p2Page.getByRole("button", { name: "add" }).click();
+    await expect(p2Page.getByText("zzinvalid")).toBeVisible({ timeout: 3000 });
+
+    // Bob also submits a valid answer
+    await p2Page.getByPlaceholder("type an answer").fill("apple");
+    await p2Page.getByRole("button", { name: "add" }).click();
+    await expect(p2Page.getByText("apple")).toBeVisible({ timeout: 3000 });
+
+    // Pause and terminate to enter review
+    await hostPage.getByRole("button", { name: "pause" }).click();
+    await expect(hostPage.getByText("game paused")).toBeVisible({ timeout: 5000 });
+    await hostPage.getByRole("button", { name: "end game" }).click();
+    await hostPage.getByText("are you sure?").waitFor({ timeout: 3000 });
+    await hostPage.locator("button.bg-red-600").click();
+
+    await expect(hostPage.getByRole("heading", { name: "review answers" })).toBeVisible({ timeout: 10000 });
+
+    // Classification should have run at transition — check auto-classified section
+    await expect(hostPage.getByText("auto-classified")).toBeVisible({ timeout: 15000 });
+
+    // Finish and check scores
+    await hostPage.getByRole("button", { name: "finish & score" }).click();
+    await expect(hostPage.getByText("final scores")).toBeVisible({ timeout: 5000 });
+
+    // Expand the team containing Alice and verify her score
+    await hostPage.getByRole("button", { name: /team 1/ }).click();
+    await expect(hostPage.getByText("Alice (1)")).toBeVisible({ timeout: 5000 });
+
+    // Expand Bob's team (collapses Alice's) and verify score — zzinvalid rejected
+    await hostPage.getByRole("button", { name: /team 2/ }).click();
+    await expect(hostPage.getByText("Bob (1)")).toBeVisible({ timeout: 5000 });
+
+    await hostContext.close();
+    await p2Context.close();
+  });
+
   test("team mode toggle hidden when in turns mode", async ({
     browser,
   }) => {
