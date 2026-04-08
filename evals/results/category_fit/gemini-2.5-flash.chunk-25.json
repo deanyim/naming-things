@@ -1,0 +1,547 @@
+{
+  "task": "category_fit",
+  "modelId": "gemini-2.5-flash",
+  "chunkSize": 25,
+  "batches": [
+    {
+      "latencyMs": 6341,
+      "inputTokens": 956,
+      "outputTokens": 1359,
+      "estimatedCostUsd": 0.0036842999999999997
+    },
+    {
+      "latencyMs": 5903,
+      "inputTokens": 1013,
+      "outputTokens": 1374,
+      "estimatedCostUsd": 0.0037389000000000003
+    },
+    {
+      "latencyMs": 1088,
+      "inputTokens": 149,
+      "outputTokens": 127,
+      "estimatedCostUsd": 0.00036219999999999997
+    }
+  ],
+  "cases": [
+    {
+      "caseId": "fit_001",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"An apple is unequivocally a fruit.\"}"
+    },
+    {
+      "caseId": "fit_002",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"A brick is a building material, not a fruit.\"}"
+    },
+    {
+      "caseId": "fit_003",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Japan is a recognized country.\"}"
+    },
+    {
+      "caseId": "fit_004",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"A piano is a well-known musical instrument.\"}"
+    },
+    {
+      "caseId": "fit_005",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Ice cream is inherently cold.\"}"
+    },
+    {
+      "caseId": "fit_006",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "ambiguous",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Batman is a well-known movie franchise and character, often referring to the films.\"}"
+    },
+    {
+      "caseId": "fit_007",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"An elephant is a large mammal and clearly an animal.\"}"
+    },
+    {
+      "caseId": "fit_008",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"A table is a piece of furniture, not an animal.\"}"
+    },
+    {
+      "caseId": "fit_009",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "ambiguous",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.7,\"reason\":\"While a phone can be found in a kitchen, it's not a primary or defining item of a kitchen, making its validity subjective.\"}"
+    },
+    {
+      "caseId": "fit_010",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"The answer '???' is not a color.\"}"
+    },
+    {
+      "caseId": "fit_011",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "ambiguous",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.6,\"reason\":\"Chess is often considered a game or a mind sport, but its classification as a 'sport' can be debated depending on the definition used.\"}"
+    },
+    {
+      "caseId": "fit_012",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"While not perfectly spherical, a pizza is generally round in shape.\"}"
+    },
+    {
+      "caseId": "fit_013",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Paris is a city, not a country.\"}"
+    },
+    {
+      "caseId": "fit_014",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "ambiguous",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.8,\"reason\":\"Botanically, a tomato is a fruit, but culinarily it is often treated as a vegetable, making its classification subjective.\"}"
+    },
+    {
+      "caseId": "fit_015",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Mars is a recognized planet in our solar system.\"}"
+    },
+    {
+      "caseId": "fit_016",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "ambiguous",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.7,\"reason\":\"Pluto's classification as a planet is a subject of ongoing debate and reclassification, making its validity dependent on the adopted definition.\"}"
+    },
+    {
+      "caseId": "fit_017",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"George Washington was the first U.S. president.\"}"
+    },
+    {
+      "caseId": "fit_018",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Penguins are birds, but they are flightless and do not fly.\"}"
+    },
+    {
+      "caseId": "fit_019",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Cleopatra was a famous historical female figure.\"}"
+    },
+    {
+      "caseId": "fit_020",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Marie Curie was a famous female scientist.\"}"
+    },
+    {
+      "caseId": "fit_021",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Abraham Lincoln was a man, not a woman.\"}"
+    },
+    {
+      "caseId": "fit_022",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "ambiguous",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"Mulan is a famous fictional female character, widely recognized.\"}"
+    },
+    {
+      "caseId": "fit_023",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Beyoncé is a famous contemporary female singer.\"}"
+    },
+    {
+      "caseId": "fit_024",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.5,\"reason\":\"While 'my mom' is a woman, her fame is subjective and not universally recognized, making her validity dependent on the context of 'famous'.\"}"
+    },
+    {
+      "caseId": "fit_025",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "ambiguous",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Siri is an artificial intelligence, not a human woman.\"}"
+    },
+    {
+      "caseId": "fit_026",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Patrick Mahomes is a current and prominent NFL player.\"}"
+    },
+    {
+      "caseId": "fit_027",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"LeBron James is a famous basketball player, not an NFL player.\"}"
+    },
+    {
+      "caseId": "fit_028",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Deion Sanders is a well-known former NFL player.\"}"
+    },
+    {
+      "caseId": "fit_029",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Tom Brady is a legendary former NFL player.\"}"
+    },
+    {
+      "caseId": "fit_030",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"O.J. Simpson was a famous NFL player.\"}"
+    },
+    {
+      "caseId": "fit_031",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Travis Kelce is a current and prominent NFL player.\"}"
+    },
+    {
+      "caseId": "fit_032",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"The word 'comfortable' has exactly 11 letters.\"}"
+    },
+    {
+      "caseId": "fit_033",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"The word 'cat' has only 3 letters, not 11.\"}"
+    },
+    {
+      "caseId": "fit_034",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"The word 'information' has exactly 11 letters.\"}"
+    },
+    {
+      "caseId": "fit_035",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"The word 'abracadabra' has exactly 11 letters.\"}"
+    },
+    {
+      "caseId": "fit_036",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"The word 'environment' has exactly 11 letters.\"}"
+    },
+    {
+      "caseId": "fit_037",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"The word 'development' has exactly 11 letters.\"}"
+    },
+    {
+      "caseId": "fit_038",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"The word 'personality' has exactly 11 letters.\"}"
+    },
+    {
+      "caseId": "fit_039",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"The word 'hello' has only 5 letters, not 11.\"}"
+    },
+    {
+      "caseId": "fit_040",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Snooki is widely known for being a reality TV contestant on Jersey Shore.\"}"
+    },
+    {
+      "caseId": "fit_041",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Kim Kardashian rose to fame as a reality TV contestant on Keeping Up with the Kardashians.\"}"
+    },
+    {
+      "caseId": "fit_042",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "ambiguous",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.7,\"reason\":\"Gordon Ramsay is primarily a celebrity chef and host of reality TV shows, rather than a contestant himself, though he has been a judge on many.\"}"
+    },
+    {
+      "caseId": "fit_043",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Albert Einstein was a theoretical physicist and was never a reality TV contestant.\"}"
+    },
+    {
+      "caseId": "fit_044",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Paris Hilton gained significant fame as a reality TV contestant on The Simple Life.\"}"
+    },
+    {
+      "caseId": "fit_045",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "ambiguous",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.8,\"reason\":\"Donald Trump was the host of a reality TV show ('The Apprentice') but not a contestant in the traditional sense.\"}"
+    },
+    {
+      "caseId": "fit_046",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Monopoly is a classic and widely recognized board game.\"}"
+    },
+    {
+      "caseId": "fit_047",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Minecraft is a video game, not a board game.\"}"
+    },
+    {
+      "caseId": "fit_048",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "ambiguous",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Dungeons & Dragons is a well-known tabletop role-playing game, which falls under the broader category of board games for many.\"}"
+    },
+    {
+      "caseId": "fit_049",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"A stethoscope is a common and essential item found in a hospital.\"}"
+    },
+    {
+      "caseId": "fit_050",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "ambiguous",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Vending machines are commonly found in hospitals for staff and visitor convenience.\"}"
+    },
+    {
+      "caseId": "fit_051",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"SpongeBob SquarePants is a well-known character from an animated television series.\"}"
+    },
+    {
+      "caseId": "fit_052",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Shrek is the titular character from a popular animated film franchise.\"}"
+    }
+  ]
+}

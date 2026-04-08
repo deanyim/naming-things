@@ -1,0 +1,547 @@
+{
+  "task": "category_fit",
+  "modelId": "mistral-small-2603",
+  "chunkSize": 25,
+  "batches": [
+    {
+      "latencyMs": 5359,
+      "inputTokens": 870,
+      "outputTokens": 1121,
+      "estimatedCostUsd": 0.0008031
+    },
+    {
+      "latencyMs": 5601,
+      "inputTokens": 921,
+      "outputTokens": 1166,
+      "estimatedCostUsd": 0.00083775
+    },
+    {
+      "latencyMs": 2473,
+      "inputTokens": 149,
+      "outputTokens": 103,
+      "estimatedCostUsd": 0.00008415
+    }
+  ],
+  "cases": [
+    {
+      "caseId": "fit_001",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Apple is a well-known fruit.\"}"
+    },
+    {
+      "caseId": "fit_002",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"A brick is not a fruit.\"}"
+    },
+    {
+      "caseId": "fit_003",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Japan is a recognized country.\"}"
+    },
+    {
+      "caseId": "fit_004",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Piano is a common musical instrument.\"}"
+    },
+    {
+      "caseId": "fit_005",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.8,\"reason\":\"Ice cream is typically cold but may not always be served cold.\"}"
+    },
+    {
+      "caseId": "fit_006",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "ambiguous",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.9,\"reason\":\"Batman could refer to a movie or the character, depending on context.\"}"
+    },
+    {
+      "caseId": "fit_007",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Elephant is a well-known animal.\"}"
+    },
+    {
+      "caseId": "fit_008",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"A table is not an animal.\"}"
+    },
+    {
+      "caseId": "fit_009",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "ambiguous",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"A phone is not typically found in a kitchen.\"}"
+    },
+    {
+      "caseId": "fit_010",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"??? is not a valid color.\"}"
+    },
+    {
+      "caseId": "fit_011",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "ambiguous",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.95,\"reason\":\"Chess is widely recognized as a sport.\"}"
+    },
+    {
+      "caseId": "fit_012",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Pizza is commonly round.\"}"
+    },
+    {
+      "caseId": "fit_013",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Paris is a city, not a country.\"}"
+    },
+    {
+      "caseId": "fit_014",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "ambiguous",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"Tomato is commonly considered a vegetable in culinary contexts.\"}"
+    },
+    {
+      "caseId": "fit_015",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Mars is a recognized planet.\"}"
+    },
+    {
+      "caseId": "fit_016",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "ambiguous",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.8,\"reason\":\"Pluto's classification as a planet is debated.\"}"
+    },
+    {
+      "caseId": "fit_017",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"George Washington is a well-known U.S. president.\"}"
+    },
+    {
+      "caseId": "fit_018",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Penguins do not fly.\"}"
+    },
+    {
+      "caseId": "fit_019",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.95,\"reason\":\"Cleopatra is a historically famous woman.\"}"
+    },
+    {
+      "caseId": "fit_020",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Marie Curie is a renowned female scientist.\"}"
+    },
+    {
+      "caseId": "fit_021",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Abraham Lincoln was a man, not a woman.\"}"
+    },
+    {
+      "caseId": "fit_022",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "ambiguous",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"Mulan is a famous female literary and cultural figure.\"}"
+    },
+    {
+      "caseId": "fit_023",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Beyonce is a well-known female celebrity.\"}"
+    },
+    {
+      "caseId": "fit_024",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.7,\"reason\":\"Whether someone's mom qualifies as 'famous' is subjective.\"}"
+    },
+    {
+      "caseId": "fit_025",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "ambiguous",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.6,\"reason\":\"Siri is an AI assistant, and its fame is context-dependent.\"}"
+    },
+    {
+      "caseId": "fit_026",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Patrick Mahomes is a well-known NFL player.\"}"
+    },
+    {
+      "caseId": "fit_027",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"LeBron James is a basketball player, not an NFL player.\"}"
+    },
+    {
+      "caseId": "fit_028",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Deion Sanders is a former NFL player.\"}"
+    },
+    {
+      "caseId": "fit_029",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Tom Brady is a well-known NFL player.\"}"
+    },
+    {
+      "caseId": "fit_030",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.9,\"reason\":\"O.J. Simpson is a former NFL player but his inclusion may be controversial.\"}"
+    },
+    {
+      "caseId": "fit_031",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Travis Kelce is a current NFL player.\"}"
+    },
+    {
+      "caseId": "fit_032",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Comfortable has exactly 11 letters.\"}"
+    },
+    {
+      "caseId": "fit_033",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Cat has only 3 letters.\"}"
+    },
+    {
+      "caseId": "fit_034",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Information has exactly 11 letters.\"}"
+    },
+    {
+      "caseId": "fit_035",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Abracadabra has exactly 11 letters.\"}"
+    },
+    {
+      "caseId": "fit_036",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Environment has exactly 11 letters.\"}"
+    },
+    {
+      "caseId": "fit_037",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Development has exactly 11 letters.\"}"
+    },
+    {
+      "caseId": "fit_038",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Personality has exactly 11 letters.\"}"
+    },
+    {
+      "caseId": "fit_039",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Hello has only 5 letters.\"}"
+    },
+    {
+      "caseId": "fit_040",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Snooki is a well-known reality TV contestant.\"}"
+    },
+    {
+      "caseId": "fit_041",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.9,\"reason\":\"Kim Kardashian is primarily known as a celebrity, though she has appeared on reality TV.\"}"
+    },
+    {
+      "caseId": "fit_042",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "ambiguous",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Gordon Ramsay is a chef and TV personality, not a reality TV contestant.\"}"
+    },
+    {
+      "caseId": "fit_043",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Albert Einstein is a historical figure, not a reality TV contestant.\"}"
+    },
+    {
+      "caseId": "fit_044",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Paris Hilton is a well-known reality TV contestant.\"}"
+    },
+    {
+      "caseId": "fit_045",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "ambiguous",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.8,\"reason\":\"Donald Trump has appeared on reality TV but is primarily a politician.\"}"
+    },
+    {
+      "caseId": "fit_046",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Monopoly is a well-known board game.\"}"
+    },
+    {
+      "caseId": "fit_047",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Minecraft is a video game, not a board game.\"}"
+    },
+    {
+      "caseId": "fit_048",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "ambiguous",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Dungeons & Dragons is a well-known board game.\"}"
+    },
+    {
+      "caseId": "fit_049",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"A stethoscope is a common item found in hospitals.\"}"
+    },
+    {
+      "caseId": "fit_050",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "ambiguous",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.9,\"reason\":\"A vending machine may or may not be considered a thing typically found in a hospital.\"}"
+    },
+    {
+      "caseId": "fit_051",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"SpongeBob is a well-known cartoon character.\"}"
+    },
+    {
+      "caseId": "fit_052",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Shrek is a well-known cartoon character.\"}"
+    }
+  ]
+}

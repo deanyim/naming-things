@@ -1,0 +1,569 @@
+{
+  "task": "category_fit",
+  "modelId": "gemini-2.5-flash-lite",
+  "chunkSize": 25,
+  "batches": [
+    {
+      "latencyMs": 0
+    },
+    {
+      "latencyMs": 4423,
+      "inputTokens": 1013,
+      "outputTokens": 1331,
+      "estimatedCostUsd": 0.0006337000000000001
+    },
+    {
+      "latencyMs": 685,
+      "inputTokens": 149,
+      "outputTokens": 120,
+      "estimatedCostUsd": 0.0000629
+    }
+  ],
+  "cases": [
+    {
+      "caseId": "fit_001",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "error",
+      "expectedLabel": "valid",
+      "actualLabel": null,
+      "parseOk": false,
+      "rawText": "",
+      "error": "Maximum call stack size exceeded"
+    },
+    {
+      "caseId": "fit_002",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "error",
+      "expectedLabel": "invalid",
+      "actualLabel": null,
+      "parseOk": false,
+      "rawText": "",
+      "error": "Maximum call stack size exceeded"
+    },
+    {
+      "caseId": "fit_003",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "error",
+      "expectedLabel": "valid",
+      "actualLabel": null,
+      "parseOk": false,
+      "rawText": "",
+      "error": "Maximum call stack size exceeded"
+    },
+    {
+      "caseId": "fit_004",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "error",
+      "expectedLabel": "valid",
+      "actualLabel": null,
+      "parseOk": false,
+      "rawText": "",
+      "error": "Maximum call stack size exceeded"
+    },
+    {
+      "caseId": "fit_005",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "error",
+      "expectedLabel": "valid",
+      "actualLabel": null,
+      "parseOk": false,
+      "rawText": "",
+      "error": "Maximum call stack size exceeded"
+    },
+    {
+      "caseId": "fit_006",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "error",
+      "expectedLabel": "ambiguous",
+      "actualLabel": null,
+      "parseOk": false,
+      "rawText": "",
+      "error": "Maximum call stack size exceeded"
+    },
+    {
+      "caseId": "fit_007",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "error",
+      "expectedLabel": "valid",
+      "actualLabel": null,
+      "parseOk": false,
+      "rawText": "",
+      "error": "Maximum call stack size exceeded"
+    },
+    {
+      "caseId": "fit_008",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "error",
+      "expectedLabel": "invalid",
+      "actualLabel": null,
+      "parseOk": false,
+      "rawText": "",
+      "error": "Maximum call stack size exceeded"
+    },
+    {
+      "caseId": "fit_009",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "error",
+      "expectedLabel": "ambiguous",
+      "actualLabel": null,
+      "parseOk": false,
+      "rawText": "",
+      "error": "Maximum call stack size exceeded"
+    },
+    {
+      "caseId": "fit_010",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "error",
+      "expectedLabel": "invalid",
+      "actualLabel": null,
+      "parseOk": false,
+      "rawText": "",
+      "error": "Maximum call stack size exceeded"
+    },
+    {
+      "caseId": "fit_011",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "error",
+      "expectedLabel": "ambiguous",
+      "actualLabel": null,
+      "parseOk": false,
+      "rawText": "",
+      "error": "Maximum call stack size exceeded"
+    },
+    {
+      "caseId": "fit_012",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "error",
+      "expectedLabel": "valid",
+      "actualLabel": null,
+      "parseOk": false,
+      "rawText": "",
+      "error": "Maximum call stack size exceeded"
+    },
+    {
+      "caseId": "fit_013",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "error",
+      "expectedLabel": "invalid",
+      "actualLabel": null,
+      "parseOk": false,
+      "rawText": "",
+      "error": "Maximum call stack size exceeded"
+    },
+    {
+      "caseId": "fit_014",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "error",
+      "expectedLabel": "ambiguous",
+      "actualLabel": null,
+      "parseOk": false,
+      "rawText": "",
+      "error": "Maximum call stack size exceeded"
+    },
+    {
+      "caseId": "fit_015",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "error",
+      "expectedLabel": "valid",
+      "actualLabel": null,
+      "parseOk": false,
+      "rawText": "",
+      "error": "Maximum call stack size exceeded"
+    },
+    {
+      "caseId": "fit_016",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "error",
+      "expectedLabel": "ambiguous",
+      "actualLabel": null,
+      "parseOk": false,
+      "rawText": "",
+      "error": "Maximum call stack size exceeded"
+    },
+    {
+      "caseId": "fit_017",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "error",
+      "expectedLabel": "valid",
+      "actualLabel": null,
+      "parseOk": false,
+      "rawText": "",
+      "error": "Maximum call stack size exceeded"
+    },
+    {
+      "caseId": "fit_018",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "error",
+      "expectedLabel": "invalid",
+      "actualLabel": null,
+      "parseOk": false,
+      "rawText": "",
+      "error": "Maximum call stack size exceeded"
+    },
+    {
+      "caseId": "fit_019",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "error",
+      "expectedLabel": "valid",
+      "actualLabel": null,
+      "parseOk": false,
+      "rawText": "",
+      "error": "Maximum call stack size exceeded"
+    },
+    {
+      "caseId": "fit_020",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "error",
+      "expectedLabel": "valid",
+      "actualLabel": null,
+      "parseOk": false,
+      "rawText": "",
+      "error": "Maximum call stack size exceeded"
+    },
+    {
+      "caseId": "fit_021",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "error",
+      "expectedLabel": "invalid",
+      "actualLabel": null,
+      "parseOk": false,
+      "rawText": "",
+      "error": "Maximum call stack size exceeded"
+    },
+    {
+      "caseId": "fit_022",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "error",
+      "expectedLabel": "ambiguous",
+      "actualLabel": null,
+      "parseOk": false,
+      "rawText": "",
+      "error": "Maximum call stack size exceeded"
+    },
+    {
+      "caseId": "fit_023",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "error",
+      "expectedLabel": "valid",
+      "actualLabel": null,
+      "parseOk": false,
+      "rawText": "",
+      "error": "Maximum call stack size exceeded"
+    },
+    {
+      "caseId": "fit_024",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "error",
+      "expectedLabel": "invalid",
+      "actualLabel": null,
+      "parseOk": false,
+      "rawText": "",
+      "error": "Maximum call stack size exceeded"
+    },
+    {
+      "caseId": "fit_025",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "error",
+      "expectedLabel": "ambiguous",
+      "actualLabel": null,
+      "parseOk": false,
+      "rawText": "",
+      "error": "Maximum call stack size exceeded"
+    },
+    {
+      "caseId": "fit_026",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Patrick Mahomes is a well-known NFL player.\"}"
+    },
+    {
+      "caseId": "fit_027",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"LeBron James is a famous NBA player, not an NFL player.\"}"
+    },
+    {
+      "caseId": "fit_028",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Deion Sanders is a former NFL player and coach.\"}"
+    },
+    {
+      "caseId": "fit_029",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Tom Brady is a legendary NFL quarterback.\"}"
+    },
+    {
+      "caseId": "fit_030",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"O.J. Simpson was a notable NFL player before his later legal troubles.\"}"
+    },
+    {
+      "caseId": "fit_031",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Travis Kelce is a prominent current NFL player.\"}"
+    },
+    {
+      "caseId": "fit_032",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"The word 'comfortable' has exactly 11 letters.\"}"
+    },
+    {
+      "caseId": "fit_033",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"The word 'cat' has only 3 letters, not 11.\"}"
+    },
+    {
+      "caseId": "fit_034",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"The word 'information' contains exactly 11 letters.\"}"
+    },
+    {
+      "caseId": "fit_035",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"The word 'abracadabra' has 11 letters, but the category is 'words with 11 letters', implying a single word, and this is a phrase.\"}"
+    },
+    {
+      "caseId": "fit_036",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"The word 'environment' has exactly 11 letters.\"}"
+    },
+    {
+      "caseId": "fit_037",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"The word 'development' has exactly 11 letters.\"}"
+    },
+    {
+      "caseId": "fit_038",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"The word 'personality' has exactly 11 letters.\"}"
+    },
+    {
+      "caseId": "fit_039",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"The word 'hello' has only 5 letters, not 11.\"}"
+    },
+    {
+      "caseId": "fit_040",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Snooki is a well-known contestant from the reality TV show Jersey Shore.\"}"
+    },
+    {
+      "caseId": "fit_041",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Kim Kardashian is famous for her role in the reality TV show Keeping Up with the Kardashians.\"}"
+    },
+    {
+      "caseId": "fit_042",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "ambiguous",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.7,\"reason\":\"Gordon Ramsay is primarily known as a chef and restaurateur, though he has hosted and appeared in many reality TV shows.\"}"
+    },
+    {
+      "caseId": "fit_043",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Albert Einstein was a theoretical physicist and not a reality TV contestant.\"}"
+    },
+    {
+      "caseId": "fit_044",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Paris Hilton is a prominent figure in reality television, known for 'The Simple Life'.\"}"
+    },
+    {
+      "caseId": "fit_045",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "ambiguous",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Donald Trump has been a contestant and host on reality TV shows like 'The Apprentice'.\"}"
+    },
+    {
+      "caseId": "fit_046",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Monopoly is a classic and widely recognized board game.\"}"
+    },
+    {
+      "caseId": "fit_047",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Minecraft is primarily a video game, not a board game.\"}"
+    },
+    {
+      "caseId": "fit_048",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "ambiguous",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Dungeons & Dragons is a well-known tabletop role-playing game, often categorized with board games.\"}"
+    },
+    {
+      "caseId": "fit_049",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"A stethoscope is a common medical instrument found in hospitals.\"}"
+    },
+    {
+      "caseId": "fit_050",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "ambiguous",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"A vending machine is often present in hospitals for convenience.\"}"
+    },
+    {
+      "caseId": "fit_051",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"SpongeBob is a well-known cartoon character.\"}"
+    },
+    {
+      "caseId": "fit_052",
+      "task": "category_fit",
+      "modelId": "gemini-2.5-flash-lite",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Shrek is a popular character from animated films, which are a form of cartoon.\"}"
+    }
+  ]
+}
