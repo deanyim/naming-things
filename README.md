@@ -36,6 +36,17 @@ Edit `.env` and set `DATABASE_URL` to match your local PostgreSQL setup:
 DATABASE_URL="postgresql://<your-user>@localhost:5432/naming-things"
 ```
 
+### Auto Review (optional)
+
+To enable LLM-based answer classification, add an [OpenRouter](https://openrouter.ai/) API key:
+
+```
+OPENROUTER_API_KEY="sk-or-v1-..."
+OPENROUTER_MODEL="google/gemini-2.5-flash"  # optional, this is the default
+```
+
+When enabled, the host can toggle "auto review" in the lobby. The LLM judges whether each answer fits the category and marks invalid answers as rejected. Players can dispute any classification during the review phase.
+
 ### Push the schema
 
 ```bash
@@ -67,6 +78,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 - [Drizzle ORM](https://orm.drizzle.team)
 - [PostgreSQL](https://www.postgresql.org/)
 - [Tailwind CSS](https://tailwindcss.com)
+- [OpenRouter](https://openrouter.ai) (optional, for auto review)
 
 ## Deployment
 

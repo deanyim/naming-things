@@ -9,7 +9,7 @@ export const env = createEnv({
   server: {
     DATABASE_URL: z.string().url(),
     OPENROUTER_API_KEY: z.string().min(1).optional(),
-    OPENROUTER_MODEL: z.string().min(1).default("mistralai/mistral-small-3.2-24b-instruct"),
+    OPENROUTER_MODEL: z.string().min(1).default("google/gemini-2.5-flash"),
     OPENROUTER_REFERER: z.string().url().optional(),
     OPENROUTER_MOCK: z.coerce.boolean().default(false),
     NODE_ENV: z
