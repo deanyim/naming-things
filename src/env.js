@@ -11,6 +11,7 @@ export const env = createEnv({
     OPENROUTER_API_KEY: z.string().min(1).optional(),
     OPENROUTER_MODEL: z.string().min(1).default("mistralai/mistral-small-3.2-24b-instruct"),
     OPENROUTER_REFERER: z.string().url().optional(),
+    OPENROUTER_MOCK: z.coerce.boolean().default(false),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -34,6 +35,7 @@ export const env = createEnv({
     OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
     OPENROUTER_MODEL: process.env.OPENROUTER_MODEL,
     OPENROUTER_REFERER: process.env.OPENROUTER_REFERER,
+    OPENROUTER_MOCK: process.env.OPENROUTER_MOCK,
     NODE_ENV: process.env.NODE_ENV,
   },
   /**

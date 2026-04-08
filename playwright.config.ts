@@ -15,7 +15,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "NODE_ENV=production PORT=3001 npx tsx server.ts",
+    command: "NODE_ENV=production PORT=3001 OPENROUTER_API_KEY=mock-key OPENROUTER_MOCK=1 npx tsx server.ts",
     url: "http://localhost:3001",
     reuseExistingServer: true,
     timeout: 30000,

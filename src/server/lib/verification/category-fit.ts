@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { env } from "~/env";
 import { callOpenRouterJson } from "../openrouter/client";
 import { buildCategoryFitPrompt } from "./prompts";
 
@@ -37,12 +38,26 @@ async function judgeChunk(
   return result.parsed.decisions;
 }
 
+function mockJudge(
+  candidates: { answerId: number; text: string }[],
+): CategoryFitResult[] {
+  return candidates.map((c) => ({
+    answerId: c.answerId,
+    label: c.text.toLowerCase().includes("zzinvalid")
+      ? ("invalid" as const)
+      : ("valid" as const),
+    confidence: 0.95,
+    reason: "mock",
+  }));
+}
+
 export async function judgeCategoryFit(
   category: string,
   candidates: { answerId: number; text: string }[],
   options?: { model?: string; timeoutMs?: number; chunkSize?: number },
 ): Promise<CategoryFitResult[]> {
   if (candidates.length === 0) return [];
+  if (env.OPENROUTER_MOCK) return mockJudge(candidates);
 
   const items = candidates.map((c) => ({
     answerId: c.answerId,
