@@ -59,40 +59,19 @@ describe("normalizeAnswer", () => {
     expect(result.normalizedText).toBe("cat domestic");
   });
 
-  it("conservative singularize: basic plural -s", () => {
-    const result = normalizeAnswer("bananas");
-    expect(result.canonicalText).toBe("banana");
-    expect(result.appliedRules).toContain("conservative_singularize");
-  });
-
-  it("conservative singularize: -ies to -y", () => {
-    expect(normalizeAnswer("berries").canonicalText).toBe("berry");
-    expect(normalizeAnswer("countries").canonicalText).toBe("country");
-  });
-
-  it("conservative singularize: -ses and -xes", () => {
-    expect(normalizeAnswer("buses").canonicalText).toBe("bus");
-    expect(normalizeAnswer("foxes").canonicalText).toBe("fox");
-  });
-
-  it("does not singularize words ending in -ss", () => {
-    expect(normalizeAnswer("chess").canonicalText).toBe("chess");
-    expect(normalizeAnswer("bass").canonicalText).toBe("bass");
-  });
-
-  it("does not singularize short words (<=3 chars)", () => {
-    expect(normalizeAnswer("gas").canonicalText).toBe("gas");
-    expect(normalizeAnswer("bus").canonicalText).toBe("bus");
+  it("does not singularize plurals", () => {
+    expect(normalizeAnswer("bananas").canonicalText).toBe("bananas");
+    expect(normalizeAnswer("berries").canonicalText).toBe("berries");
+    expect(normalizeAnswer("buses").canonicalText).toBe("buses");
   });
 
   it("applies multiple rules together", () => {
     const result = normalizeAnswer("  The Ice-Creams!  ");
-    expect(result.canonicalText).toBe("ice cream");
+    expect(result.canonicalText).toBe("ice creams");
     expect(result.appliedRules).toContain("lowercase");
     expect(result.appliedRules).toContain("strip_article");
     expect(result.appliedRules).toContain("normalize_separator");
     expect(result.appliedRules).toContain("normalize_punctuation");
-    expect(result.appliedRules).toContain("conservative_singularize");
   });
 
   it("returns empty applied rules when nothing changes", () => {

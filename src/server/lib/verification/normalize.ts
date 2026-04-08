@@ -10,20 +10,6 @@ export type NormalizationResult = {
   appliedRules: string[];
 };
 
-function singularizeToken(token: string): string {
-  if (token.length <= 3) return token;
-  if (token.endsWith("ies") && token.length > 4) {
-    return `${token.slice(0, -3)}y`;
-  }
-  if (token.endsWith("ses") || token.endsWith("xes")) {
-    return token.slice(0, -2);
-  }
-  if (token.endsWith("s") && !token.endsWith("ss")) {
-    return token.slice(0, -1);
-  }
-  return token;
-}
-
 export function normalizeAnswer(text: string): NormalizationResult {
   const appliedRules: string[] = [];
   const originalText = text;
@@ -58,17 +44,7 @@ export function normalizeAnswer(text: string): NormalizationResult {
     normalizedText = normalizedPunctuation.replace(/\s+/g, " ").trim();
   }
 
-  let canonicalText = normalizedText;
-
-  const singularized = canonicalText
-    .split(" ")
-    .filter(Boolean)
-    .map((token) => singularizeToken(token))
-    .join(" ");
-  if (singularized !== canonicalText) {
-    appliedRules.push("conservative_singularize");
-    canonicalText = singularized;
-  }
+  const canonicalText = normalizedText;
 
   return {
     originalText,
