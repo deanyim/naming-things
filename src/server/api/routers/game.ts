@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { eq, and, sql, desc, asc, isNull } from "drizzle-orm";
+import { eq, and, sql, desc, asc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { env } from "~/env";
@@ -30,6 +30,15 @@ function generateCode(): string {
     code += chars[Math.floor(Math.random() * chars.length)];
   }
   return code;
+}
+
+function generateSlug(): string {
+  const chars = "abcdefghjkmnpqrstuvwxyz23456789";
+  let slug = "";
+  for (let i = 0; i < 8; i++) {
+    slug += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return slug;
 }
 
 type AdvanceTurnResult = {
@@ -161,6 +170,7 @@ export const gameRouter = createTRPCRouter({
         .insert(games)
         .values({
           code,
+          slug: generateSlug(),
           hostPlayerId: player.id,
           status: "lobby",
         })
@@ -232,23 +242,30 @@ export const gameRouter = createTRPCRouter({
       z.object({
         sessionToken: z.string().min(1),
         code: z.string().min(1),
+        slug: z.string().optional(),
       }),
     )
     .query(async ({ ctx, input }) => {
       const player = await getPlayerBySession(ctx.db, input.sessionToken);
-      const code = input.code.toUpperCase();
 
-      const game = await ctx.db.query.games.findFirst({
-        where: eq(games.code, code),
-        orderBy: desc(games.id),
-        with: {
-          gamePlayers: {
+      const game = input.slug
+        ? await ctx.db.query.games.findFirst({
+            where: eq(games.slug, input.slug),
             with: {
-              player: true,
+              gamePlayers: {
+                with: { player: true },
+              },
             },
-          },
-        },
-      });
+          })
+        : await ctx.db.query.games.findFirst({
+            where: eq(games.code, input.code.toUpperCase()),
+            orderBy: desc(games.id),
+            with: {
+              gamePlayers: {
+                with: { player: true },
+              },
+            },
+          });
 
       if (!game) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Game not found" });
@@ -276,6 +293,7 @@ export const gameRouter = createTRPCRouter({
       return {
         id: game.id,
         code: game.code,
+        slug: game.slug,
         status: game.status,
         mode: game.mode,
         category: game.category,
@@ -313,6 +331,93 @@ export const gameRouter = createTRPCRouter({
           })),
         myPlayerId: player.id,
       };
+    }),
+
+  getVerifications: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        slug: z.string().min(1),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      await getPlayerBySession(ctx.db, input.sessionToken);
+
+      const game = await ctx.db.query.games.findFirst({
+        where: eq(games.slug, input.slug),
+      });
+
+      if (!game) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Game not found" });
+      }
+
+      const allAnswers = await ctx.db.query.answers.findMany({
+        where: eq(answers.gameId, game.id),
+        with: {
+          player: true,
+          verification: true,
+        },
+        orderBy: asc(answers.id),
+      });
+
+      return {
+        category: game.category,
+        model: env.OPENROUTER_MODEL,
+        answers: allAnswers.map((a) => ({
+          id: a.id,
+          text: a.text,
+          normalizedText: a.normalizedText,
+          status: a.status,
+          player: a.player.displayName,
+          verification: a.verification
+            ? {
+                label: a.verification.label,
+                confidence: a.verification.confidence,
+                reason: a.verification.reason,
+              }
+            : null,
+        })),
+      };
+    }),
+
+  getHistory: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        code: z.string().min(1),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      await getPlayerBySession(ctx.db, input.sessionToken);
+      const code = input.code.toUpperCase();
+
+      const allGames = await ctx.db.query.games.findMany({
+        where: eq(games.code, code),
+        orderBy: desc(games.id),
+        with: {
+          gamePlayers: {
+            with: { player: true },
+          },
+        },
+      });
+
+      return allGames.map((game) => ({
+        id: game.id,
+        slug: game.slug,
+        status: game.status,
+        category: game.category,
+        mode: game.mode,
+        startedAt: game.startedAt,
+        endedAt: game.endedAt,
+        createdAt: game.createdAt,
+        playerCount: game.gamePlayers.filter((gp) => !gp.isSpectator).length,
+        players: game.gamePlayers
+          .filter((gp) => !gp.isSpectator)
+          .map((gp) => ({
+            displayName: gp.player.displayName,
+            score: gp.score,
+          })),
+      }));
     }),
 
   setCategory: publicProcedure
@@ -936,6 +1041,29 @@ export const gameRouter = createTRPCRouter({
         await ctx.db.insert(answers).values(toInsert);
       }
 
+      // Classify this player's answers
+      if (toInsert.length > 0 && game.autoClassificationEnabled && game.category && env.OPENROUTER_API_KEY) {
+        const myAnswers = await ctx.db.query.answers.findMany({
+          where: and(
+            eq(answers.gameId, input.gameId),
+            eq(answers.playerId, player.id),
+          ),
+          orderBy: asc(answers.createdAt),
+        });
+
+        if (myAnswers.length > 0) {
+          const results = await judgeCategoryFit(
+            game.category,
+            myAnswers.map((a) => ({ answerId: a.id, text: a.text })),
+            { model: env.OPENROUTER_MODEL },
+          );
+
+          await ctx.db.transaction(async (tx) => {
+            await classifyAnswers(tx, input.gameId, game.category!, results);
+          });
+        }
+      }
+
       notify(game.code);
       return { inserted: toInsert.length };
     }),
@@ -1162,7 +1290,7 @@ export const gameRouter = createTRPCRouter({
         where: eq(games.id, input.gameId),
       });
 
-      // Auto-classify: only run once per game using classifiedAt as a lock
+      // Check if classification is still in progress (answers exist but not all verified)
       let classifying = false;
       if (
         game?.status === "reviewing" &&
@@ -1170,45 +1298,16 @@ export const gameRouter = createTRPCRouter({
         game.category &&
         env.OPENROUTER_API_KEY
       ) {
-        if (!game.classifiedAt) {
-          const toClassify = await ctx.db.query.answers.findMany({
-            where: and(
-              eq(answers.gameId, input.gameId),
-              eq(answers.status, "accepted"),
-            ),
-            orderBy: asc(answers.createdAt),
-          });
-
-          if (toClassify.length > 0) {
-            // Atomically acquire the lock — only one caller wins
-            const locked = await ctx.db
-              .update(games)
-              .set({ classifiedAt: new Date() })
-              .where(and(eq(games.id, input.gameId), isNull(games.classifiedAt)))
-              .returning({ id: games.id });
-
-            if (locked.length > 0) {
-              classifying = true;
-              const results = await judgeCategoryFit(
-                game.category,
-                toClassify.map((a) => ({ answerId: a.id, text: a.text })),
-                { model: env.OPENROUTER_MODEL },
-              );
-
-              await ctx.db.transaction(async (tx) => {
-                await classifyAnswers(tx, input.gameId, game.category!, results);
-              });
-              classifying = false;
-            } else {
-              // Another caller acquired the lock — check if classification is done
-              const verificationCount = await ctx.db.query.answerVerifications.findMany({
-                where: eq(answerVerifications.gameId, input.gameId),
-              });
-              if (verificationCount.length === 0) {
-                classifying = true;
-              }
-            }
-          }
+        const answerCount = await ctx.db.query.answers.findMany({
+          where: eq(answers.gameId, input.gameId),
+          columns: { id: true },
+        });
+        const verifiedCount = await ctx.db.query.answerVerifications.findMany({
+          where: eq(answerVerifications.gameId, input.gameId),
+          columns: { id: true },
+        });
+        if (answerCount.length > 0 && verifiedCount.length < answerCount.length) {
+          classifying = true;
         }
       }
 
@@ -1369,8 +1468,13 @@ export const gameRouter = createTRPCRouter({
       const player = await getPlayerBySession(ctx.db, input.sessionToken);
       const game = await requireHost(ctx.db, input.gameId, player.id);
 
-      // Fallback: classify any unclassified answers before scoring
-      if (!game.classifiedAt && game.autoClassificationEnabled && game.category && env.OPENROUTER_API_KEY) {
+      // Fallback: classify any unverified answers before scoring
+      if (game.autoClassificationEnabled && game.category && env.OPENROUTER_API_KEY) {
+        const verified = await ctx.db.query.answerVerifications.findMany({
+          where: eq(answerVerifications.gameId, input.gameId),
+        });
+        const verifiedIds = new Set(verified.map((v) => v.answerId));
+
         const unclassified = await ctx.db.query.answers.findMany({
           where: and(
             eq(answers.gameId, input.gameId),
@@ -1378,22 +1482,18 @@ export const gameRouter = createTRPCRouter({
           ),
           orderBy: asc(answers.createdAt),
         });
+        const toClassify = unclassified.filter((a) => !verifiedIds.has(a.id));
 
-        if (unclassified.length > 0) {
+        if (toClassify.length > 0) {
           const results = await judgeCategoryFit(
             game.category,
-            unclassified.map((a) => ({ answerId: a.id, text: a.text })),
+            toClassify.map((a) => ({ answerId: a.id, text: a.text })),
             { model: env.OPENROUTER_MODEL },
           );
 
           await ctx.db.transaction(async (tx) => {
             await classifyAnswers(tx, input.gameId, game.category!, results);
           });
-
-          await ctx.db
-            .update(games)
-            .set({ classifiedAt: new Date() })
-            .where(eq(games.id, input.gameId));
         }
       }
 
@@ -1810,6 +1910,7 @@ export const gameRouter = createTRPCRouter({
         .insert(games)
         .values({
           code: game.code,
+          slug: generateSlug(),
           hostPlayerId: player.id,
           status: "lobby",
           mode: game.mode,
