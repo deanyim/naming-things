@@ -180,10 +180,24 @@ export function FinalScoreboard({
         )}
 
         <button
+          onClick={() => router.push(`/game/${game.code}/history`)}
+          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-500 transition hover:bg-gray-100"
+        >
+          view past rounds
+        </button>
+
+        <button
           onClick={() => router.push("/")}
           className="w-full rounded-lg border border-gray-900 px-4 py-3 font-medium text-gray-900 transition hover:bg-gray-100"
         >
           back to home
+        </button>
+
+        <button
+          onClick={() => router.push(`/game/${game.code}/round/${game.slug}/debug`)}
+          className="text-xs text-gray-300 transition hover:text-gray-500"
+        >
+          debug
         </button>
       </div>
     </main>
@@ -380,10 +394,24 @@ function TeamScoreboard({
         )}
 
         <button
+          onClick={() => router.push(`/game/${game.code}/history`)}
+          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-500 transition hover:bg-gray-100"
+        >
+          view past rounds
+        </button>
+
+        <button
           onClick={() => router.push("/")}
           className="w-full rounded-lg border border-gray-900 px-4 py-3 font-medium text-gray-900 transition hover:bg-gray-100"
         >
           back to home
+        </button>
+
+        <button
+          onClick={() => router.push(`/game/${game.code}/round/${game.slug}/debug`)}
+          className="text-xs text-gray-300 transition hover:text-gray-500"
+        >
+          debug
         </button>
       </div>
     </main>

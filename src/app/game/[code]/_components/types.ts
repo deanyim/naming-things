@@ -1,6 +1,7 @@
 export interface GameState {
   id: number;
   code: string;
+  slug: string;
   status: "lobby" | "playing" | "reviewing" | "finished";
   mode: "classic" | "turns";
   category: string | null;

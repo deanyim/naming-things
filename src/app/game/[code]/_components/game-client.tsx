@@ -29,7 +29,7 @@ function clearLocalAnswers(gameId: number) {
   localStorage.removeItem(`naming-things-answers-${gameId}`);
 }
 
-export function GameClient({ code }: { code: string }) {
+export function GameClient({ code, slug }: { code: string; slug?: string }) {
   const router = useRouter();
   const { sessionToken, displayName, login, isReady } = useSession();
   const [isSubmittingAnswers, setIsSubmittingAnswers] = useState(false);
@@ -48,8 +48,9 @@ export function GameClient({ code }: { code: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReady, sessionToken, displayName]);
 
+  const queryInput = slug ? { sessionToken, code, slug } : { sessionToken, code };
   const gameState = api.game.getState.useQuery(
-    { sessionToken, code },
+    queryInput,
     {
       enabled: isReady && !!sessionToken && !!displayName,
       refetchInterval: 5000,
