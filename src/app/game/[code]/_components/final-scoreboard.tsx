@@ -41,7 +41,7 @@ export function FinalScoreboard({
   // Build per-player answer lists from grouped data
   const playerAnswers = new Map<number, PlayerAnswer[]>();
   if (answersQuery.data) {
-    for (const group of answersQuery.data) {
+    for (const group of answersQuery.data.groups) {
       for (const answer of group.answers) {
         if (!playerAnswers.has(answer.playerId)) {
           playerAnswers.set(answer.playerId, []);
