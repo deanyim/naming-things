@@ -42,6 +42,10 @@ async function setTopicTimerAndStart(
   await page.getByRole("button", { name: "start round" }).click();
 }
 
+function teamsSection(page: Page) {
+  return page.locator("div").filter({ hasText: /^teams/ });
+}
+
 test.describe("Team mode", () => {
   test("host can toggle team mode on/off and set number of teams", async ({
     browser,
@@ -56,7 +60,7 @@ test.describe("Team mode", () => {
     await expect(hostPage.getByText("teams")).toBeVisible();
 
     // Toggle team mode on
-    await hostPage.getByRole("button", { name: "on", exact: true }).click();
+    await teamsSection(hostPage).getByRole("button", { name: "on" }).click();
 
     // Number of teams input should appear
     await expect(hostPage.getByText("# teams")).toBeVisible({ timeout: 5000 });
@@ -66,7 +70,7 @@ test.describe("Team mode", () => {
     await expect(hostPage.getByText("team 2")).toBeVisible();
 
     // Toggle team mode off
-    await hostPage.getByRole("button", { name: "off" }).click();
+    await teamsSection(hostPage).getByRole("button", { name: "off" }).click();
 
     // Team groups should disappear, standard player list shows
     await expect(hostPage.getByText("# teams")).not.toBeVisible({ timeout: 5000 });
@@ -90,7 +94,7 @@ test.describe("Team mode", () => {
     await expect(hostPage.getByText("players (2)")).toBeVisible({ timeout: 5000 });
 
     // Enable team mode
-    await hostPage.getByRole("button", { name: "on", exact: true }).click();
+    await teamsSection(hostPage).getByRole("button", { name: "on" }).click();
 
     // Players should be auto-assigned: Alice->Team 1, Bob->Team 2
     await expect(hostPage.getByText("team 1 (1)")).toBeVisible({ timeout: 5000 });
@@ -116,7 +120,7 @@ test.describe("Team mode", () => {
     await expect(hostPage.getByText("players (2)")).toBeVisible({ timeout: 5000 });
 
     // Enable team mode with 1 team (cooperative)
-    await hostPage.getByRole("button", { name: "on", exact: true }).click();
+    await teamsSection(hostPage).getByRole("button", { name: "on" }).click();
     await expect(hostPage.getByText("# teams")).toBeVisible({ timeout: 5000 });
     // Change to 1 team
     await hostPage.locator('input[type="number"]').first().fill("1");
@@ -174,7 +178,7 @@ test.describe("Team mode", () => {
     await expect(hostPage.getByText("players (2)")).toBeVisible({ timeout: 5000 });
 
     // Enable team mode with 1 team
-    await hostPage.getByRole("button", { name: "on", exact: true }).click();
+    await teamsSection(hostPage).getByRole("button", { name: "on" }).click();
     await expect(hostPage.getByText("# teams")).toBeVisible({ timeout: 5000 });
     await hostPage.locator('input[type="number"]').first().fill("1");
     await expect(hostPage.getByText("team 1 (2)")).toBeVisible({ timeout: 5000 });
@@ -219,7 +223,7 @@ test.describe("Team mode", () => {
     await expect(hostPage.getByText("players (2)")).toBeVisible({ timeout: 5000 });
 
     // Enable team mode with 1 team
-    await hostPage.getByRole("button", { name: "on", exact: true }).click();
+    await teamsSection(hostPage).getByRole("button", { name: "on" }).click();
     await expect(hostPage.getByText("# teams")).toBeVisible({ timeout: 5000 });
     await hostPage.locator('input[type="number"]').first().fill("1");
     await expect(hostPage.getByText("team 1 (2)")).toBeVisible({ timeout: 5000 });
@@ -266,7 +270,7 @@ test.describe("Team mode", () => {
     await expect(hostPage.getByText("players (2)")).toBeVisible({ timeout: 5000 });
 
     // Enable team mode with 2 teams
-    await hostPage.getByRole("button", { name: "on", exact: true }).click();
+    await teamsSection(hostPage).getByRole("button", { name: "on" }).click();
     await expect(hostPage.getByText("team 1 (1)")).toBeVisible({ timeout: 5000 });
     await expect(hostPage.getByText("team 2 (1)")).toBeVisible();
 
@@ -275,7 +279,7 @@ test.describe("Team mode", () => {
     await expect(hostPage.getByText("fruits")).toBeVisible({ timeout: 5000 });
     await expect(p2Page.getByText("fruits")).toBeVisible({ timeout: 5000 });
 
-    // Alice (team 1) submits answers
+    // Alice submits 3 answers (including "apple" which Bob also submits)
     await hostPage.getByPlaceholder("type an answer").fill("apple");
     await hostPage.getByRole("button", { name: "add" }).click();
     await expect(hostPage.getByText("apple")).toBeVisible({ timeout: 3000 });
@@ -283,13 +287,13 @@ test.describe("Team mode", () => {
     await hostPage.getByPlaceholder("type an answer").fill("banana");
     await hostPage.getByRole("button", { name: "add" }).click();
 
-    // Bob (team 2) submits answers — including "apple" (should be common across teams)
+    await hostPage.getByPlaceholder("type an answer").fill("mango");
+    await hostPage.getByRole("button", { name: "add" }).click();
+
+    // Bob submits 1 answer — "apple" is common across teams
     await p2Page.getByPlaceholder("type an answer").fill("apple");
     await p2Page.getByRole("button", { name: "add" }).click();
     await expect(p2Page.getByText("apple")).toBeVisible({ timeout: 3000 });
-
-    await p2Page.getByPlaceholder("type an answer").fill("cherry");
-    await p2Page.getByRole("button", { name: "add" }).click();
 
     // Host pauses and terminates to go to review (instead of waiting for timer)
     await hostPage.getByRole("button", { name: "pause" }).click();
@@ -309,19 +313,19 @@ test.describe("Team mode", () => {
     await hostPage.getByRole("button", { name: "finish & score" }).click();
     await expect(hostPage.getByText("final scores")).toBeVisible({ timeout: 5000 });
 
-    // Should show team-based scoreboard
-    await expect(hostPage.getByText("team 1 wins!")).toBeVisible();
-    await expect(hostPage.getByRole("button", { name: /team 2/ })).toBeVisible();
+    // Alice's team wins (3 answers vs 1) — could be team 1 or 2 depending on assignment
+    await expect(hostPage.getByText(/team \d wins!/)).toBeVisible();
 
-    // Expand team 1 to see per-player contribution counts
-    await hostPage.getByRole("button", { name: /team 1/ }).click();
-    // Alice submitted 2 answers (apple, banana)
-    await expect(hostPage.getByText("Alice (2)")).toBeVisible({ timeout: 5000 });
+    // Find which team each player is on by expanding each
+    // The winning team (Alice's) is listed first
+    const firstTeamBtn = hostPage.getByRole("button", { name: /team \d/ }).first();
+    await firstTeamBtn.click();
+    await expect(hostPage.getByText("Alice (3)")).toBeVisible({ timeout: 5000 });
 
-    // Expand team 2 to see Bob's contribution count
-    await hostPage.getByRole("button", { name: /team 2/ }).click();
-    // Bob submitted 2 answers (apple, cherry)
-    await expect(hostPage.getByText("Bob (2)")).toBeVisible({ timeout: 5000 });
+    // Collapse first, expand second
+    const secondTeamBtn = hostPage.getByRole("button", { name: /team \d/ }).nth(1);
+    await secondTeamBtn.click();
+    await expect(hostPage.getByText("Bob (1)")).toBeVisible({ timeout: 5000 });
 
     await hostContext.close();
     await p2Context.close();
@@ -343,7 +347,7 @@ test.describe("Team mode", () => {
     await expect(hostPage.getByText("players (2)")).toBeVisible({ timeout: 5000 });
 
     // Enable team mode
-    await hostPage.getByRole("button", { name: "on", exact: true }).click();
+    await teamsSection(hostPage).getByRole("button", { name: "on" }).click();
     await expect(hostPage.getByText("team 1 (1)")).toBeVisible({ timeout: 5000 });
 
     await setTopicTimerAndStart(hostPage, "fruits", 60);
@@ -389,7 +393,7 @@ test.describe("Team mode", () => {
     await expect(hostPage.getByText("players (2)")).toBeVisible({ timeout: 5000 });
 
     // Enable team mode with 2 teams
-    await hostPage.getByRole("button", { name: "on", exact: true }).click();
+    await teamsSection(hostPage).getByRole("button", { name: "on" }).click();
     await expect(hostPage.getByText("team 1 (1)")).toBeVisible({ timeout: 5000 });
     await expect(hostPage.getByText("team 2 (1)")).toBeVisible();
 
@@ -466,7 +470,7 @@ test.describe("Team mode", () => {
     await hostPage.getByRole("button", { name: "last one standing" }).click();
 
     // Teams toggle should not be visible in turns mode
-    await expect(hostPage.getByRole("button", { name: "on", exact: true })).not.toBeVisible({ timeout: 5000 });
+    await expect(teamsSection(hostPage).getByRole("button", { name: "on" })).not.toBeVisible({ timeout: 5000 });
 
     await hostContext.close();
   });
