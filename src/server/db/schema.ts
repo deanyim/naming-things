@@ -76,6 +76,7 @@ export const games = createTable(
   (d) => ({
     id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
     code: d.varchar({ length: 6 }).notNull(),
+    slug: d.varchar({ length: 8 }).notNull().unique(),
     hostPlayerId: d.integer().notNull(),
     status: gameStatusEnum().default("lobby").notNull(),
     category: d.varchar({ length: 256 }),
