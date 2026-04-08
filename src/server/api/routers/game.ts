@@ -148,6 +148,35 @@ async function classifyAnswers(
   }
 }
 
+async function classifyUnverifiedAnswers(
+  db: DB,
+  gameId: number,
+  category: string,
+) {
+  const verified = await db.query.answerVerifications.findMany({
+    where: eq(answerVerifications.gameId, gameId),
+  });
+  const verifiedIds = new Set(verified.map((v) => v.answerId));
+
+  const unclassified = await db.query.answers.findMany({
+    where: and(eq(answers.gameId, gameId), eq(answers.status, "accepted")),
+    orderBy: asc(answers.createdAt),
+  });
+  const toClassify = unclassified.filter((a) => !verifiedIds.has(a.id));
+
+  if (toClassify.length === 0) return;
+
+  const results = await judgeCategoryFit(
+    category,
+    toClassify.map((a) => ({ answerId: a.id, text: a.text })),
+    { model: env.OPENROUTER_MODEL },
+  );
+
+  await db.transaction(async (tx) => {
+    await classifyAnswers(tx, gameId, category, results);
+  });
+}
+
 export const gameRouter = createTRPCRouter({
   create: publicProcedure
     .input(z.object({ sessionToken: z.string().min(1) }))
@@ -1041,7 +1070,7 @@ export const gameRouter = createTRPCRouter({
         await ctx.db.insert(answers).values(toInsert);
       }
 
-      // Classify this player's answers
+      // In classic mode, classify only this player's answers on submission
       if (toInsert.length > 0 && game.autoClassificationEnabled && game.category && env.OPENROUTER_API_KEY) {
         const myAnswers = await ctx.db.query.answers.findMany({
           where: and(
@@ -1271,6 +1300,11 @@ export const gameRouter = createTRPCRouter({
         .update(games)
         .set({ status: "reviewing" })
         .where(eq(games.id, input.gameId));
+
+      // In team mode, answers are already in the DB — classify now
+      if (game.isTeamMode && game.autoClassificationEnabled && game.category && env.OPENROUTER_API_KEY) {
+        await classifyUnverifiedAnswers(ctx.db, input.gameId, game.category);
+      }
 
       notify(game.code);
       return { success: true };
@@ -1873,6 +1907,11 @@ export const gameRouter = createTRPCRouter({
           currentTurnPlayerId: null,
         })
         .where(eq(games.id, input.gameId));
+
+      // In team mode, answers are already in the DB — classify now
+      if (newStatus === "reviewing" && game.isTeamMode && game.autoClassificationEnabled && game.category && env.OPENROUTER_API_KEY) {
+        await classifyUnverifiedAnswers(ctx.db, input.gameId, game.category);
+      }
 
       notify(game.code);
       return { success: true };
