@@ -43,6 +43,11 @@ export const answerStatusEnum = pgEnum("answer_status", [
 ]);
 
 export const gameModeEnum = pgEnum("game_mode", ["classic", "turns"]);
+export const categoryFitLabelEnum = pgEnum("category_fit_label", [
+  "valid",
+  "invalid",
+  "ambiguous",
+]);
 
 // Players
 export const players = createTable(
@@ -81,6 +86,7 @@ export const games = createTable(
     currentTurnDeadline: d.timestamp({ withTimezone: true }),
     isTeamMode: d.boolean().default(false).notNull(),
     numTeams: d.integer().default(2).notNull(),
+    autoClassificationEnabled: d.boolean().default(false).notNull(),
     isPaused: d.boolean().default(false).notNull(),
     pausedAt: d.timestamp({ withTimezone: true }),
     pausedTimeRemainingMs: d.integer(),
@@ -169,7 +175,45 @@ export const answersRelations = relations(answers, ({ one, many }) => ({
     references: [players.id],
   }),
   disputeVotes: many(disputeVotes),
+  verification: one(answerVerifications, {
+    fields: [answers.id],
+    references: [answerVerifications.answerId],
+  }),
 }));
+
+export const answerVerifications = createTable(
+  "answer_verification",
+  (d) => ({
+    id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
+    answerId: d.integer().notNull(),
+    gameId: d.integer().notNull(),
+    label: categoryFitLabelEnum().notNull(),
+    confidence: d.integer(),
+    reason: d.varchar({ length: 512 }),
+    createdAt: d
+      .timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  }),
+  (t) => [
+    uniqueIndex("answer_verification_answer_idx").on(t.answerId),
+    index("answer_verification_game_idx").on(t.gameId),
+  ],
+);
+
+export const answerVerificationsRelations = relations(
+  answerVerifications,
+  ({ one }) => ({
+    answer: one(answers, {
+      fields: [answerVerifications.answerId],
+      references: [answers.id],
+    }),
+    game: one(games, {
+      fields: [answerVerifications.gameId],
+      references: [games.id],
+    }),
+  }),
+);
 
 // Dispute Votes
 export const disputeVotes = createTable(

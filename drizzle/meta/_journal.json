@@ -64,6 +64,13 @@
       "when": 1772406272867,
       "tag": "0008_nasty_spectrum",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1775676158515,
+      "tag": "0009_luxuriant_shriek",
+      "breakpoints": true
     }
   ]
 }
