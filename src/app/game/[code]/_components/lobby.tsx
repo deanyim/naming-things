@@ -219,6 +219,29 @@ export function Lobby({
     },
   });
 
+  const setAutoClassificationMutation =
+    api.game.setAutoClassificationEnabled.useMutation({
+      onMutate: async (variables) => {
+        await utils.game.getState.cancel(queryInput);
+        const previousData = utils.game.getState.getData(queryInput);
+        utils.game.getState.setData(queryInput, (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            autoClassificationEnabled: variables.enabled,
+          };
+        });
+        return { previousData };
+      },
+      onSuccess: () => utils.game.getState.invalidate(queryInput),
+      onError: (err, _variables, context) => {
+        if (context?.previousData) {
+          utils.game.getState.setData(queryInput, context.previousData);
+        }
+        setError(err.message);
+      },
+    });
+
   const setTeamModeMutation = api.game.setTeamMode.useMutation({
     onMutate: async (variables) => {
       await utils.game.getState.cancel(queryInput);
@@ -507,6 +530,46 @@ export function Lobby({
               </div>
             )}
 
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-500">auto review</label>
+              <div className="flex flex-1 gap-2">
+                <button
+                  onClick={() =>
+                    game.autoClassificationEnabled &&
+                    setAutoClassificationMutation.mutate({
+                      sessionToken,
+                      gameId: game.id,
+                      enabled: false,
+                    })
+                  }
+                  className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                    !game.autoClassificationEnabled
+                      ? "border-gray-900 bg-gray-900 text-white"
+                      : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  off
+                </button>
+                <button
+                  onClick={() =>
+                    !game.autoClassificationEnabled &&
+                    setAutoClassificationMutation.mutate({
+                      sessionToken,
+                      gameId: game.id,
+                      enabled: true,
+                    })
+                  }
+                  className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                    game.autoClassificationEnabled
+                      ? "border-gray-900 bg-gray-900 text-white"
+                      : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  on
+                </button>
+              </div>
+            </div>
+
             <div className="flex w-full items-center gap-2">
               <label className="text-sm text-gray-500">topic</label>
               <input
@@ -652,6 +715,9 @@ export function Lobby({
                 teams: <span className="font-medium text-gray-900">on ({game.numTeams} teams)</span>
               </p>
             )}
+            <p className="text-sm text-gray-500">
+              auto review: <span className="font-medium text-gray-900">{game.autoClassificationEnabled ? "on" : "off"}</span>
+            </p>
             {topicSet ? (
               <p className="text-sm text-gray-500">
                 topic: <span className="font-medium text-gray-900">{game.category}</span>

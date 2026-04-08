@@ -2,12 +2,16 @@ import { z } from "zod";
 import { eq, and, sql, desc, asc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { env } from "~/env";
 import {
   games,
   gamePlayers,
   answers,
   disputeVotes,
+  answerVerifications,
 } from "~/server/db/schema";
+import { normalizeAnswer } from "~/server/lib/verification/normalize";
+import { judgeCategoryFit } from "~/server/lib/verification/category-fit";
 import {
   getPlayerBySession,
   requireHost,
@@ -241,6 +245,7 @@ export const gameRouter = createTRPCRouter({
         endedAt: game.endedAt,
         isTeamMode: game.isTeamMode,
         numTeams: game.numTeams,
+        autoClassificationEnabled: game.autoClassificationEnabled,
         isPaused: game.isPaused,
         pausedTimeRemainingMs: game.pausedTimeRemainingMs,
         isHost: game.hostPlayerId === player.id,
@@ -359,6 +364,34 @@ export const gameRouter = createTRPCRouter({
       await ctx.db
         .update(games)
         .set({ turnTimerSeconds: input.turnTimerSeconds })
+        .where(eq(games.id, input.gameId));
+
+      notify(game.code);
+      return { success: true };
+    }),
+
+  setAutoClassificationEnabled: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        gameId: z.number(),
+        enabled: z.boolean(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+      const game = await requireHost(ctx.db, input.gameId, player.id);
+
+      if (game.status === "finished") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Cannot change auto-classification after the game ends",
+        });
+      }
+
+      await ctx.db
+        .update(games)
+        .set({ autoClassificationEnabled: input.enabled })
         .where(eq(games.id, input.gameId));
 
       notify(game.code);
@@ -663,7 +696,7 @@ export const gameRouter = createTRPCRouter({
         }
 
         const text = input.text.trim();
-        const normalizedText = text.toLowerCase();
+        const normalizedText = normalizeAnswer(text).canonicalText;
 
         // Check for duplicate against all prior answers in this game
         const existingAnswer = await tx.query.answers.findFirst({
@@ -843,7 +876,7 @@ export const gameRouter = createTRPCRouter({
 
       for (const item of input.answers) {
         const text = item.text.trim();
-        const normalizedText = text.toLowerCase();
+        const normalizedText = normalizeAnswer(text).canonicalText;
         if (!text || seen.has(normalizedText) || existingNormalized.has(normalizedText)) {
           continue;
         }
@@ -902,7 +935,7 @@ export const gameRouter = createTRPCRouter({
       }
 
       const text = input.text.trim();
-      const normalizedText = text.toLowerCase();
+      const normalizedText = normalizeAnswer(text).canonicalText;
 
       // Dedup against team's existing answers
       const teamPlayerIds = await ctx.db.query.gamePlayers.findMany({
@@ -1147,6 +1180,81 @@ export const gameRouter = createTRPCRouter({
       return Array.from(groups.values()).sort((a, b) =>
         a.normalizedText.localeCompare(b.normalizedText),
       );
+    }),
+
+  runAutoClassification: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        gameId: z.number(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+      const game = await requireHost(ctx.db, input.gameId, player.id);
+
+      if (game.status !== "reviewing") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Auto-classification only runs during review",
+        });
+      }
+
+      if (!game.category) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Game has no category set",
+        });
+      }
+
+      const allAnswers = await ctx.db.query.answers.findMany({
+        where: eq(answers.gameId, input.gameId),
+        orderBy: asc(answers.createdAt),
+      });
+
+      const results = await judgeCategoryFit(
+        game.category,
+        allAnswers.map((a) => ({ answerId: a.id, text: a.text })),
+        { model: env.OPENROUTER_MODEL },
+      );
+
+      const resultMap = new Map(results.map((r) => [r.answerId, r]));
+
+      await ctx.db.transaction(async (tx) => {
+        for (const answer of allAnswers) {
+          const llm = resultMap.get(answer.id);
+          if (!llm) continue;
+
+          // Log the LLM result
+          await tx
+            .insert(answerVerifications)
+            .values({
+              answerId: answer.id,
+              gameId: input.gameId,
+              label: llm.label,
+              confidence: Math.round(llm.confidence * 100),
+              reason: llm.reason,
+            })
+            .onConflictDoUpdate({
+              target: answerVerifications.answerId,
+              set: {
+                label: llm.label,
+                confidence: Math.round(llm.confidence * 100),
+                reason: llm.reason,
+              },
+            });
+
+          // Update answer status based on LLM judgment
+          const newStatus = llm.label === "valid" ? "accepted" : llm.label === "invalid" ? "rejected" : "accepted";
+          await tx
+            .update(answers)
+            .set({ status: newStatus })
+            .where(eq(answers.id, answer.id));
+        }
+      });
+
+      notify(game.code);
+      return { success: true, classified: allAnswers.length };
     }),
 
   disputeAnswer: publicProcedure

@@ -13,6 +13,7 @@ export interface GameState {
   endedAt: Date | null;
   isTeamMode: boolean;
   numTeams: number;
+  autoClassificationEnabled: boolean;
   isPaused: boolean;
   pausedTimeRemainingMs: number | null;
   isHost: boolean;
