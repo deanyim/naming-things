@@ -20,10 +20,27 @@ export type CategoryFitResult = {
   reason: string;
 };
 
+const DEFAULT_CHUNK_SIZE = 25;
+
+async function judgeChunk(
+  items: { answerId: number; category: string; candidate_answer: string }[],
+  options?: { model?: string; timeoutMs?: number },
+): Promise<CategoryFitResult[]> {
+  const result = await callOpenRouterJson({
+    model: options?.model,
+    timeoutMs: options?.timeoutMs,
+    maxOutputTokens: Math.max(512, items.length * 60),
+    schema: categoryFitSchema,
+    messages: [{ role: "user", content: buildCategoryFitPrompt(items) }],
+  });
+
+  return result.parsed.decisions;
+}
+
 export async function judgeCategoryFit(
   category: string,
   candidates: { answerId: number; text: string }[],
-  options?: { model?: string; timeoutMs?: number },
+  options?: { model?: string; timeoutMs?: number; chunkSize?: number },
 ): Promise<CategoryFitResult[]> {
   if (candidates.length === 0) return [];
 
@@ -33,13 +50,20 @@ export async function judgeCategoryFit(
     candidate_answer: c.text,
   }));
 
-  const result = await callOpenRouterJson({
-    model: options?.model,
-    timeoutMs: options?.timeoutMs,
-    maxOutputTokens: Math.max(512, candidates.length * 60),
-    schema: categoryFitSchema,
-    messages: [{ role: "user", content: buildCategoryFitPrompt(items) }],
-  });
+  const chunkSize = options?.chunkSize ?? DEFAULT_CHUNK_SIZE;
 
-  return result.parsed.decisions;
+  if (items.length <= chunkSize) {
+    return judgeChunk(items, options);
+  }
+
+  const chunks: (typeof items)[] = [];
+  for (let i = 0; i < items.length; i += chunkSize) {
+    chunks.push(items.slice(i, i + chunkSize));
+  }
+
+  const results = await Promise.all(
+    chunks.map((chunk) => judgeChunk(chunk, options)),
+  );
+
+  return results.flat();
 }
