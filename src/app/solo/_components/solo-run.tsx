@@ -20,6 +20,7 @@ export function SoloRun({
   );
   const inputRef = useRef<HTMLInputElement>(null);
   const hasAutoFinished = useRef(false);
+  const pendingMutations = useRef(0);
 
   const runQuery = api.solo.getRun.useQuery(
     { sessionToken, slug },
@@ -35,6 +36,7 @@ export function SoloRun({
 
   const submitAnswer = api.solo.submitAnswer.useMutation({
     onMutate: async (variables) => {
+      pendingMutations.current++;
       // Cancel outgoing refetches so they don't overwrite our optimistic update
       await utils.solo.getRun.cancel({ sessionToken, slug });
 
@@ -78,8 +80,12 @@ export function SoloRun({
       inputRef.current?.focus();
     },
     onSettled: () => {
-      // Sync with server to get real IDs
-      void utils.solo.getRun.invalidate({ sessionToken, slug });
+      pendingMutations.current--;
+      // Only sync with server once all in-flight submissions have settled,
+      // otherwise the refetch can overwrite optimistic updates from newer submissions.
+      if (pendingMutations.current === 0) {
+        void utils.solo.getRun.invalidate({ sessionToken, slug });
+      }
     },
   });
 
