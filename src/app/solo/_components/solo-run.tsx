@@ -161,7 +161,7 @@ export function SoloRun({
     // Read directly from the DOM ref so form submission works even when
     // React state hasn't re-rendered yet (e.g. Playwright's fill + Enter).
     const text = inputRef.current?.value?.trim() ?? input.trim();
-    if (!text || submitAnswer.isPending || isExpired) return;
+    if (!text || isExpired) return;
     submitAnswer.mutate({
       sessionToken,
       slug,
@@ -218,9 +218,7 @@ export function SoloRun({
               />
               <button
                 type="submit"
-                disabled={
-                  isExpired || submitAnswer.isPending || !input.trim()
-                }
+                disabled={isExpired || !input.trim()}
                 className="rounded-lg bg-gray-900 px-6 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
               >
                 add
