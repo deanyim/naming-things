@@ -2,9 +2,10 @@
 
 import { useRef, useEffect, useState } from "react";
 import { api } from "~/trpc/react";
-import { useCountdown } from "~/hooks/use-countdown";
+import { normalizeAnswer } from "~/lib/normalize";
 import { AnswerInput } from "./answer-input";
 import { PauseOverlay } from "./pause-overlay";
+import { RoundHeader, useTimerDisplay } from "./round-header";
 import type { GameState } from "./types";
 
 export function TeamPlayingRound({
@@ -14,7 +15,7 @@ export function TeamPlayingRound({
   game: GameState;
   sessionToken: string;
 }) {
-  const { secondsRemaining, isExpired } = useCountdown(game.endedAt);
+  const { isExpired, timerDisplay, isUrgent } = useTimerDisplay(game.endedAt, game);
   const hasEndedRef = useRef(false);
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
 
@@ -26,7 +27,6 @@ export function TeamPlayingRound({
     { refetchInterval: 2000 },
   );
 
-  // Find current player for optimistic entries
   const myPlayer = game.players.find((p) => p.id === game.myPlayerId);
 
   const submitTeamAnswer = api.game.submitTeamAnswer.useMutation({
@@ -38,7 +38,7 @@ export function TeamPlayingRound({
         {
           id: -Date.now(),
           text,
-          normalizedText: text.toLowerCase().trim(),
+          normalizedText: normalizeAnswer(text).canonicalText,
           playerDisplayName: myPlayer?.displayName ?? "",
           playerId: myPlayer?.id ?? 0,
         },
@@ -48,7 +48,6 @@ export function TeamPlayingRound({
     onSuccess: (data, _variables, context) => {
       if (!data.success && data.reason === "duplicate") {
         setDuplicateError("your team already has that answer");
-        // Rollback the optimistic entry for duplicates
         if (context?.previousData) {
           utils.game.getTeamAnswers.setData(queryInput, context.previousData);
         }
@@ -87,10 +86,6 @@ export function TeamPlayingRound({
     onSuccess: () => utils.game.getState.invalidate(),
   });
 
-  const pauseGame = api.game.pauseGame.useMutation({
-    onSuccess: () => utils.game.getState.invalidate(),
-  });
-
   // Host auto-ends when timer expires
   useEffect(() => {
     if (game.isSpectator || game.isPaused) return;
@@ -109,7 +104,7 @@ export function TeamPlayingRound({
   }, [duplicateError]);
 
   const handleSubmit = (text: string) => {
-    const normalized = text.toLowerCase().trim();
+    const normalized = normalizeAnswer(text).canonicalText;
     if (answers.some((a) => a.normalizedText === normalized)) {
       setDuplicateError("your team already has that answer");
       return;
@@ -122,16 +117,6 @@ export function TeamPlayingRound({
   };
 
   const inputDisabled = isExpired || game.isPaused;
-  const isUrgent = secondsRemaining <= 10 && secondsRemaining > 0 && !game.isPaused;
-
-  // When paused, show frozen time from server
-  const displaySeconds = game.isPaused && game.pausedTimeRemainingMs != null
-    ? Math.ceil(game.pausedTimeRemainingMs / 1000)
-    : secondsRemaining;
-
-  const timerDisplay = isExpired && !game.isPaused
-    ? "0:00"
-    : `${Math.floor(displaySeconds / 60)}:${String(displaySeconds % 60).padStart(2, "0")}`;
 
   const myTeamId = myPlayer?.teamId;
   const teammates = game.players.filter((p) => p.teamId === myTeamId);
@@ -141,27 +126,13 @@ export function TeamPlayingRound({
   return (
     <main className="flex min-h-screen flex-col items-center bg-white px-4 pt-12">
       <div className="flex w-full max-w-sm flex-col items-center gap-6">
-        <div className="flex w-full items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-900">{game.category}</h2>
-          <div className="flex items-center gap-2">
-            {game.isHost && !game.isPaused && !isExpired && (
-              <button
-                onClick={() => pauseGame.mutate({ sessionToken, gameId: game.id })}
-                disabled={pauseGame.isPending}
-                className="rounded-lg border border-gray-300 px-2 py-1 text-sm text-gray-500 transition hover:bg-gray-100 disabled:opacity-50"
-              >
-                pause
-              </button>
-            )}
-            <span
-              className={`font-mono text-2xl font-bold ${
-                isUrgent ? "text-red-600" : "text-gray-900"
-              }`}
-            >
-              {timerDisplay}
-            </span>
-          </div>
-        </div>
+        <RoundHeader
+          game={game}
+          sessionToken={sessionToken}
+          timerDisplay={timerDisplay}
+          isUrgent={isUrgent}
+          isExpired={isExpired}
+        />
 
         {/* Team info */}
         {myTeamId && !game.isSpectator && (

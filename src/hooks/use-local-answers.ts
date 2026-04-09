@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { normalizeAnswer } from "~/lib/normalize";
 
 export interface LocalAnswer {
   text: string;
@@ -36,7 +37,7 @@ export function useLocalAnswers(gameId: number) {
     (text: string): boolean => {
       const trimmed = text.trim();
       if (!trimmed) return false;
-      const normalizedText = trimmed.toLowerCase();
+      const normalizedText = normalizeAnswer(trimmed).canonicalText;
 
       // Check for duplicate
       const isDuplicate = answers.some(
