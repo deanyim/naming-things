@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CategorySearch } from "../_components/category-search";
 import {
@@ -13,22 +13,27 @@ export function LeaderboardsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const rawCategoryParam = searchParams.get("category") ?? "";
-  const slugParam = searchParams.get("slug") ?? rawCategoryParam;
-  // If only a slug was provided (no separate category param), convert hyphens to spaces for display
-  const categoryParam = searchParams.get("slug") ? rawCategoryParam : rawCategoryParam.replace(/-/g, " ");
+  const slugParam = searchParams.get("category") ?? "";
   const timerParam = Number(searchParams.get("timer")) || 60;
 
-  const [category, setCategory] = useState(categoryParam);
+  const [category, setCategory] = useState(slugParam.replace(/-/g, " "));
   const [categorySlug, setCategorySlug] = useState(slugParam);
   const [timerSeconds, setTimerSeconds] = useState(timerParam);
 
   // Sync state when URL search params change (e.g. clicking a leaderboard bucket)
   useEffect(() => {
-    if (categoryParam) setCategory(categoryParam);
-    if (slugParam) setCategorySlug(slugParam);
+    if (slugParam) {
+      setCategorySlug(slugParam);
+      // Temporary display until server resolves the real name
+      setCategory(slugParam.replace(/-/g, " "));
+    }
     if (searchParams.get("timer")) setTimerSeconds(timerParam);
-  }, [categoryParam, slugParam, timerParam, searchParams]);
+  }, [slugParam, timerParam, searchParams]);
+
+  // Update display name once server resolves it
+  const handleDisplayNameResolved = useCallback((displayName: string) => {
+    setCategory(displayName);
+  }, []);
 
   const hasSelection = categorySlug.trim().length > 0;
 
@@ -78,6 +83,7 @@ export function LeaderboardsContent() {
             categorySlug={categorySlug.trim().toLowerCase()}
             timerSeconds={timerSeconds}
             limit={20}
+            onDisplayNameResolved={handleDisplayNameResolved}
           />
         ) : (
           <LeaderboardOverview limit={10} />

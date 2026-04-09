@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
 
@@ -19,11 +20,13 @@ export function SoloLeaderboard({
   timerSeconds,
   limit = 10,
   compact = false,
+  onDisplayNameResolved,
 }: {
   categorySlug: string;
   timerSeconds: number;
   limit?: number;
   compact?: boolean;
+  onDisplayNameResolved?: (displayName: string) => void;
 }) {
   const router = useRouter();
   const leaderboard = api.solo.getLeaderboard.useQuery({
@@ -31,6 +34,13 @@ export function SoloLeaderboard({
     timerSeconds,
     limit,
   });
+
+  // Resolve display name from first result
+  useEffect(() => {
+    if (leaderboard.data?.[0]?.categoryDisplayName && onDisplayNameResolved) {
+      onDisplayNameResolved(leaderboard.data[0].categoryDisplayName);
+    }
+  }, [leaderboard.data, onDisplayNameResolved]);
 
   if (leaderboard.isLoading) {
     return <p className="text-center text-sm text-gray-400">loading...</p>;
@@ -117,7 +127,7 @@ export function LeaderboardOverview({
             key={`${bucket.categorySlug}-${bucket.timerSeconds}`}
             onClick={() =>
               router.push(
-                `/solo/leaderboards?category=${encodeURIComponent(bucket.categoryDisplayName)}&slug=${bucket.categorySlug}&timer=${bucket.timerSeconds}`,
+                `/solo/leaderboards?category=${bucket.categorySlug}&timer=${bucket.timerSeconds}`,
               )
             }
             className="flex w-full items-center justify-between rounded-lg bg-gray-50 px-3 py-2 transition hover:bg-gray-100"

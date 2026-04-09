@@ -123,4 +123,11 @@ describe("normalizeCategory", () => {
     expect(result.displayName).toBe("fruit");
     expect(result.slug).toBe("fruit");
   });
+
+  it("slug with hyphens can be converted back to approximate display name", () => {
+    const result = normalizeCategory("board games");
+    expect(result.slug).toBe("board-game");
+    // Replacing hyphens with spaces gives a reasonable fallback display name
+    expect(result.slug.replace(/-/g, " ")).toBe("board game");
+  });
 });
