@@ -1,13 +1,14 @@
 import { redirect } from "next/navigation";
-import { env } from "~/env";
 import { SoloSetup } from "./_components/solo-setup";
+
+export const dynamic = "force-dynamic";
 
 export default async function SoloPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  if (!env.OPENROUTER_API_KEY) {
+  if (!process.env.OPENROUTER_API_KEY) {
     redirect("/");
   }
 
