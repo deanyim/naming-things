@@ -31,17 +31,55 @@ export function SoloRun({
 
   const run = runQuery.data;
 
+  const utils = api.useUtils();
+
   const submitAnswer = api.solo.submitAnswer.useMutation({
-    onSuccess: () => {
+    onMutate: async (variables) => {
+      // Cancel outgoing refetches so they don't overwrite our optimistic update
+      await utils.solo.getRun.cancel({ sessionToken, slug });
+
+      const previous = utils.solo.getRun.getData({ sessionToken, slug });
+
+      // Optimistically add the answer
+      if (previous) {
+        utils.solo.getRun.setData({ sessionToken, slug }, {
+          ...previous,
+          answers: [
+            ...previous.answers,
+            {
+              id: -Date.now(), // temporary id
+              runId: previous.id,
+              playerId: previous.playerId,
+              text: variables.text.trim(),
+              normalizedText: variables.text.trim().toLowerCase(),
+              isDuplicate: false,
+              label: null,
+              confidence: null,
+              reason: null,
+              createdAt: new Date(),
+            },
+          ],
+        });
+      }
+
       setInput("");
       setError("");
       inputRef.current?.focus();
-      void runQuery.refetch();
+
+      return { previous };
     },
-    onError: (err) => {
+    onError: (err, _variables, context) => {
+      // Roll back to previous state
+      if (context?.previous) {
+        utils.solo.getRun.setData({ sessionToken, slug }, context.previous);
+      }
       setError(err.message);
       setTimeout(() => setError(""), 2000);
       inputRef.current?.focus();
+    },
+    onSettled: () => {
+      // Sync with server to get real IDs
+      void utils.solo.getRun.invalidate({ sessionToken, slug });
     },
   });
 
