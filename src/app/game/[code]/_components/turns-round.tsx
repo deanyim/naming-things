@@ -5,6 +5,7 @@ import { api } from "~/trpc/react";
 import { useCountdown } from "~/hooks/use-countdown";
 import { AnswerInput } from "./answer-input";
 import { PauseOverlay } from "./pause-overlay";
+import { RoundHeader } from "./round-header";
 import type { GameState } from "./types";
 
 export function TurnsRound({
@@ -25,13 +26,9 @@ export function TurnsRound({
 
   const submitTurnAnswer = api.game.submitTurnAnswer.useMutation({
     onMutate: async (variables) => {
-      // Cancel outgoing refetches so they don't overwrite our optimistic update
       await utils.game.getState.cancel(queryInput);
-
-      // Snapshot current data for rollback
       const previousData = utils.game.getState.getData(queryInput);
 
-      // Optimistically update: append answer to history, clear current turn
       utils.game.getState.setData(queryInput, (old) => {
         if (!old) return old;
         return {
@@ -54,7 +51,6 @@ export function TurnsRound({
         setDuplicateError("already used — you're eliminated!");
       }
 
-      // Merge returned turn state into cache
       utils.game.getState.setData(queryInput, (old) => {
         if (!old) return old;
         return {
@@ -74,11 +70,9 @@ export function TurnsRound({
         };
       });
 
-      // Still invalidate so other data eventually refreshes
       void utils.game.getState.invalidate(queryInput);
     },
     onError: (err, _variables, context) => {
-      // Rollback optimistic update
       if (context?.previousData) {
         utils.game.getState.setData(queryInput, context.previousData);
       }
@@ -88,10 +82,6 @@ export function TurnsRound({
 
   const timeoutTurn = api.game.timeoutTurn.useMutation({
     onSuccess: () => void utils.game.getState.invalidate(),
-  });
-
-  const pauseGame = api.game.pauseGame.useMutation({
-    onSuccess: () => utils.game.getState.invalidate(),
   });
 
   // Timeout enforcement: when deadline passes, any client calls timeoutTurn
@@ -126,34 +116,24 @@ export function TurnsRound({
     });
   };
 
+  // Turns mode uses seconds display and a tighter urgency threshold
+  const displaySeconds =
+    game.isPaused && game.pausedTimeRemainingMs != null
+      ? Math.ceil(game.pausedTimeRemainingMs / 1000)
+      : secondsRemaining;
+
+  const timerDisplay = `${displaySeconds}s`;
+  const isUrgent = secondsRemaining <= 2 && secondsRemaining > 0 && !game.isPaused;
+
   return (
     <main className="flex min-h-screen flex-col items-center bg-white px-4 pt-12">
       <div className="flex w-full max-w-sm flex-col items-center gap-6">
-        <div className="flex w-full items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-900">{game.category}</h2>
-          <div className="flex items-center gap-2">
-            {game.isHost && !game.isPaused && (
-              <button
-                onClick={() => pauseGame.mutate({ sessionToken, gameId: game.id })}
-                disabled={pauseGame.isPending}
-                className="rounded-lg border border-gray-300 px-2 py-1 text-sm text-gray-500 transition hover:bg-gray-100 disabled:opacity-50"
-              >
-                pause
-              </button>
-            )}
-            <span
-              className={`font-mono text-2xl font-bold ${
-                secondsRemaining <= 2 && secondsRemaining > 0 && !game.isPaused
-                  ? "text-red-600"
-                  : "text-gray-900"
-              }`}
-            >
-              {game.isPaused && game.pausedTimeRemainingMs != null
-                ? `${Math.ceil(game.pausedTimeRemainingMs / 1000)}s`
-                : `${secondsRemaining}s`}
-            </span>
-          </div>
-        </div>
+        <RoundHeader
+          game={game}
+          sessionToken={sessionToken}
+          timerDisplay={timerDisplay}
+          isUrgent={isUrgent}
+        />
 
         {/* Player list with alive/eliminated status */}
         <div className="w-full space-y-1">
