@@ -5,101 +5,9 @@ import { api } from "~/trpc/react";
 import { ShareCode } from "./share-code";
 import { PlayerList } from "./player-list";
 import { TeamPlayerList } from "./team-player-list";
+import { ToggleGroup } from "./toggle-group";
+import { TOPIC_SUGGESTIONS } from "./topic-suggestions";
 import type { GameState } from "./types";
-
-const TOPIC_SUGGESTIONS = [
-  "types of cheese",
-  "harry potter characters",
-  "cartoon characters",
-  "pizza toppings",
-  "dog breeds",
-  "board games",
-  "periodic table elements",
-  "famous landmarks",
-  "ice cream flavors",
-  "marvel characters",
-  "breakfast foods",
-  "musical instruments",
-  "snack foods",
-  "vegetables",
-  "olympic sports",
-  "nfl teams",
-  "animated movies",
-  "birds",
-  "cocktails",
-  "u.s. presidents",
-  "candy bars",
-  "world capitals",
-  "tv shows",
-  "card games",
-  "desserts",
-  "mythical creatures",
-  "pasta shapes",
-  "nba teams",
-  "body parts",
-  "types of fish",
-  "greek gods",
-  "disney movies",
-  "fast food chains",
-  "currencies",
-  "yoga poses",
-  "video game characters",
-  "taylor swift songs",
-  "countries in africa",
-  "sandwich types",
-  "corporate logos",
-  "shakespeare plays",
-  "national parks",
-  "children's books",
-  "pokémon",
-  "fairy tale characters",
-  "star wars characters",
-  "rock bands",
-  "fruits",
-  "horror movies",
-  "game of thrones characters",
-  "animals at a zoo",
-  "comedians",
-  "simpsons characters",
-  "toys",
-  "christmas songs",
-  "action movies",
-  "rom-coms",
-  "countries in asia",
-  "premier league clubs",
-  "car brands",
-  "herbs and spices",
-  "rappers",
-  "dances",
-  "rides at a theme park",
-  "apps",
-  "countries in europe",
-  "baby names",
-  "world flags",
-  "u.s. states",
-  "countries of the world",
-  "90s tv shows",
-  "languages",
-  "mlb teams",
-  "insects",
-  "flowers",
-  "musicals",
-  "cereals",
-  "reptiles",
-  "the office characters",
-  "farm animals",
-  "oscar best picture winners",
-  "ocean creatures",
-  "cat breeds",
-  "super smash bros. characters",
-  "nhl teams",
-  "kitchen utensils",
-  "dinosaurs",
-  "comedies",
-  "superheroes",
-  "candy",
-  "video games",
-];
 
 function formatTimer(seconds: number): string {
   if (seconds >= 60 && seconds % 60 === 0) {
@@ -130,7 +38,6 @@ export function Lobby({
   const [turnTimerValue, setTurnTimerValue] = useState(game.turnTimerSeconds);
   const [error, setError] = useState("");
 
-  // Keep local category in sync with server state (for non-host players)
   useEffect(() => {
     if (!game.isHost && game.category !== null) {
       setCategory(game.category);
@@ -147,17 +54,14 @@ export function Lobby({
     onMutate: async (variables) => {
       await utils.game.getState.cancel(queryInput);
       const previousData = utils.game.getState.getData(queryInput);
-      utils.game.getState.setData(queryInput, (old) => {
-        if (!old) return old;
-        return { ...old, mode: variables.mode };
-      });
+      utils.game.getState.setData(queryInput, (old) =>
+        old ? { ...old, mode: variables.mode } : old,
+      );
       return { previousData };
     },
     onSuccess: () => utils.game.getState.invalidate(queryInput),
-    onError: (err, _variables, context) => {
-      if (context?.previousData) {
-        utils.game.getState.setData(queryInput, context.previousData);
-      }
+    onError: (err, _v, ctx) => {
+      if (ctx?.previousData) utils.game.getState.setData(queryInput, ctx.previousData);
       setError(err.message);
     },
   });
@@ -166,17 +70,14 @@ export function Lobby({
     onMutate: async (variables) => {
       await utils.game.getState.cancel(queryInput);
       const previousData = utils.game.getState.getData(queryInput);
-      utils.game.getState.setData(queryInput, (old) => {
-        if (!old) return old;
-        return { ...old, category: variables.category };
-      });
+      utils.game.getState.setData(queryInput, (old) =>
+        old ? { ...old, category: variables.category } : old,
+      );
       return { previousData };
     },
     onSuccess: () => utils.game.getState.invalidate(queryInput),
-    onError: (err, _variables, context) => {
-      if (context?.previousData) {
-        utils.game.getState.setData(queryInput, context.previousData);
-      }
+    onError: (err, _v, ctx) => {
+      if (ctx?.previousData) utils.game.getState.setData(queryInput, ctx.previousData);
       setError(err.message);
     },
   });
@@ -185,17 +86,14 @@ export function Lobby({
     onMutate: async (variables) => {
       await utils.game.getState.cancel(queryInput);
       const previousData = utils.game.getState.getData(queryInput);
-      utils.game.getState.setData(queryInput, (old) => {
-        if (!old) return old;
-        return { ...old, timerSeconds: variables.timerSeconds };
-      });
+      utils.game.getState.setData(queryInput, (old) =>
+        old ? { ...old, timerSeconds: variables.timerSeconds } : old,
+      );
       return { previousData };
     },
     onSuccess: () => utils.game.getState.invalidate(queryInput),
-    onError: (err, _variables, context) => {
-      if (context?.previousData) {
-        utils.game.getState.setData(queryInput, context.previousData);
-      }
+    onError: (err, _v, ctx) => {
+      if (ctx?.previousData) utils.game.getState.setData(queryInput, ctx.previousData);
       setError(err.message);
     },
   });
@@ -204,59 +102,46 @@ export function Lobby({
     onMutate: async (variables) => {
       await utils.game.getState.cancel(queryInput);
       const previousData = utils.game.getState.getData(queryInput);
-      utils.game.getState.setData(queryInput, (old) => {
-        if (!old) return old;
-        return { ...old, turnTimerSeconds: variables.turnTimerSeconds };
-      });
+      utils.game.getState.setData(queryInput, (old) =>
+        old ? { ...old, turnTimerSeconds: variables.turnTimerSeconds } : old,
+      );
       return { previousData };
     },
     onSuccess: () => utils.game.getState.invalidate(queryInput),
-    onError: (err, _variables, context) => {
-      if (context?.previousData) {
-        utils.game.getState.setData(queryInput, context.previousData);
-      }
+    onError: (err, _v, ctx) => {
+      if (ctx?.previousData) utils.game.getState.setData(queryInput, ctx.previousData);
       setError(err.message);
     },
   });
 
-  const setAutoClassificationMutation =
-    api.game.setAutoClassificationEnabled.useMutation({
-      onMutate: async (variables) => {
-        await utils.game.getState.cancel(queryInput);
-        const previousData = utils.game.getState.getData(queryInput);
-        utils.game.getState.setData(queryInput, (old) => {
-          if (!old) return old;
-          return {
-            ...old,
-            autoClassificationEnabled: variables.enabled,
-          };
-        });
-        return { previousData };
-      },
-      onSuccess: () => utils.game.getState.invalidate(queryInput),
-      onError: (err, _variables, context) => {
-        if (context?.previousData) {
-          utils.game.getState.setData(queryInput, context.previousData);
-        }
-        setError(err.message);
-      },
-    });
+  const setAutoClassificationMutation = api.game.setAutoClassificationEnabled.useMutation({
+    onMutate: async (variables) => {
+      await utils.game.getState.cancel(queryInput);
+      const previousData = utils.game.getState.getData(queryInput);
+      utils.game.getState.setData(queryInput, (old) =>
+        old ? { ...old, autoClassificationEnabled: variables.enabled } : old,
+      );
+      return { previousData };
+    },
+    onSuccess: () => utils.game.getState.invalidate(queryInput),
+    onError: (err, _v, ctx) => {
+      if (ctx?.previousData) utils.game.getState.setData(queryInput, ctx.previousData);
+      setError(err.message);
+    },
+  });
 
   const setTeamModeMutation = api.game.setTeamMode.useMutation({
     onMutate: async (variables) => {
       await utils.game.getState.cancel(queryInput);
       const previousData = utils.game.getState.getData(queryInput);
-      utils.game.getState.setData(queryInput, (old) => {
-        if (!old) return old;
-        return { ...old, isTeamMode: variables.isTeamMode };
-      });
+      utils.game.getState.setData(queryInput, (old) =>
+        old ? { ...old, isTeamMode: variables.isTeamMode } : old,
+      );
       return { previousData };
     },
     onSuccess: () => utils.game.getState.invalidate(queryInput),
-    onError: (err, _variables, context) => {
-      if (context?.previousData) {
-        utils.game.getState.setData(queryInput, context.previousData);
-      }
+    onError: (err, _v, ctx) => {
+      if (ctx?.previousData) utils.game.getState.setData(queryInput, ctx.previousData);
       setError(err.message);
     },
   });
@@ -265,17 +150,14 @@ export function Lobby({
     onMutate: async (variables) => {
       await utils.game.getState.cancel(queryInput);
       const previousData = utils.game.getState.getData(queryInput);
-      utils.game.getState.setData(queryInput, (old) => {
-        if (!old) return old;
-        return { ...old, numTeams: variables.numTeams };
-      });
+      utils.game.getState.setData(queryInput, (old) =>
+        old ? { ...old, numTeams: variables.numTeams } : old,
+      );
       return { previousData };
     },
     onSuccess: () => utils.game.getState.invalidate(queryInput),
-    onError: (err, _variables, context) => {
-      if (context?.previousData) {
-        utils.game.getState.setData(queryInput, context.previousData);
-      }
+    onError: (err, _v, ctx) => {
+      if (ctx?.previousData) utils.game.getState.setData(queryInput, ctx.previousData);
       setError(err.message);
     },
   });
@@ -290,45 +172,6 @@ export function Lobby({
     onError: (err) => setError(err.message),
   });
 
-  const saveCategory = () => {
-    const trimmed = category.trim();
-    if (trimmed && trimmed !== game.category) {
-      setCategoryMutation.mutate({
-        sessionToken,
-        gameId: game.id,
-        category: trimmed,
-      });
-    }
-  };
-
-  const saveTimer = () => {
-    if (timerSeconds < 10 || timerSeconds > 7200) {
-      setError("Timer must be between 10 seconds and 120 minutes");
-      return;
-    }
-    if (timerSeconds !== game.timerSeconds) {
-      setTimerMutation.mutate({
-        sessionToken,
-        gameId: game.id,
-        timerSeconds,
-      });
-    }
-  };
-
-  const saveTurnTimer = () => {
-    if (turnTimerValue < 3 || turnTimerValue > 30) {
-      setError("Turn timer must be between 3 and 30 seconds");
-      return;
-    }
-    if (turnTimerValue !== game.turnTimerSeconds) {
-      setTurnTimerMutation.mutate({
-        sessionToken,
-        gameId: game.id,
-        turnTimerSeconds: turnTimerValue,
-      });
-    }
-  };
-
   const joinAsPlayer = api.game.joinAsPlayer.useMutation({
     onSuccess: () => utils.game.getState.invalidate(),
   });
@@ -338,16 +181,43 @@ export function Lobby({
     onError: (err) => setError(err.message),
   });
 
+  const mutInput = { sessionToken, gameId: game.id };
+
+  const saveCategory = () => {
+    const trimmed = category.trim();
+    if (trimmed && trimmed !== game.category) {
+      setCategoryMutation.mutate({ ...mutInput, category: trimmed });
+    }
+  };
+
+  const saveTimer = () => {
+    if (timerSeconds < 10 || timerSeconds > 7200) {
+      setError("Timer must be between 10 seconds and 120 minutes");
+      return;
+    }
+    if (timerSeconds !== game.timerSeconds) {
+      setTimerMutation.mutate({ ...mutInput, timerSeconds });
+    }
+  };
+
+  const saveTurnTimer = () => {
+    if (turnTimerValue < 3 || turnTimerValue > 30) {
+      setError("Turn timer must be between 3 and 30 seconds");
+      return;
+    }
+    if (turnTimerValue !== game.turnTimerSeconds) {
+      setTurnTimerMutation.mutate({ ...mutInput, turnTimerSeconds: turnTimerValue });
+    }
+  };
+
   const handleStart = () => {
     if (!game.category && !category.trim()) {
       setError("Set a topic first");
       return;
     }
-    // Save category if it hasn't been saved yet
     if (category.trim() && category.trim() !== game.category) {
       saveCategory();
     }
-    // Save timer if it hasn't been saved yet
     if (game.mode === "classic" && timerSeconds !== game.timerSeconds) {
       saveTimer();
     }
@@ -355,25 +225,13 @@ export function Lobby({
       saveTurnTimer();
     }
     setError("");
-    startGame.mutate({
-      sessionToken,
-      gameId: game.id,
-    });
+    startGame.mutate(mutInput);
   };
 
   const suggestTopic = () => {
     const options = TOPIC_SUGGESTIONS.filter((t) => t !== category);
     const pick = options[Math.floor(Math.random() * options.length)]!;
     setCategory(pick);
-  };
-
-  const handleSetPlayerTeam = (playerId: number, teamId: number) => {
-    setPlayerTeamMutation.mutate({
-      sessionToken,
-      gameId: game.id,
-      playerId,
-      teamId,
-    });
   };
 
   const topicSet = !!game.category;
@@ -389,13 +247,11 @@ export function Lobby({
       isHost={game.isHost}
       myPlayerId={game.myPlayerId}
       isSpectator={game.isSpectator}
-      onSetTeam={handleSetPlayerTeam}
+      onSetTeam={(playerId, teamId) =>
+        setPlayerTeamMutation.mutate({ ...mutInput, playerId, teamId })
+      }
       onKick={(playerId) =>
-        kickPlayerMutation.mutate({
-          sessionToken,
-          gameId: game.id,
-          playerId,
-        })
+        kickPlayerMutation.mutate({ ...mutInput, playerId })
       }
     />
   ) : (
@@ -404,11 +260,7 @@ export function Lobby({
       spectators={game.spectators}
       isHost={game.isHost}
       onKick={(playerId) =>
-        kickPlayerMutation.mutate({
-          sessionToken,
-          gameId: game.id,
-          playerId,
-        })
+        kickPlayerMutation.mutate({ ...mutInput, playerId })
       }
     />
   );
@@ -422,94 +274,34 @@ export function Lobby({
 
         {playerListSection}
 
-        {/* Topic & timer — visible to all, editable by host */}
         {game.isHost ? (
           <div className="flex w-full flex-col gap-4">
-            {/* Mode selector */}
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-500">mode</label>
-              <div className="flex flex-1 gap-2">
-                <button
-                  onClick={() =>
-                    game.mode !== "classic" &&
-                    setModeMutation.mutate({
-                      sessionToken,
-                      gameId: game.id,
-                      mode: "classic",
-                    })
-                  }
-                  className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${
-                    game.mode === "classic"
-                      ? "border-gray-900 bg-gray-900 text-white"
-                      : "border-gray-300 text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  classic
-                </button>
-                <button
-                  onClick={() =>
-                    game.mode !== "turns" &&
-                    setModeMutation.mutate({
-                      sessionToken,
-                      gameId: game.id,
-                      mode: "turns",
-                    })
-                  }
-                  className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${
-                    game.mode === "turns"
-                      ? "border-gray-900 bg-gray-900 text-white"
-                      : "border-gray-300 text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  last one standing
-                </button>
-              </div>
-            </div>
+            <ToggleGroup
+              label="mode"
+              value={game.mode}
+              onChange={(mode) =>
+                setModeMutation.mutate({ ...mutInput, mode: mode as "classic" | "turns" })
+              }
+              options={[
+                { value: "classic", label: "classic" },
+                { value: "turns", label: "last one standing" },
+              ]}
+            />
 
-            {/* Team mode toggle — only for classic mode */}
             {game.mode === "classic" && (
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-500">teams</label>
-                <div className="flex flex-1 gap-2">
-                  <button
-                    onClick={() =>
-                      game.isTeamMode &&
-                      setTeamModeMutation.mutate({
-                        sessionToken,
-                        gameId: game.id,
-                        isTeamMode: false,
-                      })
-                    }
-                    className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${
-                      !game.isTeamMode
-                        ? "border-gray-900 bg-gray-900 text-white"
-                        : "border-gray-300 text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    off
-                  </button>
-                  <button
-                    onClick={() =>
-                      !game.isTeamMode &&
-                      setTeamModeMutation.mutate({
-                        sessionToken,
-                        gameId: game.id,
-                        isTeamMode: true,
-                      })
-                    }
-                    className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${
-                      game.isTeamMode
-                        ? "border-gray-900 bg-gray-900 text-white"
-                        : "border-gray-300 text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    on
-                  </button>
-                </div>
-              </div>
+              <ToggleGroup
+                label="teams"
+                value={game.isTeamMode ? "on" : "off"}
+                onChange={(v) =>
+                  setTeamModeMutation.mutate({ ...mutInput, isTeamMode: v === "on" })
+                }
+                options={[
+                  { value: "off", label: "off" },
+                  { value: "on", label: "on" },
+                ]}
+              />
             )}
 
-            {/* Number of teams — only when team mode is on */}
             {game.mode === "classic" && game.isTeamMode && (
               <div className="flex items-center gap-2">
                 <label className="text-sm text-gray-500"># teams</label>
@@ -519,56 +311,24 @@ export function Lobby({
                   value={game.numTeams}
                   onChange={(e) => {
                     const val = Math.max(1, Number(e.target.value));
-                    setNumTeamsMutation.mutate({
-                      sessionToken,
-                      gameId: game.id,
-                      numTeams: val,
-                    });
+                    setNumTeamsMutation.mutate({ ...mutInput, numTeams: val });
                   }}
                   className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-gray-900 outline-none focus:border-gray-900"
                 />
               </div>
             )}
 
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-500">auto review</label>
-              <div className="flex flex-1 gap-2">
-                <button
-                  onClick={() =>
-                    game.autoClassificationEnabled &&
-                    setAutoClassificationMutation.mutate({
-                      sessionToken,
-                      gameId: game.id,
-                      enabled: false,
-                    })
-                  }
-                  className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${
-                    !game.autoClassificationEnabled
-                      ? "border-gray-900 bg-gray-900 text-white"
-                      : "border-gray-300 text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  off
-                </button>
-                <button
-                  onClick={() =>
-                    !game.autoClassificationEnabled &&
-                    setAutoClassificationMutation.mutate({
-                      sessionToken,
-                      gameId: game.id,
-                      enabled: true,
-                    })
-                  }
-                  className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${
-                    game.autoClassificationEnabled
-                      ? "border-gray-900 bg-gray-900 text-white"
-                      : "border-gray-300 text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  on
-                </button>
-              </div>
-            </div>
+            <ToggleGroup
+              label="auto review"
+              value={game.autoClassificationEnabled ? "on" : "off"}
+              onChange={(v) =>
+                setAutoClassificationMutation.mutate({ ...mutInput, enabled: v === "on" })
+              }
+              options={[
+                { value: "off", label: "off" },
+                { value: "on", label: "on" },
+              ]}
+            />
 
             <div className="flex w-full items-center gap-2">
               <label className="text-sm text-gray-500">topic</label>
@@ -631,9 +391,7 @@ export function Lobby({
                   </select>
                   <button
                     onClick={saveTimer}
-                    disabled={
-                      setTimerMutation.isPending || !timerChanged
-                    }
+                    disabled={setTimerMutation.isPending || !timerChanged}
                     className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-50"
                   >
                     {setTimerMutation.isPending ? "..." : "set"}
@@ -659,9 +417,7 @@ export function Lobby({
                   <span className="text-sm text-gray-500">seconds</span>
                   <button
                     onClick={saveTurnTimer}
-                    disabled={
-                      setTurnTimerMutation.isPending || !turnTimerChanged
-                    }
+                    disabled={setTurnTimerMutation.isPending || !turnTimerChanged}
                     className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-50"
                   >
                     {setTurnTimerMutation.isPending ? "..." : "set"}
