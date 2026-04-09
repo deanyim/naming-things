@@ -6,9 +6,11 @@ import { api } from "~/trpc/react";
 export function CategorySearch({
   value,
   onChange,
+  onSlugChange,
 }: {
   value: string;
   onChange: (value: string) => void;
+  onSlugChange?: (slug: string) => void;
 }) {
   const [isFocused, setIsFocused] = useState(false);
 
@@ -38,6 +40,7 @@ export function CategorySearch({
                 onMouseDown={(e) => {
                   e.preventDefault();
                   onChange(item.categoryDisplayName);
+                  onSlugChange?.(item.categorySlug);
                   setIsFocused(false);
                 }}
                 className="w-full px-4 py-2 text-left text-sm text-gray-700 transition first:rounded-t-lg last:rounded-b-lg hover:bg-gray-100"

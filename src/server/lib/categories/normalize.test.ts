@@ -109,4 +109,18 @@ describe("normalizeCategory", () => {
     expect(result.displayName).toBe("");
     expect(result.slug).toBe("");
   });
+
+  it("displayName may differ from slug due to singular normalization", () => {
+    const result = normalizeCategory("fruits");
+    expect(result.displayName).toBe("fruits");
+    expect(result.slug).toBe("fruit");
+    // Leaderboard lookups must use the slug, not the displayName
+    expect(result.displayName).not.toBe(result.slug);
+  });
+
+  it("displayName equals slug when no singular normalization needed", () => {
+    const result = normalizeCategory("fruit");
+    expect(result.displayName).toBe("fruit");
+    expect(result.slug).toBe("fruit");
+  });
 });

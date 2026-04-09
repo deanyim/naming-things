@@ -17,15 +17,19 @@ export function LeaderboardsContent() {
   const timerParam = Number(searchParams.get("timer")) || 60;
 
   const [category, setCategory] = useState(categoryParam);
+  const [categorySlug, setCategorySlug] = useState(categoryParam);
   const [timerSeconds, setTimerSeconds] = useState(timerParam);
 
   // Sync state when URL search params change (e.g. clicking a leaderboard bucket)
   useEffect(() => {
-    if (categoryParam) setCategory(categoryParam);
+    if (categoryParam) {
+      setCategory(categoryParam);
+      setCategorySlug(categoryParam);
+    }
     if (searchParams.get("timer")) setTimerSeconds(timerParam);
   }, [categoryParam, timerParam, searchParams]);
 
-  const hasSelection = category.trim().length > 0;
+  const hasSelection = categorySlug.trim().length > 0;
 
   return (
     <main className="flex min-h-screen flex-col items-center bg-white px-4 pt-12">
@@ -38,7 +42,15 @@ export function LeaderboardsContent() {
         </div>
 
         <div className="flex w-full flex-col gap-4">
-          <CategorySearch value={category} onChange={setCategory} />
+          <CategorySearch
+            value={category}
+            onChange={(v) => {
+              setCategory(v);
+              // Clear slug when user types freely — only set it from dropdown selection
+              setCategorySlug("");
+            }}
+            onSlugChange={setCategorySlug}
+          />
 
           <div className="flex flex-col gap-1">
             <span className="text-sm text-gray-500">time limit</span>
@@ -62,7 +74,7 @@ export function LeaderboardsContent() {
 
         {hasSelection ? (
           <SoloLeaderboard
-            categorySlug={category.trim().toLowerCase()}
+            categorySlug={categorySlug.trim().toLowerCase()}
             timerSeconds={timerSeconds}
             limit={20}
           />
