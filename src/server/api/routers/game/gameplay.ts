@@ -12,6 +12,7 @@ import {
   advanceTurn,
   classifyAnswers,
   classifyUnverifiedAnswers,
+  markClassificationAttempt,
 } from "./helpers";
 
 export const gameplayRouter = createTRPCRouter({
@@ -244,6 +245,8 @@ export const gameplayRouter = createTRPCRouter({
       }
 
       if (toInsert.length > 0 && game.autoClassificationEnabled && game.category && env.OPENROUTER_API_KEY) {
+        await markClassificationAttempt(ctx.db, input.gameId);
+
         const myAnswers = await ctx.db.query.answers.findMany({
           where: and(
             eq(answers.gameId, input.gameId),
@@ -467,7 +470,13 @@ export const gameplayRouter = createTRPCRouter({
 
       await ctx.db
         .update(games)
-        .set({ status: "reviewing" })
+        .set({
+          status: "reviewing",
+          classifiedAt:
+            game.isTeamMode && game.autoClassificationEnabled && game.category && env.OPENROUTER_API_KEY
+              ? new Date()
+              : game.classifiedAt,
+        })
         .where(eq(games.id, input.gameId));
 
       if (game.isTeamMode && game.autoClassificationEnabled && game.category && env.OPENROUTER_API_KEY) {

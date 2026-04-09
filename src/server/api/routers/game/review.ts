@@ -12,8 +12,11 @@ import {
 } from "~/server/db/schema";
 import { getPlayerBySession, requireHost, requirePlayer } from "~/server/api/lib/session";
 import { notify } from "~/server/ws/notify";
-import { judgeCategoryFit } from "~/server/lib/verification/category-fit";
-import { classifyAnswers } from "./helpers";
+import {
+  canRetryClassification,
+  classifyUnverifiedAnswers,
+  markClassificationAttempt,
+} from "./helpers";
 
 export const reviewRouter = createTRPCRouter({
   getAllAnswers: publicProcedure
@@ -30,26 +33,6 @@ export const reviewRouter = createTRPCRouter({
         where: eq(games.id, input.gameId),
       });
 
-      let classifying = false;
-      if (
-        game?.status === "reviewing" &&
-        game.autoClassificationEnabled &&
-        game.category &&
-        env.OPENROUTER_API_KEY
-      ) {
-        const answerCount = await ctx.db.query.answers.findMany({
-          where: eq(answers.gameId, input.gameId),
-          columns: { id: true },
-        });
-        const verifiedCount = await ctx.db.query.answerVerifications.findMany({
-          where: eq(answerVerifications.gameId, input.gameId),
-          columns: { id: true },
-        });
-        if (answerCount.length > 0 && verifiedCount.length < answerCount.length) {
-          classifying = true;
-        }
-      }
-
       const allAnswers = await ctx.db.query.answers.findMany({
         where: eq(answers.gameId, input.gameId),
         with: {
@@ -58,6 +41,26 @@ export const reviewRouter = createTRPCRouter({
           verification: true,
         },
       });
+
+      const canAutoClassify =
+        !!game &&
+        game.status === "reviewing" &&
+        game.autoClassificationEnabled &&
+        !!game.category &&
+        !!env.OPENROUTER_API_KEY;
+
+      const hasUnverifiedAcceptedAnswers = allAnswers.some(
+        (answer) => answer.status === "accepted" && !answer.verification,
+      );
+      const canManuallyClassify =
+        canAutoClassify &&
+        hasUnverifiedAcceptedAnswers &&
+        canRetryClassification(game?.classifiedAt);
+
+      const classifying =
+        canAutoClassify &&
+        hasUnverifiedAcceptedAnswers &&
+        !canManuallyClassify;
 
       const playerTeamMap = new Map<number, number | null>();
       if (game?.isTeamMode) {
@@ -109,7 +112,45 @@ export const reviewRouter = createTRPCRouter({
           a.normalizedText.localeCompare(b.normalizedText),
         ),
         classifying,
+        canManuallyClassify,
       };
+    }),
+
+  retryAutoClassification: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        gameId: z.number(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+      const game = await requireHost(ctx.db, input.gameId, player.id);
+
+      if (
+        game.status !== "reviewing" ||
+        !game.autoClassificationEnabled ||
+        !game.category ||
+        !env.OPENROUTER_API_KEY
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Auto-classification is not available for this game",
+        });
+      }
+
+      if (!canRetryClassification(game.classifiedAt)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Auto-classification was attempted recently. Please wait and try again.",
+        });
+      }
+
+      await markClassificationAttempt(ctx.db, input.gameId);
+      await classifyUnverifiedAnswers(ctx.db, input.gameId, game.category);
+
+      notify(game.code);
+      return { success: true };
     }),
 
   disputeAnswer: publicProcedure
@@ -216,15 +257,15 @@ export const reviewRouter = createTRPCRouter({
         const toClassify = unclassified.filter((a) => !verifiedIds.has(a.id));
 
         if (toClassify.length > 0) {
-          const results = await judgeCategoryFit(
-            game.category,
-            toClassify.map((a) => ({ answerId: a.id, text: a.text })),
-            { model: env.OPENROUTER_MODEL },
-          );
+          if (!canRetryClassification(game.classifiedAt)) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "Auto-classification was attempted recently. Please wait and try again.",
+            });
+          }
 
-          await ctx.db.transaction(async (tx) => {
-            await classifyAnswers(tx, input.gameId, game.category!, results);
-          });
+          await markClassificationAttempt(ctx.db, input.gameId);
+          await classifyUnverifiedAnswers(ctx.db, input.gameId, game.category);
         }
       }
 

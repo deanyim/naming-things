@@ -288,6 +288,10 @@ export const managementRouter = createTRPCRouter({
         .update(games)
         .set({
           status: newStatus,
+          classifiedAt:
+            newStatus === "reviewing" && game.isTeamMode && game.autoClassificationEnabled && game.category && env.OPENROUTER_API_KEY
+              ? new Date()
+              : game.classifiedAt,
           isPaused: false,
           pausedAt: null,
           pausedTimeRemainingMs: null,

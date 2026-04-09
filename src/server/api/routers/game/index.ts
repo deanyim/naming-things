@@ -32,6 +32,7 @@ export const gameRouter = createTRPCRouter({
 
   // Review & scoring
   getAllAnswers: reviewRouter.getAllAnswers,
+  retryAutoClassification: reviewRouter.retryAutoClassification,
   disputeAnswer: reviewRouter.disputeAnswer,
   castVote: reviewRouter.castVote,
   finishGame: reviewRouter.finishGame,

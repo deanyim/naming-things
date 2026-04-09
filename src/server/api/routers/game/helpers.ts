@@ -12,6 +12,7 @@ import type { CategoryFitResult } from "~/server/lib/verification/category-fit";
 import { type db as dbType } from "~/server/db";
 
 export type DB = typeof dbType;
+export const CLASSIFICATION_RETRY_AFTER_MS = 15_000;
 
 export { normalizeAnswer };
 
@@ -164,4 +165,19 @@ export async function classifyUnverifiedAnswers(
   await db.transaction(async (tx) => {
     await classifyAnswers(tx, gameId, category, results);
   });
+}
+
+export function canRetryClassification(classifiedAt: Date | null | undefined) {
+  if (!classifiedAt) return true;
+  return classifiedAt.getTime() <= Date.now() - CLASSIFICATION_RETRY_AFTER_MS;
+}
+
+export async function markClassificationAttempt(
+  dbOrTx: DB | Parameters<Parameters<DB["transaction"]>[0]>[0],
+  gameId: number,
+) {
+  await dbOrTx
+    .update(games)
+    .set({ classifiedAt: new Date() })
+    .where(eq(games.id, gameId));
 }

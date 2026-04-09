@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { api } from "~/trpc/react";
 import { DisputeAnswerCard } from "./dispute-answer-card";
 import type { GameState } from "./types";
@@ -12,6 +13,7 @@ export function ReviewPhase({
   sessionToken: string;
 }) {
   const utils = api.useUtils();
+  const [error, setError] = useState<string | null>(null);
 
   const allAnswers = api.game.getAllAnswers.useQuery(
     { sessionToken, gameId: game.id },
@@ -24,11 +26,21 @@ export function ReviewPhase({
 
   const finishGame = api.game.finishGame.useMutation({
     onSuccess: () => utils.game.getState.invalidate(),
+    onError: (err) => setError(err.message),
+  });
+
+  const retryAutoClassification = api.game.retryAutoClassification.useMutation({
+    onSuccess: () => {
+      setError(null);
+      void utils.game.getAllAnswers.invalidate();
+    },
+    onError: (err) => setError(err.message),
   });
 
   const isLoading = allAnswers.isLoading;
   const groups = allAnswers.data?.groups ?? [];
   const classifying = allAnswers.data?.classifying ?? false;
+  const canManuallyClassify = allAnswers.data?.canManuallyClassify ?? false;
   const commonGroups = groups.filter((g) => g.isCommon);
   const nonCommon = groups.filter((g) => !g.isCommon);
 
@@ -68,6 +80,12 @@ export function ReviewPhase({
         {classifying && !isLoading && (
           <div className="w-full rounded-lg border border-blue-200 bg-blue-50 p-3 text-center">
             <p className="text-sm text-blue-700">classifying answers...</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="w-full rounded-lg border border-red-200 bg-red-50 p-3 text-center">
+            <p className="text-sm text-red-700">{error}</p>
           </div>
         )}
 
@@ -264,15 +282,31 @@ export function ReviewPhase({
         )}
 
         {game.isHost && (
-          <button
-            onClick={() =>
-              finishGame.mutate({ sessionToken, gameId: game.id })
-            }
-            disabled={finishGame.isPending}
-            className="w-full rounded-lg bg-gray-900 px-4 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
-          >
-            {finishGame.isPending ? "tallying scores..." : "finish & score"}
-          </button>
+          <div className="flex w-full flex-col gap-3">
+            {canManuallyClassify && (
+              <button
+                onClick={() =>
+                  retryAutoClassification.mutate({ sessionToken, gameId: game.id })
+                }
+                disabled={retryAutoClassification.isPending || finishGame.isPending}
+                className="w-full rounded-lg border border-blue-300 bg-blue-50 px-4 py-3 font-medium text-blue-700 transition hover:bg-blue-100 disabled:opacity-50"
+              >
+                {retryAutoClassification.isPending
+                  ? "retrying auto-classification..."
+                  : "retry auto-classification"}
+              </button>
+            )}
+
+            <button
+              onClick={() =>
+                finishGame.mutate({ sessionToken, gameId: game.id })
+              }
+              disabled={finishGame.isPending || retryAutoClassification.isPending}
+              className="w-full rounded-lg bg-gray-900 px-4 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
+            >
+              {finishGame.isPending ? "tallying scores..." : "finish & score"}
+            </button>
+          </div>
         )}
 
         {!game.isHost && !game.isSpectator && (
