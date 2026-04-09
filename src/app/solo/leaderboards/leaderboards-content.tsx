@@ -13,21 +13,22 @@ export function LeaderboardsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const categoryParam = searchParams.get("category") ?? "";
+  const rawCategoryParam = searchParams.get("category") ?? "";
+  const slugParam = searchParams.get("slug") ?? rawCategoryParam;
+  // If only a slug was provided (no separate category param), convert hyphens to spaces for display
+  const categoryParam = searchParams.get("slug") ? rawCategoryParam : rawCategoryParam.replace(/-/g, " ");
   const timerParam = Number(searchParams.get("timer")) || 60;
 
   const [category, setCategory] = useState(categoryParam);
-  const [categorySlug, setCategorySlug] = useState(categoryParam);
+  const [categorySlug, setCategorySlug] = useState(slugParam);
   const [timerSeconds, setTimerSeconds] = useState(timerParam);
 
   // Sync state when URL search params change (e.g. clicking a leaderboard bucket)
   useEffect(() => {
-    if (categoryParam) {
-      setCategory(categoryParam);
-      setCategorySlug(categoryParam);
-    }
+    if (categoryParam) setCategory(categoryParam);
+    if (slugParam) setCategorySlug(slugParam);
     if (searchParams.get("timer")) setTimerSeconds(timerParam);
-  }, [categoryParam, timerParam, searchParams]);
+  }, [categoryParam, slugParam, timerParam, searchParams]);
 
   const hasSelection = categorySlug.trim().length > 0;
 

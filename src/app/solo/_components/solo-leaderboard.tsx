@@ -117,7 +117,7 @@ export function LeaderboardOverview({
             key={`${bucket.categorySlug}-${bucket.timerSeconds}`}
             onClick={() =>
               router.push(
-                `/solo/leaderboards?category=${bucket.categorySlug}&timer=${bucket.timerSeconds}`,
+                `/solo/leaderboards?category=${encodeURIComponent(bucket.categoryDisplayName)}&slug=${bucket.categorySlug}&timer=${bucket.timerSeconds}`,
               )
             }
             className="flex w-full items-center justify-between rounded-lg bg-gray-50 px-3 py-2 transition hover:bg-gray-100"
