@@ -5,6 +5,7 @@ import {
   integer,
   pgEnum,
   pgTableCreator,
+  real,
   timestamp,
   uniqueIndex,
   varchar,
@@ -246,3 +247,114 @@ export const disputeVotesRelations = relations(disputeVotes, ({ one }) => ({
     references: [players.id],
   }),
 }));
+
+// Solo Mode
+
+export const soloRunStatusEnum = pgEnum("solo_run_status", [
+  "playing",
+  "finished",
+  "abandoned",
+]);
+
+export const soloRuns = createTable(
+  "solo_run",
+  (d) => ({
+    id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
+    slug: d.varchar({ length: 64 }).notNull().unique(),
+    playerId: d.integer().notNull(),
+    inputCategory: d.varchar({ length: 256 }).notNull(),
+    categoryDisplayName: d.varchar({ length: 256 }).notNull(),
+    categorySlug: d.varchar({ length: 256 }).notNull(),
+    timerSeconds: d.integer().notNull(),
+    attempt: d.integer().default(1).notNull(),
+    status: soloRunStatusEnum().default("playing").notNull(),
+    startedAt: d
+      .timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    endedAt: d.timestamp({ withTimezone: true }),
+    durationMs: d.integer(),
+    score: d.integer().default(0).notNull(),
+    validCount: d.integer().default(0).notNull(),
+    invalidCount: d.integer().default(0).notNull(),
+    ambiguousCount: d.integer().default(0).notNull(),
+    judgeModel: d.varchar({ length: 256 }),
+    judgeVersion: d.varchar({ length: 256 }),
+    createdAt: d
+      .timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
+  }),
+  (t) => [
+    index("solo_run_leaderboard_idx").on(
+      t.categorySlug,
+      t.timerSeconds,
+    ),
+    index("solo_run_player_bucket_idx").on(
+      t.playerId,
+      t.categorySlug,
+      t.timerSeconds,
+    ),
+  ],
+);
+
+export const soloRunsRelations = relations(soloRuns, ({ one, many }) => ({
+  player: one(players, {
+    fields: [soloRuns.playerId],
+    references: [players.id],
+  }),
+  answers: many(soloRunAnswers),
+}));
+
+export const soloRunAnswers = createTable(
+  "solo_run_answer",
+  (d) => ({
+    id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
+    runId: d.integer().notNull(),
+    playerId: d.integer().notNull(),
+    text: d.varchar({ length: 256 }).notNull(),
+    normalizedText: d.varchar({ length: 256 }).notNull(),
+    label: categoryFitLabelEnum(),
+    confidence: real(),
+    reason: d.varchar({ length: 512 }),
+    isDuplicate: d.boolean().default(false).notNull(),
+    createdAt: d
+      .timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  }),
+  (t) => [
+    index("solo_answer_run_normalized_idx").on(t.runId, t.normalizedText),
+  ],
+);
+
+export const soloRunAnswersRelations = relations(
+  soloRunAnswers,
+  ({ one }) => ({
+    run: one(soloRuns, {
+      fields: [soloRunAnswers.runId],
+      references: [soloRuns.id],
+    }),
+    player: one(players, {
+      fields: [soloRunAnswers.playerId],
+      references: [players.id],
+    }),
+  }),
+);
+
+export const categoryAliases = createTable(
+  "category_alias",
+  (d) => ({
+    id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
+    alias: d.varchar({ length: 256 }).notNull(),
+    aliasSlug: d.varchar({ length: 256 }).notNull(),
+    canonicalName: d.varchar({ length: 256 }).notNull(),
+    canonicalSlug: d.varchar({ length: 256 }).notNull(),
+    createdAt: d
+      .timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  }),
+  (t) => [index("category_alias_slug_idx").on(t.aliasSlug)],
+);
