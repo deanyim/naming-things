@@ -35,7 +35,29 @@ async function judgeChunk(
     messages: [{ role: "user", content: buildCategoryFitPrompt(items) }],
   });
 
-  return result.parsed.decisions;
+  const decisions = result.parsed.decisions;
+  const requestedIds = new Set(items.map((item) => item.answerId));
+  const returnedIds = new Set(decisions.map((decision) => decision.answerId));
+  const missingIds = items
+    .map((item) => item.answerId)
+    .filter((answerId) => !returnedIds.has(answerId));
+  const unexpectedIds = decisions
+    .map((decision) => decision.answerId)
+    .filter((answerId) => !requestedIds.has(answerId));
+
+  if (missingIds.length > 0 || unexpectedIds.length > 0) {
+    console.error("Category fit response did not match requested answers", {
+      model: result.model,
+      requestId: result.requestId,
+      requestedCount: items.length,
+      returnedCount: decisions.length,
+      missingIds,
+      unexpectedIds,
+      rawText: result.rawText,
+    });
+  }
+
+  return decisions;
 }
 
 function mockJudge(

@@ -81,6 +81,11 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function truncateForLog(text: string, maxLength = 2000) {
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, maxLength)}... [truncated ${text.length - maxLength} chars]`;
+}
+
 export async function callOpenRouterJson<T>(
   input: OpenRouterJsonCallInput<T>,
 ): Promise<OpenRouterJsonCallResult<T>> {
@@ -105,6 +110,26 @@ export async function callOpenRouterJson<T>(
       ? setTimeout(() => controller.abort(), input.timeoutMs)
       : null;
   const startedAt = Date.now();
+  let lastResponseBody = "";
+  let lastResponseJson: unknown = null;
+  let lastRawText = "";
+  let lastExtractedJsonText = "";
+  let lastRequestId: string | null = null;
+
+  function logResponseHandlingFailure(message: string) {
+    console.error("OpenRouter response handling failed", {
+      message,
+      model,
+      requestId: lastRequestId,
+      responseBody: truncateForLog(lastResponseBody),
+      responseJson:
+        lastResponseJson == null
+          ? null
+          : truncateForLog(JSON.stringify(lastResponseJson)),
+      rawText: truncateForLog(lastRawText),
+      extractedJsonText: truncateForLog(lastExtractedJsonText),
+    });
+  }
 
   try {
     const requestBody = JSON.stringify({
@@ -135,6 +160,11 @@ export async function callOpenRouterJson<T>(
 
       const latencyMs = Date.now() - startedAt;
       const bodyText = await readResponseBody(response);
+      lastResponseBody = bodyText;
+      lastResponseJson = null;
+      lastRawText = "";
+      lastExtractedJsonText = "";
+      lastRequestId = null;
 
       if (!response.ok) {
         lastError = new OpenRouterError(
@@ -148,9 +178,14 @@ export async function callOpenRouterJson<T>(
         throw lastError;
       }
 
-      const json = openRouterJsonResponseSchema.parse(JSON.parse(bodyText));
+      const responseJson = JSON.parse(bodyText);
+      lastResponseJson = responseJson;
+      const json = openRouterJsonResponseSchema.parse(responseJson);
+      lastRequestId = json.id ?? null;
       const rawText = json.choices[0]?.message.content ?? "";
+      lastRawText = rawText;
       const jsonText = extractJsonText(rawText);
+      lastExtractedJsonText = jsonText;
       const parsedJson = JSON.parse(jsonText);
       const parsed = input.schema.parse(parsedJson);
 
@@ -172,13 +207,22 @@ export async function callOpenRouterJson<T>(
       throw error;
     }
 
+    if (error instanceof z.ZodError) {
+      logResponseHandlingFailure(error.message);
+      throw new OpenRouterError(
+        `OpenRouter response schema validation failed: ${error.message}`,
+      );
+    }
+
     if (error instanceof SyntaxError) {
+      logResponseHandlingFailure(error.message);
       throw new OpenRouterError(
         `Failed to parse OpenRouter response: ${error.message}`,
       );
     }
 
     if (error instanceof Error) {
+      logResponseHandlingFailure(error.message);
       throw new OpenRouterError(error.message);
     }
 
