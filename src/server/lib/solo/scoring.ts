@@ -11,6 +11,10 @@ type DB = typeof dbType;
 
 const BACKGROUND_BATCH_SIZE = 25;
 
+// Per-run lock to prevent concurrent classification of the same answers.
+// Maps runId to a promise that resolves when the in-flight batch completes.
+const classifyLocks = new Map<number, Promise<void>>();
+
 export type ScoringResult = {
   score: number;
   validCount: number;
@@ -56,7 +60,10 @@ export function maybeClassifyBatch(
   runId: number,
   category: string,
 ): void {
-  void (async () => {
+  // Skip if a batch is already in-flight for this run
+  if (classifyLocks.has(runId)) return;
+
+  const work = (async () => {
     try {
       const unclassified = await db.query.soloRunAnswers.findMany({
         where: and(
@@ -73,8 +80,12 @@ export function maybeClassifyBatch(
       await classifyAndPersist(db, category, candidates);
     } catch (err) {
       console.error("Background classification batch failed:", err);
+    } finally {
+      classifyLocks.delete(runId);
     }
   })();
+
+  classifyLocks.set(runId, work);
 }
 
 /**
@@ -87,6 +98,10 @@ export async function scoreRun(
   runId: number,
   category: string,
 ): Promise<ScoringResult> {
+  // Wait for any in-flight background batch to finish before scoring
+  const pending = classifyLocks.get(runId);
+  if (pending) await pending;
+
   const allAnswers = await db.query.soloRunAnswers.findMany({
     where: eq(soloRunAnswers.runId, runId),
   });
