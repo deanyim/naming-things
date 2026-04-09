@@ -171,7 +171,7 @@ describe("judgeCategoryFit", () => {
     const call = mockCallOpenRouterJson.mock.calls[0] as [
       { maxOutputTokens: number },
     ];
-    // Math.max(512, 5 * 60) = 512
+    // Math.max(512, 5 * 80) = 512
     expect(call[0].maxOutputTokens).toBe(512);
 
     mockCallOpenRouterJson.mockClear();
@@ -182,7 +182,7 @@ describe("judgeCategoryFit", () => {
     const largeCall = mockCallOpenRouterJson.mock.calls[0] as [
       { maxOutputTokens: number },
     ];
-    // Math.max(512, 20 * 60) = 1200
-    expect(largeCall[0].maxOutputTokens).toBe(1200);
+    // Math.max(512, 20 * 80) = 1600
+    expect(largeCall[0].maxOutputTokens).toBe(1600);
   });
 });

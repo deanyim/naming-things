@@ -30,7 +30,7 @@ async function judgeChunk(
   const result = await callOpenRouterJson({
     model: options?.model,
     timeoutMs: options?.timeoutMs,
-    maxOutputTokens: Math.max(512, items.length * 60),
+    maxOutputTokens: Math.max(512, items.length * 80),
     schema: categoryFitSchema,
     messages: [{ role: "user", content: buildCategoryFitPrompt(items) }],
   });
