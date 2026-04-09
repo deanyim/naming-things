@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "~/hooks/use-session";
 import { api } from "~/trpc/react";
 
-export function DebugClient({ code, slug }: { code: string; slug: string }) {
+export function DebugClient({ code, slug, backTo }: { code: string; slug: string; backTo?: string }) {
   const router = useRouter();
   const { sessionToken, isReady } = useSession();
 
@@ -98,7 +98,7 @@ export function DebugClient({ code, slug }: { code: string; slug: string }) {
         </table>
 
         <button
-          onClick={() => router.push(`/game/${code}/round/${slug}`)}
+          onClick={() => router.push(backTo ?? `/game/${code}`)}
           className="w-full rounded-lg border border-gray-900 px-4 py-3 font-medium text-gray-900 transition hover:bg-gray-100"
         >
           back to game
