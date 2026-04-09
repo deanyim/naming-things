@@ -11,7 +11,7 @@ import {
 import { getPlayerBySession } from "~/server/api/lib/session";
 import { resolveCategory } from "~/server/lib/categories/normalize";
 import { normalizeAnswer } from "~/lib/normalize";
-import { scoreRun } from "~/server/lib/solo/scoring";
+import { scoreRun, maybeClassifyBatch } from "~/server/lib/solo/scoring";
 import { generateSoloSlug } from "~/server/lib/solo/slug";
 import { ALLOWED_TIMERS } from "~/app/solo/constants";
 
@@ -177,6 +177,11 @@ export const soloRouter = createTRPCRouter({
           isDuplicate: false,
         })
         .returning();
+
+      // For longer runs, pre-classify in background batches of 25
+      if (run.timerSeconds > 30) {
+        maybeClassifyBatch(ctx.db, run.id, run.categoryDisplayName);
+      }
 
       return {
         id: answer!.id,
