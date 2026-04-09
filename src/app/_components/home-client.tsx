@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "~/hooks/use-session";
 import { api } from "~/trpc/react";
 
-export function HomeClient() {
+export function HomeClient({ soloEnabled = false }: { soloEnabled?: boolean }) {
   const router = useRouter();
   const { sessionToken, displayName, setDisplayName, login, isReady } =
     useSession();
@@ -109,6 +109,23 @@ export function HomeClient() {
 
           {error && (
             <p className="text-center text-sm text-red-600">{error}</p>
+          )}
+
+          {soloEnabled && (
+            <>
+              <div className="flex items-center gap-4">
+                <div className="h-px flex-1 bg-gray-200" />
+                <span className="text-xs text-gray-400">or</span>
+                <div className="h-px flex-1 bg-gray-200" />
+              </div>
+
+              <button
+                onClick={() => router.push("/solo")}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-500 transition hover:bg-gray-100"
+              >
+                play solo
+              </button>
+            </>
           )}
         </div>
       </div>
