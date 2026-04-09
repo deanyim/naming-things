@@ -1,0 +1,527 @@
+import { z } from "zod";
+import { and, eq, desc, asc, sql, like } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
+import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import {
+  players,
+  soloRuns,
+  soloRunAnswers,
+  categoryAliases,
+} from "~/server/db/schema";
+import { getPlayerBySession } from "~/server/api/lib/session";
+import { resolveCategory } from "~/server/lib/categories/normalize";
+import { normalizeAnswer } from "~/lib/normalize";
+import { scoreRun } from "~/server/lib/solo/scoring";
+import { generateSoloSlug } from "~/server/lib/solo/slug";
+import { ALLOWED_TIMERS } from "~/app/solo/constants";
+
+export const soloRouter = createTRPCRouter({
+  createRun: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        category: z.string().min(1).max(256),
+        timerSeconds: z.number().refine((v) => ALLOWED_TIMERS.includes(v), {
+          message: `Timer must be one of: ${ALLOWED_TIMERS.join(", ")}`,
+        }),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+      const resolved = await resolveCategory(ctx.db, input.category);
+
+      // Count previous attempts for this player+bucket
+      const [prev] = await ctx.db
+        .select({
+          count: sql<number>`count(*)::int`,
+        })
+        .from(soloRuns)
+        .where(
+          and(
+            eq(soloRuns.playerId, player.id),
+            eq(soloRuns.categorySlug, resolved.slug),
+            eq(soloRuns.timerSeconds, input.timerSeconds),
+          ),
+        );
+      const attempt = (prev?.count ?? 0) + 1;
+
+      const now = new Date();
+      const [run] = await ctx.db
+        .insert(soloRuns)
+        .values({
+          slug: generateSoloSlug(),
+          playerId: player.id,
+          inputCategory: resolved.inputCategory,
+          categoryDisplayName: resolved.displayName,
+          categorySlug: resolved.slug,
+          timerSeconds: input.timerSeconds,
+          attempt,
+          status: "playing",
+          startedAt: now,
+        })
+        .returning();
+
+      return {
+        slug: run!.slug,
+        categoryDisplayName: resolved.displayName,
+        categorySlug: resolved.slug,
+        timerSeconds: input.timerSeconds,
+        startedAt: run!.startedAt,
+        endsAt: new Date(now.getTime() + input.timerSeconds * 1000),
+      };
+    }),
+
+  getRun: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        slug: z.string().min(1),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+      const run = await ctx.db.query.soloRuns.findFirst({
+        where: and(
+          eq(soloRuns.slug, input.slug),
+          eq(soloRuns.playerId, player.id),
+        ),
+      });
+
+      if (!run) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Run not found" });
+      }
+
+      const answers = await ctx.db.query.soloRunAnswers.findMany({
+        where: eq(soloRunAnswers.runId, run.id),
+        orderBy: [asc(soloRunAnswers.createdAt)],
+      });
+
+      const endsAt = new Date(
+        run.startedAt.getTime() + run.timerSeconds * 1000,
+      );
+
+      return {
+        ...run,
+        endsAt,
+        answers,
+      };
+    }),
+
+  submitAnswer: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        slug: z.string().min(1),
+        text: z.string().min(1).max(256),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+      const run = await ctx.db.query.soloRuns.findFirst({
+        where: and(
+          eq(soloRuns.slug, input.slug),
+          eq(soloRuns.playerId, player.id),
+        ),
+      });
+
+      if (!run) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Run not found" });
+      }
+
+      if (run.status !== "playing") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Run is not active",
+        });
+      }
+
+      // Check timer expiry
+      const endsAt = run.startedAt.getTime() + run.timerSeconds * 1000;
+      if (Date.now() > endsAt) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Timer has expired",
+        });
+      }
+
+      const normalized = normalizeAnswer(input.text);
+      if (!normalized.normalizedText.trim()) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Answer is empty after normalization",
+        });
+      }
+
+      // Check for in-run duplicates
+      const existingAnswer = await ctx.db.query.soloRunAnswers.findFirst({
+        where: and(
+          eq(soloRunAnswers.runId, run.id),
+          eq(soloRunAnswers.normalizedText, normalized.normalizedText),
+        ),
+      });
+
+      if (existingAnswer) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Duplicate answer",
+        });
+      }
+
+      const [answer] = await ctx.db
+        .insert(soloRunAnswers)
+        .values({
+          runId: run.id,
+          playerId: player.id,
+          text: input.text.trim(),
+          normalizedText: normalized.normalizedText,
+          isDuplicate: false,
+        })
+        .returning();
+
+      return {
+        id: answer!.id,
+        text: answer!.text,
+        normalizedText: answer!.normalizedText,
+      };
+    }),
+
+  finishRun: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        slug: z.string().min(1),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+      const run = await ctx.db.query.soloRuns.findFirst({
+        where: and(
+          eq(soloRuns.slug, input.slug),
+          eq(soloRuns.playerId, player.id),
+        ),
+      });
+
+      if (!run) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Run not found" });
+      }
+
+      // Idempotent: if already finished, return current state
+      if (run.status === "finished") {
+        const answers = await ctx.db.query.soloRunAnswers.findMany({
+          where: eq(soloRunAnswers.runId, run.id),
+          orderBy: [asc(soloRunAnswers.createdAt)],
+        });
+        return { ...run, answers };
+      }
+
+      if (run.status !== "playing") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Run cannot be finished",
+        });
+      }
+
+      const now = new Date();
+      const durationMs = now.getTime() - run.startedAt.getTime();
+
+      // Classify answers
+      const scoring = await scoreRun(
+        ctx.db,
+        run.id,
+        run.categoryDisplayName,
+      );
+
+      // Finalize the run
+      const [updatedRun] = await ctx.db
+        .update(soloRuns)
+        .set({
+          status: "finished",
+          endedAt: now,
+          durationMs,
+          score: scoring.score,
+          validCount: scoring.validCount,
+          invalidCount: scoring.invalidCount,
+          ambiguousCount: scoring.ambiguousCount,
+          judgeModel: scoring.judgeModel,
+          judgeVersion: scoring.judgeVersion,
+        })
+        .where(eq(soloRuns.id, run.id))
+        .returning();
+
+      const answers = await ctx.db.query.soloRunAnswers.findMany({
+        where: eq(soloRunAnswers.runId, run.id),
+        orderBy: [asc(soloRunAnswers.createdAt)],
+      });
+
+      return { ...updatedRun!, answers };
+    }),
+
+  getLeaderboard: publicProcedure
+    .input(
+      z.object({
+        categorySlug: z.string().min(1),
+        timerSeconds: z.number(),
+        limit: z.number().min(1).max(100).default(20),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const entries = await ctx.db
+        .select({
+          id: soloRuns.id,
+          slug: soloRuns.slug,
+          playerId: soloRuns.playerId,
+          displayName: players.displayName,
+          attempt: soloRuns.attempt,
+          score: soloRuns.score,
+          durationMs: soloRuns.durationMs,
+          validCount: soloRuns.validCount,
+          invalidCount: soloRuns.invalidCount,
+          ambiguousCount: soloRuns.ambiguousCount,
+          categoryDisplayName: soloRuns.categoryDisplayName,
+          createdAt: soloRuns.createdAt,
+        })
+        .from(soloRuns)
+        .innerJoin(players, eq(soloRuns.playerId, players.id))
+        .where(
+          and(
+            eq(soloRuns.categorySlug, input.categorySlug),
+            eq(soloRuns.timerSeconds, input.timerSeconds),
+            eq(soloRuns.status, "finished"),
+          ),
+        )
+        .orderBy(
+          desc(soloRuns.score),
+          asc(soloRuns.durationMs),
+          asc(soloRuns.createdAt),
+        );
+
+      const seen = new Set<number>();
+      const bestPerPlayer = entries.filter((e) => {
+        if (seen.has(e.playerId)) return false;
+        seen.add(e.playerId);
+        return true;
+      });
+
+      return bestPerPlayer.slice(0, input.limit);
+    }),
+
+  getLeaderboardOverview: publicProcedure
+    .input(
+      z.object({
+        limit: z.number().min(1).max(50).default(10),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const buckets = await ctx.db
+        .select({
+          categorySlug: soloRuns.categorySlug,
+          categoryDisplayName: soloRuns.categoryDisplayName,
+          timerSeconds: soloRuns.timerSeconds,
+          runCount: sql<number>`count(*)::int`.as("run_count"),
+          topScore: sql<number>`max(${soloRuns.score})::int`.as("top_score"),
+        })
+        .from(soloRuns)
+        .where(eq(soloRuns.status, "finished"))
+        .groupBy(
+          soloRuns.categorySlug,
+          soloRuns.categoryDisplayName,
+          soloRuns.timerSeconds,
+        )
+        .orderBy(sql`count(*) desc`)
+        .limit(input.limit);
+
+      return buckets;
+    }),
+
+  searchCategories: publicProcedure
+    .input(
+      z.object({
+        query: z.string().min(1).max(256),
+        limit: z.number().min(1).max(20).default(10),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const searchTerm = `%${input.query.toLowerCase()}%`;
+
+      const fromRuns = await ctx.db
+        .selectDistinct({
+          categoryDisplayName: soloRuns.categoryDisplayName,
+          categorySlug: soloRuns.categorySlug,
+        })
+        .from(soloRuns)
+        .where(
+          and(
+            eq(soloRuns.status, "finished"),
+            like(soloRuns.categorySlug, searchTerm),
+          ),
+        )
+        .limit(input.limit);
+
+      const fromAliases = await ctx.db
+        .selectDistinct({
+          categoryDisplayName: categoryAliases.canonicalName,
+          categorySlug: categoryAliases.canonicalSlug,
+        })
+        .from(categoryAliases)
+        .where(like(categoryAliases.canonicalSlug, searchTerm))
+        .limit(input.limit);
+
+      const seen = new Set<string>();
+      const results: { categoryDisplayName: string; categorySlug: string }[] =
+        [];
+      for (const item of [...fromRuns, ...fromAliases]) {
+        if (!seen.has(item.categorySlug)) {
+          seen.add(item.categorySlug);
+          results.push(item);
+        }
+      }
+
+      return results.slice(0, input.limit);
+    }),
+
+  getMyBest: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        categorySlug: z.string().min(1),
+        timerSeconds: z.number(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+
+      const [bestRun] = await ctx.db
+        .select()
+        .from(soloRuns)
+        .where(
+          and(
+            eq(soloRuns.playerId, player.id),
+            eq(soloRuns.categorySlug, input.categorySlug),
+            eq(soloRuns.timerSeconds, input.timerSeconds),
+            eq(soloRuns.status, "finished"),
+          ),
+        )
+        .orderBy(
+          desc(soloRuns.score),
+          asc(soloRuns.durationMs),
+          asc(soloRuns.createdAt),
+        )
+        .limit(1);
+
+      if (!bestRun) return null;
+
+      const [rankResult] = await ctx.db
+        .select({
+          rank: sql<number>`count(distinct ${soloRuns.playerId})::int + 1`.as(
+            "rank",
+          ),
+        })
+        .from(soloRuns)
+        .where(
+          and(
+            eq(soloRuns.categorySlug, input.categorySlug),
+            eq(soloRuns.timerSeconds, input.timerSeconds),
+            eq(soloRuns.status, "finished"),
+            sql`(
+              ${soloRuns.score} > ${bestRun.score}
+              OR (${soloRuns.score} = ${bestRun.score} AND ${soloRuns.durationMs} < ${bestRun.durationMs})
+              OR (${soloRuns.score} = ${bestRun.score} AND ${soloRuns.durationMs} = ${bestRun.durationMs} AND ${soloRuns.createdAt} < ${bestRun.createdAt})
+            )`,
+          ),
+        );
+
+      return {
+        ...bestRun,
+        rank: rankResult?.rank ?? 1,
+      };
+    }),
+
+  getRunDebug: publicProcedure
+    .input(
+      z.object({
+        slug: z.string().min(1),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const run = await ctx.db.query.soloRuns.findFirst({
+        where: and(
+          eq(soloRuns.slug, input.slug),
+          eq(soloRuns.status, "finished"),
+        ),
+      });
+
+      if (!run) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Run not found" });
+      }
+
+      const player = await ctx.db.query.players.findFirst({
+        where: eq(players.id, run.playerId),
+      });
+
+      const answers = await ctx.db.query.soloRunAnswers.findMany({
+        where: eq(soloRunAnswers.runId, run.id),
+        orderBy: [asc(soloRunAnswers.id)],
+      });
+
+      return {
+        slug: run.slug,
+        category: run.categoryDisplayName,
+        categorySlug: run.categorySlug,
+        inputCategory: run.inputCategory,
+        timerSeconds: run.timerSeconds,
+        score: run.score,
+        validCount: run.validCount,
+        invalidCount: run.invalidCount,
+        ambiguousCount: run.ambiguousCount,
+        judgeModel: run.judgeModel,
+        judgeVersion: run.judgeVersion,
+        durationMs: run.durationMs,
+        startedAt: run.startedAt,
+        endedAt: run.endedAt,
+        displayName: player?.displayName ?? "unknown",
+        answers: answers.map((a) => ({
+          id: a.id,
+          text: a.text,
+          normalizedText: a.normalizedText,
+          label: a.label,
+          confidence: a.confidence,
+          reason: a.reason,
+          isDuplicate: a.isDuplicate,
+        })),
+      };
+    }),
+
+  getPublicRun: publicProcedure
+    .input(
+      z.object({
+        slug: z.string().min(1),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const run = await ctx.db.query.soloRuns.findFirst({
+        where: and(
+          eq(soloRuns.slug, input.slug),
+          eq(soloRuns.status, "finished"),
+        ),
+      });
+
+      if (!run) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Run not found" });
+      }
+
+      const player = await ctx.db.query.players.findFirst({
+        where: eq(players.id, run.playerId),
+      });
+
+      const answers = await ctx.db.query.soloRunAnswers.findMany({
+        where: eq(soloRunAnswers.runId, run.id),
+        orderBy: [asc(soloRunAnswers.createdAt)],
+      });
+
+      return {
+        ...run,
+        displayName: player?.displayName ?? "unknown",
+        answers,
+      };
+    }),
+});
