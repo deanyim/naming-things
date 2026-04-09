@@ -72,7 +72,7 @@ export function LeaderboardsContent() {
 
         <div className="flex w-full flex-col gap-2">
           <button
-            onClick={() => router.push("/solo")}
+            onClick={() => router.push(hasSelection ? `/solo?category=${encodeURIComponent(category.trim())}&timer=${timerSeconds}` : "/solo")}
             className="w-full rounded-lg bg-gray-900 px-4 py-3 font-medium text-white transition hover:bg-gray-800"
           >
             start a solo run

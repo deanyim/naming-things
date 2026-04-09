@@ -6,18 +6,22 @@ import { useSession } from "~/hooks/use-session";
 import { api } from "~/trpc/react";
 import { CategorySearch } from "./category-search";
 import { LeaderboardOverview } from "./solo-leaderboard";
-import { TIMER_OPTIONS } from "../constants";
+import { TIMER_OPTIONS, ALLOWED_TIMERS } from "../constants";
 
 export function SoloSetup({
   initialCategory = "",
+  initialTimer,
 }: {
   initialCategory?: string;
+  initialTimer?: number;
 }) {
   const router = useRouter();
   const { sessionToken, displayName, setDisplayName, login, isReady } =
     useSession();
   const [category, setCategory] = useState(initialCategory);
-  const [timerSeconds, setTimerSeconds] = useState(60);
+  const [timerSeconds, setTimerSeconds] = useState(
+    initialTimer && ALLOWED_TIMERS.includes(initialTimer) ? initialTimer : 60,
+  );
   const [error, setError] = useState("");
 
   const createRun = api.solo.createRun.useMutation({

@@ -118,7 +118,7 @@ export function SoloResults({ slug }: { slug: string }) {
 
         <div className="flex w-full flex-col gap-2">
           <button
-            onClick={() => router.push(`/solo?category=${encodeURIComponent(run.categoryDisplayName)}`)}
+            onClick={() => router.push(`/solo?category=${encodeURIComponent(run.categoryDisplayName)}&timer=${run.timerSeconds}`)}
             className="w-full rounded-lg bg-gray-900 px-4 py-3 font-medium text-white transition hover:bg-gray-800"
           >
             play again

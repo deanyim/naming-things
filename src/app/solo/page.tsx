@@ -15,10 +15,12 @@ export default async function SoloPage({
   const params = await searchParams;
   const category =
     typeof params.category === "string" ? params.category : "";
+  const timer =
+    typeof params.timer === "string" ? Number(params.timer) : undefined;
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-white px-4">
-      <SoloSetup initialCategory={category} />
+      <SoloSetup initialCategory={category} initialTimer={timer} />
     </main>
   );
 }
