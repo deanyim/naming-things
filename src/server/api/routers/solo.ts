@@ -320,7 +320,7 @@ export const soloRouter = createTRPCRouter({
       const buckets = await ctx.db
         .select({
           categorySlug: soloRuns.categorySlug,
-          categoryDisplayName: soloRuns.categoryDisplayName,
+          categoryDisplayName: sql<string>`max(${soloRuns.categoryDisplayName})`.as("category_display_name"),
           timerSeconds: soloRuns.timerSeconds,
           runCount: sql<number>`count(*)::int`.as("run_count"),
           topScore: sql<number>`max(${soloRuns.score})::int`.as("top_score"),
@@ -329,7 +329,6 @@ export const soloRouter = createTRPCRouter({
         .where(eq(soloRuns.status, "finished"))
         .groupBy(
           soloRuns.categorySlug,
-          soloRuns.categoryDisplayName,
           soloRuns.timerSeconds,
         )
         .orderBy(sql`count(*) desc`)

@@ -149,6 +149,73 @@ describe("leaderboard ranking order", () => {
   });
 });
 
+// Test overview bucketing merges by slug, not displayName
+describe("leaderboard overview bucketing", () => {
+  type OverviewEntry = {
+    categorySlug: string;
+    categoryDisplayName: string;
+    timerSeconds: number;
+  };
+
+  function groupBuckets(entries: OverviewEntry[]) {
+    const map = new Map<string, { categorySlug: string; categoryDisplayName: string; timerSeconds: number; runCount: number }>();
+    for (const e of entries) {
+      const key = `${e.categorySlug}::${e.timerSeconds}`;
+      const existing = map.get(key);
+      if (existing) {
+        existing.runCount++;
+        // max() picks the lexicographically last displayName
+        if (e.categoryDisplayName > existing.categoryDisplayName) {
+          existing.categoryDisplayName = e.categoryDisplayName;
+        }
+      } else {
+        map.set(key, {
+          categorySlug: e.categorySlug,
+          categoryDisplayName: e.categoryDisplayName,
+          timerSeconds: e.timerSeconds,
+          runCount: 1,
+        });
+      }
+    }
+    return Array.from(map.values());
+  }
+
+  it("merges 'color' and 'colors' into one bucket", () => {
+    const entries: OverviewEntry[] = [
+      { categorySlug: "color", categoryDisplayName: "color", timerSeconds: 60 },
+      { categorySlug: "color", categoryDisplayName: "color", timerSeconds: 60 },
+      { categorySlug: "color", categoryDisplayName: "colors", timerSeconds: 60 },
+      { categorySlug: "color", categoryDisplayName: "colors", timerSeconds: 60 },
+      { categorySlug: "color", categoryDisplayName: "colors", timerSeconds: 60 },
+    ];
+
+    const buckets = groupBuckets(entries);
+    expect(buckets).toHaveLength(1);
+    expect(buckets[0]!.runCount).toBe(5);
+    expect(buckets[0]!.categorySlug).toBe("color");
+  });
+
+  it("different timer values stay separate", () => {
+    const entries: OverviewEntry[] = [
+      { categorySlug: "color", categoryDisplayName: "colors", timerSeconds: 60 },
+      { categorySlug: "color", categoryDisplayName: "colors", timerSeconds: 10 },
+    ];
+
+    const buckets = groupBuckets(entries);
+    expect(buckets).toHaveLength(2);
+  });
+
+  it("different slugs stay separate", () => {
+    const entries: OverviewEntry[] = [
+      { categorySlug: "color", categoryDisplayName: "colors", timerSeconds: 60 },
+      { categorySlug: "fruit", categoryDisplayName: "fruits", timerSeconds: 60 },
+    ];
+
+    const buckets = groupBuckets(entries);
+    expect(buckets).toHaveLength(2);
+  });
+});
+
 // Test alias resolution
 describe("alias-based category merge", () => {
   it("normalizeCategory produces same slug for singular/plural", () => {
