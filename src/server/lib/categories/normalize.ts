@@ -59,6 +59,7 @@ export function normalizeCategory(raw: string): {
 } {
   let text = raw.trim();
   text = text.toLowerCase();
+  text = text.replace(/-/g, " ");
   text = text.replace(whitespacePattern, " ");
   text = text.replace(punctuationPattern, "");
   text = text.replace(/&/g, "and");
@@ -95,6 +96,16 @@ export async function resolveCategory(
       displayName: alias.canonicalName,
       slug: alias.canonicalSlug,
     };
+  }
+
+  // First time seeing this slug — register it so the first display name becomes canonical
+  if (slug) {
+    await db.insert(categoryAliases).values({
+      alias: displayName,
+      aliasSlug: slug,
+      canonicalName: displayName,
+      canonicalSlug: slug,
+    });
   }
 
   return {

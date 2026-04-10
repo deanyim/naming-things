@@ -130,4 +130,17 @@ describe("normalizeCategory", () => {
     // Replacing hyphens with spaces gives a reasonable fallback display name
     expect(result.slug.replace(/-/g, " ")).toBe("board game");
   });
+
+  it("converts hyphens to spaces in input", () => {
+    const result = normalizeCategory("first-name-that-start-with-j");
+    expect(result.displayName).toBe("first name that start with j");
+    expect(result.slug).toBe("first-name-that-start-with-j");
+  });
+
+  it("hyphenated and spaced inputs produce same slug", () => {
+    const a = normalizeCategory("way-to-get-to-school");
+    const b = normalizeCategory("way to get to school");
+    expect(a.slug).toBe(b.slug);
+    expect(a.displayName).toBe(b.displayName);
+  });
 });
