@@ -157,6 +157,7 @@ describe("leaderboard overview bucketing", () => {
     timerSeconds: number;
   };
 
+  // Mirrors the SQL: group by slug+timer, pick the first display name chronologically
   function groupBuckets(entries: OverviewEntry[]) {
     const map = new Map<string, { categorySlug: string; categoryDisplayName: string; timerSeconds: number; runCount: number }>();
     for (const e of entries) {
@@ -164,10 +165,7 @@ describe("leaderboard overview bucketing", () => {
       const existing = map.get(key);
       if (existing) {
         existing.runCount++;
-        // max() picks the lexicographically last displayName
-        if (e.categoryDisplayName > existing.categoryDisplayName) {
-          existing.categoryDisplayName = e.categoryDisplayName;
-        }
+        // First entry wins (entries are in chronological order)
       } else {
         map.set(key, {
           categorySlug: e.categorySlug,
@@ -215,7 +213,6 @@ describe("leaderboard overview bucketing", () => {
     expect(buckets).toHaveLength(2);
   });
 });
-
 // Test alias resolution
 describe("alias-based category merge", () => {
   it("normalizeCategory produces same slug for singular/plural", () => {

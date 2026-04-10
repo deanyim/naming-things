@@ -314,6 +314,7 @@ export const soloRouter = createTRPCRouter({
     .input(
       z.object({
         limit: z.number().min(1).max(50).default(10),
+        offset: z.number().min(0).default(0),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -332,7 +333,8 @@ export const soloRouter = createTRPCRouter({
           soloRuns.timerSeconds,
         )
         .orderBy(sql`count(*) desc`)
-        .limit(input.limit);
+        .limit(input.limit)
+        .offset(input.offset);
 
       return buckets;
     }),

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
 
@@ -105,16 +105,38 @@ export function LeaderboardOverview({
 }: {
   limit?: number;
 }) {
+  const [page, setPage] = useState(0);
   const router = useRouter();
-  const overview = api.solo.getLeaderboardOverview.useQuery({ limit });
+  const overview = api.solo.getLeaderboardOverview.useQuery({
+    limit,
+    offset: page * limit,
+  });
 
   if (overview.isLoading) {
     return <p className="text-center text-sm text-gray-400">loading...</p>;
   }
 
   if (!overview.data || overview.data.length === 0) {
-    return null;
+    if (page === 0) return null;
+    return (
+      <div className="w-full">
+        <h3 className="mb-3 text-sm font-medium text-gray-500">
+          popular categories
+        </h3>
+        <p className="mb-3 text-center text-sm text-gray-400">
+          no more categories
+        </p>
+        <button
+          onClick={() => setPage(page - 1)}
+          className="w-full text-center text-sm text-gray-400 transition hover:text-gray-600"
+        >
+          previous
+        </button>
+      </div>
+    );
   }
+
+  const hasMore = overview.data.length === limit;
 
   return (
     <div className="w-full">
@@ -151,6 +173,24 @@ export function LeaderboardOverview({
           </button>
         ))}
       </div>
+      {(page > 0 || hasMore) && (
+        <div className="mt-3 flex justify-between">
+          <button
+            onClick={() => setPage(page - 1)}
+            disabled={page === 0}
+            className="text-sm text-gray-400 transition hover:text-gray-600 disabled:invisible"
+          >
+            previous
+          </button>
+          <button
+            onClick={() => setPage(page + 1)}
+            disabled={!hasMore}
+            className="text-sm text-gray-400 transition hover:text-gray-600 disabled:invisible"
+          >
+            next
+          </button>
+        </div>
+      )}
     </div>
   );
 }
