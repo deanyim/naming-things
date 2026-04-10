@@ -1,5 +1,7 @@
 "use client";
 
+import { useRef, useState } from "react";
+
 type Answer = {
   createdAt: Date | string;
   isDuplicate: boolean;
@@ -42,6 +44,9 @@ export function AnswerRateChart({
   startedAt: Date | string;
   timerSeconds: number;
 }) {
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
+
   const series = computeCumulativeSeries(answers, startedAt, timerSeconds);
   const maxCount = Math.max(1, series[series.length - 1]?.count ?? 0);
 
@@ -73,12 +78,38 @@ export function AnswerRateChart({
   // X-axis ticks — 5 evenly spaced
   const xTicks = Array.from({ length: 5 }, (_, i) => Math.round((i * timerSeconds) / 4));
 
+  function handleMouseMove(e: React.MouseEvent<SVGRectElement>) {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const rect = svg.getBoundingClientRect();
+    // Convert mouse x to viewBox coordinates
+    const viewX = ((e.clientX - rect.left) / rect.width) * width;
+    // Convert viewBox x back to seconds
+    const second = Math.max(
+      0,
+      Math.min(
+        timerSeconds,
+        Math.round(((viewX - padLeft) / plotWidth) * timerSeconds),
+      ),
+    );
+    setHoverIdx(second);
+  }
+
+  const hovered = hoverIdx !== null ? series[hoverIdx] : null;
+
+  // Tooltip positioning — flip to the left if too close to the right edge
+  const tooltipX = hovered ? xFor(hovered.second) : 0;
+  const tooltipY = hovered ? yFor(hovered.count) : 0;
+  const flipLeft = tooltipX > width - 100;
+  const tooltipBoxX = flipLeft ? tooltipX - 8 - 90 : tooltipX + 8;
+
   return (
     <div className="w-full">
       <h3 className="mb-2 text-sm font-medium text-gray-500">
         answers over time
       </h3>
       <svg
+        ref={svgRef}
         viewBox={`0 0 ${width} ${height}`}
         className="w-full rounded-lg border border-gray-200 bg-white"
         preserveAspectRatio="none"
@@ -127,6 +158,62 @@ export function AnswerRateChart({
             {t}s
           </text>
         ))}
+
+        {/* Hover crosshair + point + tooltip */}
+        {hovered && (
+          <g pointerEvents="none">
+            <line
+              x1={tooltipX}
+              x2={tooltipX}
+              y1={padTop}
+              y2={padTop + plotHeight}
+              stroke="#9ca3af"
+              strokeWidth={1}
+              strokeDasharray="3 3"
+            />
+            <circle
+              cx={tooltipX}
+              cy={tooltipY}
+              r={4}
+              fill="#111827"
+              stroke="#fff"
+              strokeWidth={2}
+            />
+            <rect
+              x={tooltipBoxX}
+              y={tooltipY - 28}
+              width={90}
+              height={32}
+              rx={4}
+              fill="#111827"
+            />
+            <text
+              x={tooltipBoxX + 8}
+              y={tooltipY - 14}
+              className="fill-white text-[10px]"
+            >
+              {hovered.second}s elapsed
+            </text>
+            <text
+              x={tooltipBoxX + 8}
+              y={tooltipY - 2}
+              className="fill-white text-[10px] font-bold"
+            >
+              {hovered.count} {hovered.count === 1 ? "answer" : "answers"}
+            </text>
+          </g>
+        )}
+
+        {/* Invisible overlay to capture mouse events */}
+        <rect
+          x={padLeft}
+          y={padTop}
+          width={plotWidth}
+          height={plotHeight}
+          fill="transparent"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={() => setHoverIdx(null)}
+        />
       </svg>
     </div>
   );
