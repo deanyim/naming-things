@@ -4,19 +4,19 @@
   "chunkSize": 25,
   "batches": [
     {
-      "latencyMs": 5100,
+      "latencyMs": 5693,
       "inputTokens": 994,
       "outputTokens": 1287,
       "estimatedCostUsd": 0.0035157
     },
     {
-      "latencyMs": 6088,
+      "latencyMs": 5667,
       "inputTokens": 1051,
       "outputTokens": 1332,
       "estimatedCostUsd": 0.0036453
     },
     {
-      "latencyMs": 2032,
+      "latencyMs": 2038,
       "inputTokens": 344,
       "outputTokens": 359,
       "estimatedCostUsd": 0.0010007

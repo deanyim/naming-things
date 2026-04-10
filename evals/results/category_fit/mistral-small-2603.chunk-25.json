@@ -4,22 +4,22 @@
   "chunkSize": 25,
   "batches": [
     {
-      "latencyMs": 5359,
-      "inputTokens": 870,
-      "outputTokens": 1121,
-      "estimatedCostUsd": 0.0008031
+      "latencyMs": 5817,
+      "inputTokens": 911,
+      "outputTokens": 1136,
+      "estimatedCostUsd": 0.00081825
     },
     {
-      "latencyMs": 5601,
-      "inputTokens": 921,
-      "outputTokens": 1166,
-      "estimatedCostUsd": 0.00083775
+      "latencyMs": 6092,
+      "inputTokens": 962,
+      "outputTokens": 1187,
+      "estimatedCostUsd": 0.0008565
     },
     {
-      "latencyMs": 2473,
-      "inputTokens": 149,
-      "outputTokens": 103,
-      "estimatedCostUsd": 0.00008415
+      "latencyMs": 2585,
+      "inputTokens": 330,
+      "outputTokens": 320,
+      "estimatedCostUsd": 0.00024150000000000002
     }
   ],
   "cases": [
@@ -61,7 +61,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Piano is a common musical instrument.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Piano is a musical instrument.\"}"
     },
     {
       "caseId": "fit_005",
@@ -71,7 +71,7 @@
       "expectedLabel": "valid",
       "actualLabel": "ambiguous",
       "parseOk": true,
-      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.8,\"reason\":\"Ice cream is typically cold but may not always be served cold.\"}"
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.9,\"reason\":\"Ice cream is typically cold but can be served at room temperature.\"}"
     },
     {
       "caseId": "fit_006",
@@ -79,9 +79,9 @@
       "modelId": "mistral-small-2603",
       "status": "ok",
       "expectedLabel": "ambiguous",
-      "actualLabel": "ambiguous",
+      "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.9,\"reason\":\"Batman could refer to a movie or the character, depending on context.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Batman is a well-known movie franchise.\"}"
     },
     {
       "caseId": "fit_007",
@@ -131,7 +131,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.95,\"reason\":\"Chess is widely recognized as a sport.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Chess is widely recognized as a sport.\"}"
     },
     {
       "caseId": "fit_012",
@@ -141,7 +141,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Pizza is commonly round.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Pizza is a round food item.\"}"
     },
     {
       "caseId": "fit_013",
@@ -161,7 +161,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"Tomato is commonly considered a vegetable in culinary contexts.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Tomato is classified as a vegetable in culinary contexts.\"}"
     },
     {
       "caseId": "fit_015",
@@ -181,7 +181,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "ambiguous",
       "parseOk": true,
-      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.8,\"reason\":\"Pluto's classification as a planet is debated.\"}"
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.8,\"reason\":\"Pluto is no longer classified as a planet by the IAU but is often colloquially referred to as one.\"}"
     },
     {
       "caseId": "fit_017",
@@ -191,7 +191,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"George Washington is a well-known U.S. president.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"George Washington is a U.S. president.\"}"
     },
     {
       "caseId": "fit_018",
@@ -211,7 +211,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.95,\"reason\":\"Cleopatra is a historically famous woman.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Cleopatra is a famous historical woman.\"}"
     },
     {
       "caseId": "fit_020",
@@ -221,7 +221,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Marie Curie is a renowned female scientist.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Marie Curie is a famous historical woman.\"}"
     },
     {
       "caseId": "fit_021",
@@ -241,7 +241,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"Mulan is a famous female literary and cultural figure.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Mulan is a famous woman from folklore and media.\"}"
     },
     {
       "caseId": "fit_023",
@@ -251,7 +251,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Beyonce is a well-known female celebrity.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Beyonce is a famous woman.\"}"
     },
     {
       "caseId": "fit_024",
@@ -261,7 +261,7 @@
       "expectedLabel": "invalid",
       "actualLabel": "ambiguous",
       "parseOk": true,
-      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.7,\"reason\":\"Whether someone's mom qualifies as 'famous' is subjective.\"}"
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.7,\"reason\":\"Whether 'my mom' qualifies as a famous woman is subjective and context-dependent.\"}"
     },
     {
       "caseId": "fit_025",
@@ -271,7 +271,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "ambiguous",
       "parseOk": true,
-      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.6,\"reason\":\"Siri is an AI assistant, and its fame is context-dependent.\"}"
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.6,\"reason\":\"Siri is an AI assistant and not a human, making its classification as a 'famous woman' debatable.\"}"
     },
     {
       "caseId": "fit_026",
@@ -319,9 +319,9 @@
       "modelId": "mistral-small-2603",
       "status": "ok",
       "expectedLabel": "valid",
-      "actualLabel": "ambiguous",
+      "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.9,\"reason\":\"O.J. Simpson is a former NFL player but his inclusion may be controversial.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"O.J. Simpson is a former NFL player, though controversial.\"}"
     },
     {
       "caseId": "fit_031",
@@ -341,7 +341,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Comfortable has exactly 11 letters.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Comfortable is an 11-letter word.\"}"
     },
     {
       "caseId": "fit_033",
@@ -351,7 +351,7 @@
       "expectedLabel": "invalid",
       "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Cat has only 3 letters.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Cat is a 3-letter word, not 11 letters.\"}"
     },
     {
       "caseId": "fit_034",
@@ -361,7 +361,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Information has exactly 11 letters.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Information is an 11-letter word.\"}"
     },
     {
       "caseId": "fit_035",
@@ -371,7 +371,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Abracadabra has exactly 11 letters.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Abracadabra is an 11-letter word.\"}"
     },
     {
       "caseId": "fit_036",
@@ -381,7 +381,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Environment has exactly 11 letters.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Environment is an 11-letter word.\"}"
     },
     {
       "caseId": "fit_037",
@@ -391,7 +391,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Development has exactly 11 letters.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Development is an 11-letter word.\"}"
     },
     {
       "caseId": "fit_038",
@@ -401,7 +401,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Personality has exactly 11 letters.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Personality is an 11-letter word.\"}"
     },
     {
       "caseId": "fit_039",
@@ -411,7 +411,7 @@
       "expectedLabel": "invalid",
       "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Hello has only 5 letters.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Hello is a 5-letter word, not 11 letters.\"}"
     },
     {
       "caseId": "fit_040",
@@ -431,7 +431,7 @@
       "expectedLabel": "valid",
       "actualLabel": "ambiguous",
       "parseOk": true,
-      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.9,\"reason\":\"Kim Kardashian is primarily known as a celebrity, though she has appeared on reality TV.\"}"
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.8,\"reason\":\"Kim Kardashian is more of a celebrity than a reality TV contestant, but she did appear on reality TV.\"}"
     },
     {
       "caseId": "fit_042",
@@ -451,7 +451,7 @@
       "expectedLabel": "invalid",
       "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Albert Einstein is a historical figure, not a reality TV contestant.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Albert Einstein was a physicist, not a reality TV contestant.\"}"
     },
     {
       "caseId": "fit_044",
@@ -471,7 +471,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "ambiguous",
       "parseOk": true,
-      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.8,\"reason\":\"Donald Trump has appeared on reality TV but is primarily a politician.\"}"
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.8,\"reason\":\"Donald Trump appeared on reality TV but is primarily known as a businessman and politician.\"}"
     },
     {
       "caseId": "fit_046",
@@ -519,9 +519,9 @@
       "modelId": "mistral-small-2603",
       "status": "ok",
       "expectedLabel": "ambiguous",
-      "actualLabel": "ambiguous",
+      "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.9,\"reason\":\"A vending machine may or may not be considered a thing typically found in a hospital.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"A vending machine is commonly found in hospitals.\"}"
     },
     {
       "caseId": "fit_051",
@@ -542,6 +542,46 @@
       "actualLabel": "valid",
       "parseOk": true,
       "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Shrek is a well-known cartoon character.\"}"
+    },
+    {
+      "caseId": "fit_053",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.95,\"reason\":\"Stephenie LaGrossa is a known Survivor player, and the minor misspelling is phonetically close.\"}"
+    },
+    {
+      "caseId": "fit_054",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.98,\"reason\":\"Sandra Diaz Twine is a known Survivor player, and the minor misspelling is phonetically close.\"}"
+    },
+    {
+      "caseId": "fit_055",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"Rupert Boneham is a known Survivor player, and the minor misspelling is phonetically close.\"}"
+    },
+    {
+      "caseId": "fit_056",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "invalid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Parvatie is not a known Survivor player.\"}"
     }
   ]
 }

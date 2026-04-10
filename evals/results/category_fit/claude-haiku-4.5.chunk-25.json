@@ -4,19 +4,19 @@
   "chunkSize": 25,
   "batches": [
     {
-      "latencyMs": 16605,
+      "latencyMs": 9011,
       "inputTokens": 1004,
       "outputTokens": 1434,
       "estimatedCostUsd": 0.008173999999999999
     },
     {
-      "latencyMs": 7511,
+      "latencyMs": 7323,
       "inputTokens": 1075,
-      "outputTokens": 1499,
-      "estimatedCostUsd": 0.00857
+      "outputTokens": 1582,
+      "estimatedCostUsd": 0.008985
     },
     {
-      "latencyMs": 4348,
+      "latencyMs": 3476,
       "inputTokens": 357,
       "outputTokens": 409,
       "estimatedCostUsd": 0.002402
@@ -301,7 +301,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"Deion Sanders is a former NFL cornerback and return specialist.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"Deion Sanders is a former NFL cornerback and safety who played for multiple teams.\"}"
     },
     {
       "caseId": "fit_029",
@@ -311,7 +311,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"Tom Brady is a former NFL quarterback who played for multiple teams.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"Tom Brady is a former NFL quarterback who played for the Patriots and Buccaneers.\"}"
     },
     {
       "caseId": "fit_030",
@@ -321,7 +321,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"O.J. Simpson is a former NFL running back, despite his later notoriety.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"O.J. Simpson is a former NFL running back who played for the Buffalo Bills.\"}"
     },
     {
       "caseId": "fit_031",
@@ -341,7 +341,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"Comfortable has 11 letters: c-o-m-f-o-r-t-a-b-l-e.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"The word 'comfortable' has exactly 11 letters: c-o-m-f-o-r-t-a-b-l-e.\"}"
     },
     {
       "caseId": "fit_033",
@@ -351,7 +351,7 @@
       "expectedLabel": "invalid",
       "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"invalid\",\"confidence\":0.99,\"reason\":\"Cat has only 3 letters, not 11.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":0.99,\"reason\":\"The word 'cat' has only 3 letters, not 11.\"}"
     },
     {
       "caseId": "fit_034",
@@ -361,7 +361,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"Information has 11 letters: i-n-f-o-r-m-a-t-i-o-n.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"The word 'information' has exactly 11 letters: i-n-f-o-r-m-a-t-i-o-n.\"}"
     },
     {
       "caseId": "fit_035",
@@ -371,7 +371,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"Abracadabra has 11 letters: a-b-r-a-c-a-d-a-b-r-a.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"The word 'abracadabra' has exactly 11 letters: a-b-r-a-c-a-d-a-b-r-a.\"}"
     },
     {
       "caseId": "fit_036",
@@ -381,7 +381,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"Environment has 11 letters: e-n-v-i-r-o-n-m-e-n-t.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"The word 'environment' has exactly 11 letters: e-n-v-i-r-o-n-m-e-n-t.\"}"
     },
     {
       "caseId": "fit_037",
@@ -391,7 +391,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"Development has 11 letters: d-e-v-e-l-o-p-m-e-n-t.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"The word 'development' has exactly 11 letters: d-e-v-e-l-o-p-m-e-n-t.\"}"
     },
     {
       "caseId": "fit_038",
@@ -401,7 +401,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"Personality has 11 letters: p-e-r-s-o-n-a-l-i-t-y.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"The word 'personality' has exactly 11 letters: p-e-r-s-o-n-a-l-i-t-y.\"}"
     },
     {
       "caseId": "fit_039",
@@ -411,7 +411,7 @@
       "expectedLabel": "invalid",
       "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"invalid\",\"confidence\":0.99,\"reason\":\"Hello has only 5 letters, not 11.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":0.99,\"reason\":\"The word 'hello' has only 5 letters, not 11.\"}"
     },
     {
       "caseId": "fit_040",
@@ -421,7 +421,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"Snooki is a cast member from the reality TV show Jersey Shore.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"Snooki is a cast member from the reality TV show 'Jersey Shore'.\"}"
     },
     {
       "caseId": "fit_041",
@@ -431,7 +431,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"Kim Kardashian is a reality TV star from Keeping Up with the Kardashians.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"Kim Kardashian is a cast member from the reality TV show 'Keeping Up with the Kardashians'.\"}"
     },
     {
       "caseId": "fit_042",
@@ -441,7 +441,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "ambiguous",
       "parseOk": true,
-      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.6,\"reason\":\"Gordon Ramsay is primarily a chef and TV personality, though he has appeared on reality competition shows like Hell's Kitchen and MasterChef.\"}"
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.6,\"reason\":\"Gordon Ramsay is primarily a chef and TV personality, though he has appeared as a judge/host on reality competition shows like Hell's Kitchen and MasterChef rather than as a contestant.\"}"
     },
     {
       "caseId": "fit_043",
@@ -451,7 +451,7 @@
       "expectedLabel": "invalid",
       "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"invalid\",\"confidence\":0.99,\"reason\":\"Albert Einstein was a physicist who died in 1955, not a reality TV contestant.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":0.99,\"reason\":\"Albert Einstein was a physicist who died in 1955 and never appeared on reality TV.\"}"
     },
     {
       "caseId": "fit_044",
@@ -461,7 +461,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"Paris Hilton is a reality TV star from The Simple Life and other reality shows.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"Paris Hilton is a cast member from the reality TV show 'The Simple Life'.\"}"
     },
     {
       "caseId": "fit_045",
@@ -469,9 +469,9 @@
       "modelId": "claude-haiku-4.5",
       "status": "ok",
       "expectedLabel": "ambiguous",
-      "actualLabel": "ambiguous",
+      "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.65,\"reason\":\"Donald Trump appeared on The Apprentice reality TV show, though he is primarily known as a businessman and politician.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.95,\"reason\":\"Donald Trump appeared as a contestant/participant on the reality TV show 'The Apprentice'.\"}"
     },
     {
       "caseId": "fit_046",
@@ -481,7 +481,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"Monopoly is a classic board game.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"Monopoly is a classic board game where players buy and trade properties.\"}"
     },
     {
       "caseId": "fit_047",
@@ -501,7 +501,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"Dungeons & Dragons is a tabletop role-playing board game.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"Dungeons & Dragons is a tabletop role-playing game that can be classified as a board game.\"}"
     },
     {
       "caseId": "fit_049",
@@ -511,7 +511,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"A stethoscope is a common medical instrument found in hospitals.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"A stethoscope is a medical instrument commonly found and used in hospitals.\"}"
     },
     {
       "caseId": "fit_050",
@@ -519,9 +519,9 @@
       "modelId": "claude-haiku-4.5",
       "status": "ok",
       "expectedLabel": "ambiguous",
-      "actualLabel": "ambiguous",
+      "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.55,\"reason\":\"While vending machines may be present in hospital buildings, they are not typically considered essential hospital equipment or things specifically in a hospital.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.85,\"reason\":\"Vending machines are commonly found in hospitals for patients, visitors, and staff to purchase snacks and beverages.\"}"
     },
     {
       "caseId": "fit_051",
