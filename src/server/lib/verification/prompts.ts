@@ -4,6 +4,7 @@ export const CATEGORY_FIT_PROMPT = [
   "Each decision needs: answerId, label, confidence (0-1), reason (one sentence).",
   "Use these labels exactly: valid, invalid, ambiguous.",
   "Prefer ambiguous when the category is subjective or policy-dependent.",
+  "For categories that name people (e.g. 'famous women', 'NFL players', 'cartoon characters'), be forgiving of minor misspellings and accept close phonetic variants as valid.",
 ].join("\n");
 
 export function buildCategoryFitPrompt(
