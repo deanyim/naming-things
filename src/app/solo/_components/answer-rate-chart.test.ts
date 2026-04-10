@@ -71,4 +71,26 @@ describe("computeCumulativeSeries", () => {
     expect(series[0]!.second).toBe(0);
     expect(series[60]!.second).toBe(60);
   });
+
+  it("validOnly counts only answers labeled 'valid'", () => {
+    const answers = [
+      { createdAt: at(1), isDuplicate: false, label: "valid" },
+      { createdAt: at(2), isDuplicate: false, label: "invalid" },
+      { createdAt: at(3), isDuplicate: false, label: "ambiguous" },
+      { createdAt: at(4), isDuplicate: false, label: "valid" },
+    ];
+    const all = computeCumulativeSeries(answers, START, 10, false);
+    const validOnly = computeCumulativeSeries(answers, START, 10, true);
+    expect(all[10]!.count).toBe(4);
+    expect(validOnly[10]!.count).toBe(2);
+  });
+
+  it("validOnly excludes answers with null labels (pre-scoring)", () => {
+    const answers = [
+      { createdAt: at(1), isDuplicate: false, label: null },
+      { createdAt: at(2), isDuplicate: false, label: "valid" },
+    ];
+    const validOnly = computeCumulativeSeries(answers, START, 10, true);
+    expect(validOnly[10]!.count).toBe(1);
+  });
 });

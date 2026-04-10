@@ -5,20 +5,27 @@ import { useRef, useState } from "react";
 type Answer = {
   createdAt: Date | string;
   isDuplicate: boolean;
+  label?: string | null;
 };
 
 /**
  * Compute cumulative count of non-duplicate answers at each second of the run.
  * Returns an array of [elapsedSeconds, cumulativeCount] pairs.
+ * When validOnly is true, only answers with label === "valid" are counted.
  */
 export function computeCumulativeSeries(
   answers: Answer[],
   startedAt: Date | string,
   durationSeconds: number,
+  validOnly = false,
 ): { second: number; count: number }[] {
   const start = new Date(startedAt).getTime();
-  const nonDuplicates = answers.filter((a) => !a.isDuplicate);
-  const elapsedSeconds = nonDuplicates
+  const filtered = answers.filter((a) => {
+    if (a.isDuplicate) return false;
+    if (validOnly && a.label !== "valid") return false;
+    return true;
+  });
+  const elapsedSeconds = filtered
     .map((a) => Math.max(0, Math.floor((new Date(a.createdAt).getTime() - start) / 1000)))
     .sort((a, b) => a - b);
 
@@ -46,8 +53,14 @@ export function AnswerRateChart({
 }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
+  const [mode, setMode] = useState<"all" | "valid">("all");
 
-  const series = computeCumulativeSeries(answers, startedAt, timerSeconds);
+  const series = computeCumulativeSeries(
+    answers,
+    startedAt,
+    timerSeconds,
+    mode === "valid",
+  );
   const maxCount = Math.max(1, series[series.length - 1]?.count ?? 0);
 
   const width = 600;
@@ -105,9 +118,31 @@ export function AnswerRateChart({
 
   return (
     <div className="w-full">
-      <h3 className="mb-2 text-sm font-medium text-gray-500">
-        answers over time
-      </h3>
+      <div className="mb-2 flex items-center justify-between">
+        <h3 className="text-sm font-medium text-gray-500">answers over time</h3>
+        <div className="flex gap-1 rounded-md border border-gray-200 p-0.5">
+          <button
+            onClick={() => setMode("all")}
+            className={`rounded px-2 py-0.5 text-xs font-medium transition ${
+              mode === "all"
+                ? "bg-gray-900 text-white"
+                : "text-gray-500 hover:text-gray-900"
+            }`}
+          >
+            all
+          </button>
+          <button
+            onClick={() => setMode("valid")}
+            className={`rounded px-2 py-0.5 text-xs font-medium transition ${
+              mode === "valid"
+                ? "bg-gray-900 text-white"
+                : "text-gray-500 hover:text-gray-900"
+            }`}
+          >
+            valid only
+          </button>
+        </div>
+      </div>
       <svg
         ref={svgRef}
         viewBox={`0 0 ${width} ${height}`}
@@ -199,7 +234,8 @@ export function AnswerRateChart({
               y={tooltipY - 2}
               className="fill-white text-[10px] font-bold"
             >
-              {hovered.count} {hovered.count === 1 ? "answer" : "answers"}
+              {hovered.count} {mode === "valid" ? "valid" : ""}
+              {hovered.count === 1 ? " answer" : " answers"}
             </text>
           </g>
         )}
