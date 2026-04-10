@@ -8,6 +8,8 @@ type Answer = {
   label?: string | null;
 };
 
+type Mode = "all" | "valid" | "both";
+
 /**
  * Compute cumulative count of non-duplicate answers at each second of the run.
  * Returns an array of [elapsedSeconds, cumulativeCount] pairs.
@@ -42,6 +44,9 @@ export function computeCumulativeSeries(
   return series;
 }
 
+const ALL_COLOR = "#111827";
+const VALID_COLOR = "#10b981";
+
 export function AnswerRateChart({
   answers,
   startedAt,
@@ -53,15 +58,27 @@ export function AnswerRateChart({
 }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
-  const [mode, setMode] = useState<"all" | "valid">("all");
+  const [mode, setMode] = useState<Mode>("all");
 
-  const series = computeCumulativeSeries(
+  const allSeries = computeCumulativeSeries(
     answers,
     startedAt,
     timerSeconds,
-    mode === "valid",
+    false,
   );
-  const maxCount = Math.max(1, series[series.length - 1]?.count ?? 0);
+  const validSeries = computeCumulativeSeries(
+    answers,
+    startedAt,
+    timerSeconds,
+    true,
+  );
+
+  // maxCount should reflect whatever's visible so the chart auto-scales
+  const visibleMax =
+    mode === "valid"
+      ? validSeries[validSeries.length - 1]?.count ?? 0
+      : allSeries[allSeries.length - 1]?.count ?? 0;
+  const maxCount = Math.max(1, visibleMax);
 
   const width = 600;
   const height = 200;
@@ -77,14 +94,22 @@ export function AnswerRateChart({
   const yFor = (count: number) =>
     padTop + plotHeight - (count / maxCount) * plotHeight;
 
-  const pathD = series
-    .map((p, i) => `${i === 0 ? "M" : "L"} ${xFor(p.second).toFixed(2)} ${yFor(p.count).toFixed(2)}`)
-    .join(" ");
+  function buildPath(series: { second: number; count: number }[]) {
+    return series
+      .map((p, i) => `${i === 0 ? "M" : "L"} ${xFor(p.second).toFixed(2)} ${yFor(p.count).toFixed(2)}`)
+      .join(" ");
+  }
 
-  const areaD =
-    pathD +
-    ` L ${xFor(timerSeconds).toFixed(2)} ${(padTop + plotHeight).toFixed(2)}` +
-    ` L ${xFor(0).toFixed(2)} ${(padTop + plotHeight).toFixed(2)} Z`;
+  function buildAreaPath(pathD: string) {
+    return (
+      pathD +
+      ` L ${xFor(timerSeconds).toFixed(2)} ${(padTop + plotHeight).toFixed(2)}` +
+      ` L ${xFor(0).toFixed(2)} ${(padTop + plotHeight).toFixed(2)} Z`
+    );
+  }
+
+  const allPathD = buildPath(allSeries);
+  const validPathD = buildPath(validSeries);
 
   // Y-axis ticks (0, mid, max)
   const yTicks = [0, Math.round(maxCount / 2), maxCount];
@@ -95,9 +120,7 @@ export function AnswerRateChart({
     const svg = svgRef.current;
     if (!svg) return;
     const rect = svg.getBoundingClientRect();
-    // Convert mouse x to viewBox coordinates
     const viewX = ((e.clientX - rect.left) / rect.width) * width;
-    // Convert viewBox x back to seconds
     const second = Math.max(
       0,
       Math.min(
@@ -108,39 +131,45 @@ export function AnswerRateChart({
     setHoverIdx(second);
   }
 
-  const hovered = hoverIdx !== null ? series[hoverIdx] : null;
+  const showAll = mode === "all" || mode === "both";
+  const showValid = mode === "valid" || mode === "both";
 
-  // Tooltip positioning — flip to the left if too close to the right edge
-  const tooltipX = hovered ? xFor(hovered.second) : 0;
-  const tooltipY = hovered ? yFor(hovered.count) : 0;
-  const flipLeft = tooltipX > width - 100;
-  const tooltipBoxX = flipLeft ? tooltipX - 8 - 90 : tooltipX + 8;
+  const hoveredAll = hoverIdx !== null ? allSeries[hoverIdx] : null;
+  const hoveredValid = hoverIdx !== null ? validSeries[hoverIdx] : null;
+
+  // Tooltip anchors to the higher of the two visible lines
+  const tooltipAnchorY =
+    hoverIdx !== null
+      ? Math.min(
+          showAll && hoveredAll ? yFor(hoveredAll.count) : Infinity,
+          showValid && hoveredValid ? yFor(hoveredValid.count) : Infinity,
+        )
+      : 0;
+  const tooltipX = hoverIdx !== null ? xFor(hoverIdx) : 0;
+  const flipLeft = tooltipX > width - 110;
+  const tooltipBoxWidth = mode === "both" ? 100 : 90;
+  const tooltipBoxHeight = mode === "both" ? 44 : 32;
+  const tooltipBoxX = flipLeft ? tooltipX - 8 - tooltipBoxWidth : tooltipX + 8;
+  const tooltipBoxY = tooltipAnchorY - tooltipBoxHeight + 4;
 
   return (
     <div className="w-full">
       <div className="mb-2 flex items-center justify-between">
         <h3 className="text-sm font-medium text-gray-500">answers over time</h3>
         <div className="flex gap-1 rounded-md border border-gray-200 p-0.5">
-          <button
-            onClick={() => setMode("all")}
-            className={`rounded px-2 py-0.5 text-xs font-medium transition ${
-              mode === "all"
-                ? "bg-gray-900 text-white"
-                : "text-gray-500 hover:text-gray-900"
-            }`}
-          >
-            all
-          </button>
-          <button
-            onClick={() => setMode("valid")}
-            className={`rounded px-2 py-0.5 text-xs font-medium transition ${
-              mode === "valid"
-                ? "bg-gray-900 text-white"
-                : "text-gray-500 hover:text-gray-900"
-            }`}
-          >
-            valid only
-          </button>
+          {(["all", "valid", "both"] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className={`rounded px-2 py-0.5 text-xs font-medium transition ${
+                mode === m
+                  ? "bg-gray-900 text-white"
+                  : "text-gray-500 hover:text-gray-900"
+              }`}
+            >
+              {m === "all" ? "all" : m === "valid" ? "valid only" : "both"}
+            </button>
+          ))}
         </div>
       </div>
       <svg
@@ -162,11 +191,34 @@ export function AnswerRateChart({
           />
         ))}
 
-        {/* Area fill */}
-        <path d={areaD} fill="#111827" fillOpacity={0.08} />
+        {/* All series */}
+        {showAll && (
+          <>
+            <path
+              d={buildAreaPath(allPathD)}
+              fill={ALL_COLOR}
+              fillOpacity={mode === "both" ? 0.05 : 0.08}
+            />
+            <path d={allPathD} fill="none" stroke={ALL_COLOR} strokeWidth={2} />
+          </>
+        )}
 
-        {/* Line */}
-        <path d={pathD} fill="none" stroke="#111827" strokeWidth={2} />
+        {/* Valid series */}
+        {showValid && (
+          <>
+            <path
+              d={buildAreaPath(validPathD)}
+              fill={VALID_COLOR}
+              fillOpacity={mode === "both" ? 0.1 : 0.12}
+            />
+            <path
+              d={validPathD}
+              fill="none"
+              stroke={VALID_COLOR}
+              strokeWidth={2}
+            />
+          </>
+        )}
 
         {/* Y-axis labels */}
         {yTicks.map((t) => (
@@ -194,8 +246,44 @@ export function AnswerRateChart({
           </text>
         ))}
 
-        {/* Hover crosshair + point + tooltip */}
-        {hovered && (
+        {/* Legend for "both" mode */}
+        {mode === "both" && (
+          <g>
+            <line
+              x1={padLeft + 6}
+              x2={padLeft + 18}
+              y1={padTop + 8}
+              y2={padTop + 8}
+              stroke={ALL_COLOR}
+              strokeWidth={2}
+            />
+            <text
+              x={padLeft + 22}
+              y={padTop + 11}
+              className="fill-gray-500 text-[10px]"
+            >
+              all
+            </text>
+            <line
+              x1={padLeft + 44}
+              x2={padLeft + 56}
+              y1={padTop + 8}
+              y2={padTop + 8}
+              stroke={VALID_COLOR}
+              strokeWidth={2}
+            />
+            <text
+              x={padLeft + 60}
+              y={padTop + 11}
+              className="fill-gray-500 text-[10px]"
+            >
+              valid
+            </text>
+          </g>
+        )}
+
+        {/* Hover crosshair + points + tooltip */}
+        {hoverIdx !== null && (
           <g pointerEvents="none">
             <line
               x1={tooltipX}
@@ -206,37 +294,75 @@ export function AnswerRateChart({
               strokeWidth={1}
               strokeDasharray="3 3"
             />
-            <circle
-              cx={tooltipX}
-              cy={tooltipY}
-              r={4}
-              fill="#111827"
-              stroke="#fff"
-              strokeWidth={2}
-            />
+            {showAll && hoveredAll && (
+              <circle
+                cx={tooltipX}
+                cy={yFor(hoveredAll.count)}
+                r={4}
+                fill={ALL_COLOR}
+                stroke="#fff"
+                strokeWidth={2}
+              />
+            )}
+            {showValid && hoveredValid && (
+              <circle
+                cx={tooltipX}
+                cy={yFor(hoveredValid.count)}
+                r={4}
+                fill={VALID_COLOR}
+                stroke="#fff"
+                strokeWidth={2}
+              />
+            )}
             <rect
               x={tooltipBoxX}
-              y={tooltipY - 28}
-              width={90}
-              height={32}
+              y={tooltipBoxY}
+              width={tooltipBoxWidth}
+              height={tooltipBoxHeight}
               rx={4}
               fill="#111827"
             />
             <text
               x={tooltipBoxX + 8}
-              y={tooltipY - 14}
+              y={tooltipBoxY + 14}
               className="fill-white text-[10px]"
             >
-              {hovered.second}s elapsed
+              {hoverIdx}s elapsed
             </text>
-            <text
-              x={tooltipBoxX + 8}
-              y={tooltipY - 2}
-              className="fill-white text-[10px] font-bold"
-            >
-              {hovered.count} {mode === "valid" ? "valid" : ""}
-              {hovered.count === 1 ? " answer" : " answers"}
-            </text>
+            {mode === "both" ? (
+              <>
+                <text
+                  x={tooltipBoxX + 8}
+                  y={tooltipBoxY + 26}
+                  className="fill-white text-[10px]"
+                >
+                  all: <tspan className="font-bold">{hoveredAll?.count ?? 0}</tspan>
+                </text>
+                <text
+                  x={tooltipBoxX + 8}
+                  y={tooltipBoxY + 38}
+                  className="fill-white text-[10px]"
+                >
+                  valid: <tspan className="font-bold">{hoveredValid?.count ?? 0}</tspan>
+                </text>
+              </>
+            ) : (
+              <text
+                x={tooltipBoxX + 8}
+                y={tooltipBoxY + 26}
+                className="fill-white text-[10px] font-bold"
+              >
+                {mode === "valid"
+                  ? hoveredValid?.count ?? 0
+                  : hoveredAll?.count ?? 0}
+                {mode === "valid" ? " valid" : ""}
+                {(mode === "valid"
+                  ? hoveredValid?.count ?? 0
+                  : hoveredAll?.count ?? 0) === 1
+                  ? " answer"
+                  : " answers"}
+              </text>
+            )}
           </g>
         )}
 
