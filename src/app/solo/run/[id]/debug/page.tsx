@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
+import { AnswerRateChart } from "../../../_components/answer-rate-chart";
 
 export default function SoloRunDebugPage() {
   const params = useParams();
@@ -40,6 +41,12 @@ export default function SoloRunDebugPage() {
             valid: {run.validCount} · invalid: {run.invalidCount} · ambiguous: {run.ambiguousCount} · category slug: {run.categorySlug}
           </p>
         </div>
+
+        <AnswerRateChart
+          answers={run.answers}
+          startedAt={run.startedAt}
+          timerSeconds={run.timerSeconds}
+        />
 
         <table className="w-full text-left text-sm">
           <thead>

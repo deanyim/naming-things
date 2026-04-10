@@ -493,6 +493,7 @@ export const soloRouter = createTRPCRouter({
           confidence: a.confidence,
           reason: a.reason,
           isDuplicate: a.isDuplicate,
+          createdAt: a.createdAt,
         })),
       };
     }),
