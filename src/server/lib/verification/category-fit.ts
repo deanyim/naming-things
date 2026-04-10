@@ -7,9 +7,9 @@ const categoryFitSchema = z.object({
   decisions: z.array(
     z.object({
       answerId: z.number(),
+      reason: z.string().min(1),
       label: z.enum(["valid", "invalid", "ambiguous"]),
       confidence: z.number().min(0).max(1),
-      reason: z.string().min(1),
     }),
   ),
 });
