@@ -617,6 +617,126 @@
       "actualLabel": "ambiguous",
       "parseOk": true,
       "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.35,\"reason\":\"baseline does not have enough category knowledge\"}"
+    },
+    {
+      "caseId": "fit_062",
+      "task": "category_fit",
+      "modelId": "rules-baseline",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.35,\"reason\":\"baseline does not have enough category knowledge\"}"
+    },
+    {
+      "caseId": "fit_063",
+      "task": "category_fit",
+      "modelId": "rules-baseline",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.35,\"reason\":\"baseline does not have enough category knowledge\"}"
+    },
+    {
+      "caseId": "fit_064",
+      "task": "category_fit",
+      "modelId": "rules-baseline",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.35,\"reason\":\"baseline does not have enough category knowledge\"}"
+    },
+    {
+      "caseId": "fit_065",
+      "task": "category_fit",
+      "modelId": "rules-baseline",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.35,\"reason\":\"baseline does not have enough category knowledge\"}"
+    },
+    {
+      "caseId": "fit_066",
+      "task": "category_fit",
+      "modelId": "rules-baseline",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.35,\"reason\":\"baseline does not have enough category knowledge\"}"
+    },
+    {
+      "caseId": "fit_067",
+      "task": "category_fit",
+      "modelId": "rules-baseline",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.35,\"reason\":\"baseline does not have enough category knowledge\"}"
+    },
+    {
+      "caseId": "fit_068",
+      "task": "category_fit",
+      "modelId": "rules-baseline",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.35,\"reason\":\"baseline does not have enough category knowledge\"}"
+    },
+    {
+      "caseId": "fit_069",
+      "task": "category_fit",
+      "modelId": "rules-baseline",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.35,\"reason\":\"baseline does not have enough category knowledge\"}"
+    },
+    {
+      "caseId": "fit_070",
+      "task": "category_fit",
+      "modelId": "rules-baseline",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.35,\"reason\":\"baseline does not have enough category knowledge\"}"
+    },
+    {
+      "caseId": "fit_071",
+      "task": "category_fit",
+      "modelId": "rules-baseline",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.35,\"reason\":\"baseline does not have enough category knowledge\"}"
+    },
+    {
+      "caseId": "fit_072",
+      "task": "category_fit",
+      "modelId": "rules-baseline",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.35,\"reason\":\"baseline does not have enough category knowledge\"}"
+    },
+    {
+      "caseId": "fit_073",
+      "task": "category_fit",
+      "modelId": "rules-baseline",
+      "status": "ok",
+      "expectedLabel": "invalid",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.35,\"reason\":\"baseline does not have enough category knowledge\"}"
     }
   ]
 }
