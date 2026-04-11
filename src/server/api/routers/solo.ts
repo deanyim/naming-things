@@ -19,7 +19,10 @@ import {
   rerunJudgingForRun,
   JudgeVersionAlreadyCurrentError,
 } from "~/server/lib/solo/scoring";
-import { generateSoloSlug } from "~/server/lib/solo/slug";
+import {
+  insertWithUniqueSoloSlug,
+  SoloSlugExhaustedError,
+} from "~/server/lib/solo/slug";
 import { ALLOWED_TIMERS } from "~/app/solo/constants";
 
 export const soloRouter = createTRPCRouter({
@@ -53,27 +56,43 @@ export const soloRouter = createTRPCRouter({
       const attempt = (prev?.count ?? 0) + 1;
 
       const now = new Date();
-      const [run] = await ctx.db
-        .insert(soloRuns)
-        .values({
-          slug: generateSoloSlug(),
-          playerId: player.id,
-          inputCategory: resolved.inputCategory,
-          categoryDisplayName: resolved.displayName,
-          categorySlug: resolved.slug,
-          timerSeconds: input.timerSeconds,
-          attempt,
-          status: "playing",
-          startedAt: now,
-        })
-        .returning();
+      const run = await insertWithUniqueSoloSlug(async (slug) => {
+        const [inserted] = await ctx.db
+          .insert(soloRuns)
+          .values({
+            slug,
+            playerId: player.id,
+            inputCategory: resolved.inputCategory,
+            categoryDisplayName: resolved.displayName,
+            categorySlug: resolved.slug,
+            timerSeconds: input.timerSeconds,
+            attempt,
+            status: "playing",
+            startedAt: now,
+          })
+          .onConflictDoNothing({ target: soloRuns.slug })
+          .returning();
+        return inserted ?? null;
+      }).catch((err) => {
+        // Only convert the specific exhaustion sentinel into a user-facing
+        // error. Any other thrown error (DB connection, drizzle driver,
+        // etc.) propagates as-is so we don't mislabel a transient failure.
+        if (err instanceof SoloSlugExhaustedError) {
+          console.error("Solo slug space exhausted", err);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Could not start a new run. Please try again.",
+          });
+        }
+        throw err;
+      });
 
       return {
-        slug: run!.slug,
+        slug: run.slug,
         categoryDisplayName: resolved.displayName,
         categorySlug: resolved.slug,
         timerSeconds: input.timerSeconds,
-        startedAt: run!.startedAt,
+        startedAt: run.startedAt,
         endsAt: new Date(now.getTime() + input.timerSeconds * 1000),
       };
     }),
