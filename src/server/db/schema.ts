@@ -358,3 +358,47 @@ export const categoryAliases = createTable(
   }),
   (t) => [index("category_alias_slug_idx").on(t.aliasSlug)],
 );
+
+export type SoloRunJudgmentSnapshotAnswer = {
+  answerId: number;
+  text: string;
+  label: "valid" | "invalid" | "ambiguous" | null;
+  confidence: number | null;
+  reason: string | null;
+};
+
+export const soloRunJudgmentHistory = createTable(
+  "solo_run_judgment_history",
+  (d) => ({
+    id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
+    runId: d
+      .integer()
+      .notNull()
+      .references(() => soloRuns.id, { onDelete: "cascade" }),
+    judgeModel: d.varchar({ length: 256 }),
+    judgeVersion: d.varchar({ length: 256 }),
+    score: d.integer().notNull(),
+    validCount: d.integer().notNull(),
+    invalidCount: d.integer().notNull(),
+    ambiguousCount: d.integer().notNull(),
+    answersSnapshot: d
+      .jsonb()
+      .$type<SoloRunJudgmentSnapshotAnswer[]>()
+      .notNull(),
+    createdAt: d
+      .timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  }),
+  (t) => [index("solo_run_judgment_history_run_idx").on(t.runId)],
+);
+
+export const soloRunJudgmentHistoryRelations = relations(
+  soloRunJudgmentHistory,
+  ({ one }) => ({
+    run: one(soloRuns, {
+      fields: [soloRunJudgmentHistory.runId],
+      references: [soloRuns.id],
+    }),
+  }),
+);

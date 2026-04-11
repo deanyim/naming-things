@@ -7,11 +7,18 @@ import {
   soloRuns,
   soloRunAnswers,
   categoryAliases,
+  soloRunJudgmentHistory,
 } from "~/server/db/schema";
 import { getPlayerBySession } from "~/server/api/lib/session";
 import { resolveCategory } from "~/server/lib/categories/normalize";
 import { normalizeAnswer } from "~/lib/normalize";
-import { scoreRun, maybeClassifyBatch } from "~/server/lib/solo/scoring";
+import {
+  scoreRun,
+  maybeClassifyBatch,
+  computeJudgeVersion,
+  rerunJudgingForRun,
+  JudgeVersionAlreadyCurrentError,
+} from "~/server/lib/solo/scoring";
 import { generateSoloSlug } from "~/server/lib/solo/slug";
 import { ALLOWED_TIMERS } from "~/app/solo/constants";
 
@@ -469,6 +476,11 @@ export const soloRouter = createTRPCRouter({
         orderBy: [asc(soloRunAnswers.id)],
       });
 
+      const history = await ctx.db.query.soloRunJudgmentHistory.findMany({
+        where: eq(soloRunJudgmentHistory.runId, run.id),
+        orderBy: [desc(soloRunJudgmentHistory.createdAt)],
+      });
+
       return {
         slug: run.slug,
         category: run.categoryDisplayName,
@@ -481,6 +493,7 @@ export const soloRouter = createTRPCRouter({
         ambiguousCount: run.ambiguousCount,
         judgeModel: run.judgeModel,
         judgeVersion: run.judgeVersion,
+        currentJudgeVersion: computeJudgeVersion(),
         durationMs: run.durationMs,
         startedAt: run.startedAt,
         endedAt: run.endedAt,
@@ -495,7 +508,57 @@ export const soloRouter = createTRPCRouter({
           isDuplicate: a.isDuplicate,
           createdAt: a.createdAt,
         })),
+        history: history.map((h) => ({
+          id: h.id,
+          judgeModel: h.judgeModel,
+          judgeVersion: h.judgeVersion,
+          score: h.score,
+          validCount: h.validCount,
+          invalidCount: h.invalidCount,
+          ambiguousCount: h.ambiguousCount,
+          answersSnapshot: h.answersSnapshot,
+          createdAt: h.createdAt,
+        })),
       };
+    }),
+
+  rerunJudging: publicProcedure
+    .input(
+      z.object({
+        slug: z.string().min(1),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      // No owner check: matches `getRunDebug` which is also public.
+      // The debug tool is intentionally open so any legacy/foreign run
+      // can be re-judged after a prompt or model change.
+      const run = await ctx.db.query.soloRuns.findFirst({
+        where: eq(soloRuns.slug, input.slug),
+      });
+
+      if (!run) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Run not found" });
+      }
+      if (run.status !== "finished") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Run is not finished",
+        });
+      }
+
+      try {
+        await rerunJudgingForRun(ctx.db, run.id);
+      } catch (err) {
+        if (err instanceof JudgeVersionAlreadyCurrentError) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Judging is already up to date",
+          });
+        }
+        throw err;
+      }
+
+      return { ok: true as const };
     }),
 
   getPublicRun: publicProcedure
