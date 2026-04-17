@@ -737,6 +737,66 @@
       "actualLabel": "ambiguous",
       "parseOk": true,
       "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.35,\"reason\":\"baseline does not have enough category knowledge\"}"
+    },
+    {
+      "caseId": "fit_074",
+      "task": "category_fit",
+      "modelId": "rules-baseline",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.35,\"reason\":\"baseline does not have enough category knowledge\"}"
+    },
+    {
+      "caseId": "fit_075",
+      "task": "category_fit",
+      "modelId": "rules-baseline",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.35,\"reason\":\"baseline does not have enough category knowledge\"}"
+    },
+    {
+      "caseId": "fit_076",
+      "task": "category_fit",
+      "modelId": "rules-baseline",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.35,\"reason\":\"baseline does not have enough category knowledge\"}"
+    },
+    {
+      "caseId": "fit_077",
+      "task": "category_fit",
+      "modelId": "rules-baseline",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.35,\"reason\":\"baseline does not have enough category knowledge\"}"
+    },
+    {
+      "caseId": "fit_078",
+      "task": "category_fit",
+      "modelId": "rules-baseline",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.35,\"reason\":\"baseline does not have enough category knowledge\"}"
+    },
+    {
+      "caseId": "fit_079",
+      "task": "category_fit",
+      "modelId": "rules-baseline",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "ambiguous",
+      "parseOk": true,
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.35,\"reason\":\"baseline does not have enough category knowledge\"}"
     }
   ]
 }

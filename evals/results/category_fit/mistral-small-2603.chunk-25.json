@@ -4,22 +4,28 @@
   "chunkSize": 25,
   "batches": [
     {
-      "latencyMs": 7059,
-      "inputTokens": 1039,
-      "outputTokens": 1108,
-      "estimatedCostUsd": 0.00082065
+      "latencyMs": 14471,
+      "inputTokens": 1085,
+      "outputTokens": 1146,
+      "estimatedCostUsd": 0.00085035
     },
     {
-      "latencyMs": 6608,
-      "inputTokens": 1090,
-      "outputTokens": 1124,
-      "estimatedCostUsd": 0.0008379
+      "latencyMs": 5690,
+      "inputTokens": 1136,
+      "outputTokens": 1170,
+      "estimatedCostUsd": 0.0008724000000000001
     },
     {
-      "latencyMs": 7763,
-      "inputTokens": 1020,
-      "outputTokens": 1157,
-      "estimatedCostUsd": 0.0008472
+      "latencyMs": 6298,
+      "inputTokens": 1129,
+      "outputTokens": 1290,
+      "estimatedCostUsd": 0.0009433499999999999
+    },
+    {
+      "latencyMs": 1666,
+      "inputTokens": 424,
+      "outputTokens": 214,
+      "estimatedCostUsd": 0.000192
     }
   ],
   "cases": [
@@ -69,9 +75,9 @@
       "modelId": "mistral-small-2603",
       "status": "ok",
       "expectedLabel": "valid",
-      "actualLabel": "valid",
+      "actualLabel": "ambiguous",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"Ice cream is typically cold.\"}"
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.8,\"reason\":\"Ice cream is typically cold, though it can melt.\"}"
     },
     {
       "caseId": "fit_006",
@@ -79,9 +85,9 @@
       "modelId": "mistral-small-2603",
       "status": "ok",
       "expectedLabel": "ambiguous",
-      "actualLabel": "valid",
+      "actualLabel": "ambiguous",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Batman is a movie character and associated with multiple movies.\"}"
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.9,\"reason\":\"Batman is a movie character, but 'Batman' can also refer to the movie franchise or specific films.\"}"
     },
     {
       "caseId": "fit_007",
@@ -91,7 +97,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"An elephant is an animal.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"An elephant is a well-known animal.\"}"
     },
     {
       "caseId": "fit_008",
@@ -111,7 +117,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"invalid\",\"confidence\":0.95,\"reason\":\"A phone is not typically found in a kitchen.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"A phone is not typically found in a kitchen.\"}"
     },
     {
       "caseId": "fit_010",
@@ -121,7 +127,7 @@
       "expectedLabel": "invalid",
       "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"??? is not a valid color representation.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"The answer '???' is not a valid color.\"}"
     },
     {
       "caseId": "fit_011",
@@ -131,7 +137,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.95,\"reason\":\"Chess is a recognized sport.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Chess is a recognized sport.\"}"
     },
     {
       "caseId": "fit_012",
@@ -141,7 +147,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Pizza is round.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Pizza is typically round.\"}"
     },
     {
       "caseId": "fit_013",
@@ -159,9 +165,9 @@
       "modelId": "mistral-small-2603",
       "status": "ok",
       "expectedLabel": "ambiguous",
-      "actualLabel": "valid",
+      "actualLabel": "ambiguous",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"Tomato is commonly considered a vegetable in culinary contexts.\"}"
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.9,\"reason\":\"A tomato is botanically a fruit but commonly classified as a vegetable in culinary contexts.\"}"
     },
     {
       "caseId": "fit_015",
@@ -171,7 +177,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Mars is a planet.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Mars is a recognized planet.\"}"
     },
     {
       "caseId": "fit_016",
@@ -181,7 +187,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.95,\"reason\":\"Pluto is classified as a dwarf planet, which is a type of planet.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Pluto is classified as a dwarf planet, which is a type of planet.\"}"
     },
     {
       "caseId": "fit_017",
@@ -191,7 +197,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"George Washington was a U.S. president.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"George Washington is a well-known U.S. president.\"}"
     },
     {
       "caseId": "fit_018",
@@ -201,7 +207,7 @@
       "expectedLabel": "invalid",
       "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Penguins do not fly.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Penguins are flightless birds and do not fly.\"}"
     },
     {
       "caseId": "fit_019",
@@ -221,7 +227,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Marie Curie was a famous woman scientist.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Marie Curie is a famous woman in science.\"}"
     },
     {
       "caseId": "fit_021",
@@ -241,7 +247,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Mulan is a famous woman from folklore and media.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Mulan is a famous woman from folklore and history.\"}"
     },
     {
       "caseId": "fit_023",
@@ -251,7 +257,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Beyonce is a famous woman.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Beyoncé is a famous woman.\"}"
     },
     {
       "caseId": "fit_024",
@@ -261,7 +267,7 @@
       "expectedLabel": "invalid",
       "actualLabel": "ambiguous",
       "parseOk": true,
-      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.8,\"reason\":\"While 'my mom' could be a personal reference, it is not a universally recognized famous woman.\"}"
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.7,\"reason\":\"While 'my mom' could be a famous woman, it is subjective and not a universally recognized famous woman.\"}"
     },
     {
       "caseId": "fit_025",
@@ -341,7 +347,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"comfortable has exactly 11 letters.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Comfortable has 11 letters.\"}"
     },
     {
       "caseId": "fit_033",
@@ -351,7 +357,7 @@
       "expectedLabel": "invalid",
       "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"cat has only 3 letters, not 11.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Cat has 3 letters, not 11.\"}"
     },
     {
       "caseId": "fit_034",
@@ -361,7 +367,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"information has exactly 11 letters.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Information has 11 letters.\"}"
     },
     {
       "caseId": "fit_035",
@@ -371,7 +377,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"abracadabra has exactly 11 letters.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Abracadabra has 11 letters.\"}"
     },
     {
       "caseId": "fit_036",
@@ -381,7 +387,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"environment has exactly 11 letters.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Environment has 11 letters.\"}"
     },
     {
       "caseId": "fit_037",
@@ -391,7 +397,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"development has exactly 11 letters.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Development has 11 letters.\"}"
     },
     {
       "caseId": "fit_038",
@@ -401,7 +407,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"personality has exactly 11 letters.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Personality has 11 letters.\"}"
     },
     {
       "caseId": "fit_039",
@@ -411,7 +417,7 @@
       "expectedLabel": "invalid",
       "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"hello has only 5 letters, not 11.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Hello has 5 letters, not 11.\"}"
     },
     {
       "caseId": "fit_040",
@@ -421,7 +427,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Snooki is a well-known reality TV contestant from Jersey Shore.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Snooki is a reality TV contestant from 'Jersey Shore'.\"}"
     },
     {
       "caseId": "fit_041",
@@ -431,7 +437,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Kim Kardashian is primarily known as a reality TV star from Keeping Up with the Kardashians.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Kim Kardashian is primarily known as a reality TV star from 'Keeping Up with the Kardashians'.\"}"
     },
     {
       "caseId": "fit_042",
@@ -461,7 +467,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Paris Hilton is a reality TV star from The Simple Life.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Paris Hilton is a reality TV star from 'The Simple Life'.\"}"
     },
     {
       "caseId": "fit_045",
@@ -471,7 +477,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Donald Trump was a contestant on The Apprentice, a reality TV show.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Donald Trump was a contestant on 'The Apprentice', a reality TV show.\"}"
     },
     {
       "caseId": "fit_046",
@@ -501,7 +507,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"Dungeons & Dragons is a tabletop role-playing game, often played as a board game.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Dungeons & Dragons is a tabletop role-playing game, often classified as a board game.\"}"
     },
     {
       "caseId": "fit_049",
@@ -511,7 +517,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"A stethoscope is a common item found in hospitals.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"A stethoscope is commonly found in hospitals.\"}"
     },
     {
       "caseId": "fit_050",
@@ -521,7 +527,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"A vending machine is not typically considered a thing inside a hospital.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":0.9,\"reason\":\"A vending machine is not typically considered a thing in a hospital.\"}"
     },
     {
       "caseId": "fit_051",
@@ -551,7 +557,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Stephenie LaGrossa is a known contestant on the TV show 'Survivor'.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Stephenie LaGrossa is a recognizable contestant from the reality TV show 'Survivor'.\"}"
     },
     {
       "caseId": "fit_054",
@@ -561,7 +567,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Sandra Diaz-Twine is a known contestant on the TV show 'Survivor'.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Sandra Diaz-Twine is a well-known contestant from the reality TV show 'Survivor'.\"}"
     },
     {
       "caseId": "fit_055",
@@ -571,7 +577,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Rupert Boneham is a known contestant on the TV show 'Survivor'.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Rupert Boneham is a contestant from the reality TV show 'Survivor'.\"}"
     },
     {
       "caseId": "fit_056",
@@ -581,7 +587,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"Parvati Shallow is a known contestant on the TV show 'Survivor' (likely misspelled as 'parvatie').\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.95,\"reason\":\"Parvati Shallow is a contestant from the reality TV show 'Survivor', and 'parvatie' is a clear misspelling.\"}"
     },
     {
       "caseId": "fit_057",
@@ -591,7 +597,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Dirk Been is a known contestant on the TV show 'Survivor'.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Dirk Been is a contestant from the reality TV show 'Survivor'.\"}"
     },
     {
       "caseId": "fit_058",
@@ -601,7 +607,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Dirk Been is a known contestant on the TV show 'Survivor'.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Dirk Been is a contestant from the reality TV show 'Survivor', and the category 'survivor contestants' is equivalent to 'survivor players'.\"}"
     },
     {
       "caseId": "fit_059",
@@ -611,7 +617,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"Debb Eaton is a known contestant on the TV show 'Survivor' (likely misspelled as 'debb eaton').\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Debb Eaton is a contestant from the reality TV show 'Survivor'.\"}"
     },
     {
       "caseId": "fit_060",
@@ -621,7 +627,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Alicia Callaway is a known contestant on the TV show 'Survivor'.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Alicia Callaway is a contestant from the reality TV show 'Survivor'.\"}"
     },
     {
       "caseId": "fit_061",
@@ -631,7 +637,7 @@
       "expectedLabel": "invalid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Dan Gheesling is a known contestant on the TV show 'Survivor'.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Dan Gheesling is a contestant from the reality TV show 'Survivor'.\"}"
     },
     {
       "caseId": "fit_062",
@@ -681,7 +687,7 @@
       "expectedLabel": "invalid",
       "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Stephen Curry is a basketball player, not an NFL quarterback.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Stephen Curry is an NBA player, not an NFL quarterback, so this does not fit the category.\"}"
     },
     {
       "caseId": "fit_067",
@@ -691,7 +697,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Steve Jobs is a former CEO of Apple.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Steve Jobs was a former CEO of Apple.\"}"
     },
     {
       "caseId": "fit_068",
@@ -711,7 +717,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"John Sculley is a former CEO of Apple.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"John Sculley was a former CEO of Apple.\"}"
     },
     {
       "caseId": "fit_070",
@@ -741,7 +747,7 @@
       "expectedLabel": "invalid",
       "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Kobe Bryant is not a current NBA player (he is deceased).\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Kobe Bryant is a former NBA player, not a current one, so this does not fit the category.\"}"
     },
     {
       "caseId": "fit_073",
@@ -751,7 +757,67 @@
       "expectedLabel": "invalid",
       "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Philip Rivers is a former NFL quarterback, not an active one.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Philip Rivers is a former NFL quarterback, not an active one, so this does not fit the category.\"}"
+    },
+    {
+      "caseId": "fit_074",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Steph Curry is a well-known NBA player.\"}"
+    },
+    {
+      "caseId": "fit_075",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.95,\"reason\":\"KAT is a common nickname for Karl-Anthony Towns, an NBA player.\"}"
+    },
+    {
+      "caseId": "fit_076",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"MJ is a well-known nickname for Michael Jordan, a famous NBA player.\"}"
+    },
+    {
+      "caseId": "fit_077",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Gronk is a well-known nickname for Rob Gronkowski, a famous NFL player.\"}"
+    },
+    {
+      "caseId": "fit_078",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"RBG is a well-known nickname for Ruth Bader Ginsburg, a famous woman.\"}"
+    },
+    {
+      "caseId": "fit_079",
+      "task": "category_fit",
+      "modelId": "mistral-small-2603",
+      "status": "ok",
+      "expectedLabel": "valid",
+      "actualLabel": "valid",
+      "parseOk": true,
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"LBJ is a well-known nickname for LeBron James, a famous NBA player.\"}"
     }
   ]
 }
