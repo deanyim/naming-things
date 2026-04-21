@@ -4,28 +4,28 @@
   "chunkSize": 25,
   "batches": [
     {
-      "latencyMs": 11054,
+      "latencyMs": 13044,
       "inputTokens": 1073,
-      "outputTokens": 1136,
-      "estimatedCostUsd": 0.00030231
+      "outputTokens": 1143,
+      "estimatedCostUsd": 0.00030371
     },
     {
-      "latencyMs": 5270,
+      "latencyMs": 13660,
       "inputTokens": 1124,
-      "outputTokens": 1288,
-      "estimatedCostUsd": 0.00033628000000000005
+      "outputTokens": 1231,
+      "estimatedCostUsd": 0.00032488000000000005
     },
     {
-      "latencyMs": 12147,
+      "latencyMs": 31184,
       "inputTokens": 1117,
-      "outputTokens": 1259,
-      "estimatedCostUsd": 0.00032999
+      "outputTokens": 1252,
+      "estimatedCostUsd": 0.00032859
     },
     {
-      "latencyMs": 3059,
+      "latencyMs": 4427,
       "inputTokens": 412,
-      "outputTokens": 227,
-      "estimatedCostUsd": 0.00007424
+      "outputTokens": 224,
+      "estimatedCostUsd": 0.00007364
     }
   ],
   "cases": [
@@ -57,7 +57,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Japan is a recognized country.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Japan is a sovereign country.\"}"
     },
     {
       "caseId": "fit_004",
@@ -67,7 +67,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"A piano is a well-known musical instrument.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"A piano is a musical instrument.\"}"
     },
     {
       "caseId": "fit_005",
@@ -87,7 +87,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Batman is a well-known movie franchise.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Batman is a fictional character from movies.\"}"
     },
     {
       "caseId": "fit_007",
@@ -97,7 +97,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"An elephant is a well-known animal.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"An elephant is a large mammal.\"}"
     },
     {
       "caseId": "fit_008",
@@ -117,7 +117,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"invalid\",\"confidence\":0.9,\"reason\":\"A phone is not typically found in a kitchen, though it may occasionally be present.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":0.9,\"reason\":\"A phone is not typically found in a kitchen, though it may be present occasionally.\"}"
     },
     {
       "caseId": "fit_010",
@@ -127,7 +127,7 @@
       "expectedLabel": "invalid",
       "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"The answer is nonsensical and does not represent a color.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"The answer is unclear or nonsensical, making it impossible to categorize.\"}"
     },
     {
       "caseId": "fit_011",
@@ -177,7 +177,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Mars is a recognized planet in our solar system.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Mars is a planet in our solar system.\"}"
     },
     {
       "caseId": "fit_016",
@@ -185,9 +185,9 @@
       "modelId": "mistral-small-3.2",
       "status": "ok",
       "expectedLabel": "ambiguous",
-      "actualLabel": "ambiguous",
+      "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.7,\"reason\":\"Pluto is no longer classified as a planet but was historically considered one.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":0.9,\"reason\":\"Pluto is a dwarf planet, not a full-fledged planet.\"}"
     },
     {
       "caseId": "fit_017",
@@ -197,7 +197,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"George Washington is a well-known U.S. president.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"George Washington was the first U.S. president.\"}"
     },
     {
       "caseId": "fit_018",
@@ -217,7 +217,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Cleopatra is a historically famous woman.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Cleopatra was a famous historical figure and queen of Egypt.\"}"
     },
     {
       "caseId": "fit_020",
@@ -227,7 +227,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Marie Curie is a famous scientist and woman.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Marie Curie was a renowned scientist and Nobel laureate.\"}"
     },
     {
       "caseId": "fit_021",
@@ -237,7 +237,7 @@
       "expectedLabel": "invalid",
       "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Abraham Lincoln is a man, not a woman.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Abraham Lincoln was a U.S. president, not a woman.\"}"
     },
     {
       "caseId": "fit_022",
@@ -247,7 +247,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"Mulan is a fictional character from folklore and media, widely recognized as a famous woman.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"Mulan is a fictional character from folklore and movies, often depicted as a woman.\"}"
     },
     {
       "caseId": "fit_023",
@@ -257,7 +257,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Beyoncé is a globally famous woman.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Beyoncé is a globally famous singer and performer.\"}"
     },
     {
       "caseId": "fit_024",
@@ -267,7 +267,7 @@
       "expectedLabel": "invalid",
       "actualLabel": "ambiguous",
       "parseOk": true,
-      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.5,\"reason\":\"The answer is too vague and subjective to determine fame.\"}"
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.7,\"reason\":\"The answer is too vague and subjective to determine fame.\"}"
     },
     {
       "caseId": "fit_025",
@@ -307,7 +307,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Deion Sanders is a former NFL player and current college football coach, but he is still recognizable as an NFL player.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Deion Sanders is a former NFL player and current college football coach, fitting the category.\"}"
     },
     {
       "caseId": "fit_029",
@@ -327,7 +327,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"O.J. Simpson was a famous NFL running back before his legal troubles, and he is still recognized as an NFL player.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"O.J. Simpson was a former NFL player and Heisman Trophy winner, despite his later controversies.\"}"
     },
     {
       "caseId": "fit_031",
@@ -337,7 +337,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Travis Kelce is a current NFL tight end who plays for the Kansas City Chiefs.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Travis Kelce is a current NFL tight end for the Kansas City Chiefs.\"}"
     },
     {
       "caseId": "fit_032",
@@ -427,7 +427,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Snooki is a well-known contestant from the reality TV show 'Jersey Shore'.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Snooki (Nicole Polizzi) is a well-known contestant from the reality TV show 'Jersey Shore'.\"}"
     },
     {
       "caseId": "fit_041",
@@ -437,7 +437,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Kim Kardashian is a famous reality TV personality from 'Keeping Up with the Kardashians'.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Kim Kardashian is a reality TV star from 'Keeping Up with the Kardashians'.\"}"
     },
     {
       "caseId": "fit_042",
@@ -445,9 +445,9 @@
       "modelId": "mistral-small-3.2",
       "status": "ok",
       "expectedLabel": "ambiguous",
-      "actualLabel": "ambiguous",
+      "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.7,\"reason\":\"Gordon Ramsay is a celebrity chef and TV personality, but he is primarily known for his cooking shows rather than traditional reality TV.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Gordon Ramsay is a celebrity chef and judge on reality TV shows like 'Hell's Kitchen' and 'MasterChef'.\"}"
     },
     {
       "caseId": "fit_043",
@@ -457,7 +457,7 @@
       "expectedLabel": "invalid",
       "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Albert Einstein was a scientist, not a reality TV contestant.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Albert Einstein was a famous scientist, not a reality TV contestant.\"}"
     },
     {
       "caseId": "fit_044",
@@ -467,7 +467,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Paris Hilton is a well-known reality TV personality from 'The Simple Life'.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Paris Hilton is a reality TV star from 'The Simple Life'.\"}"
     },
     {
       "caseId": "fit_045",
@@ -477,7 +477,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Donald Trump appeared on 'The Apprentice', which is a reality TV show.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Donald Trump appeared on 'The Apprentice', a reality TV show.\"}"
     },
     {
       "caseId": "fit_046",
@@ -507,7 +507,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"Dungeons & Dragons is a tabletop role-playing game, which can be considered a board game in a broad sense.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"Dungeons & Dragons is a tabletop role-playing game, which can be considered a board game.\"}"
     },
     {
       "caseId": "fit_049",
@@ -527,7 +527,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "ambiguous",
       "parseOk": true,
-      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.6,\"reason\":\"A vending machine is not typically found in hospitals, though some may have them.\"}"
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.7,\"reason\":\"A vending machine is not typically considered a primary item in a hospital, though they may be present.\"}"
     },
     {
       "caseId": "fit_051",
@@ -537,7 +537,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"SpongeBob is a well-known cartoon character from the animated series 'SpongeBob SquarePants'.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"SpongeBob is a well-known character from the animated series 'SpongeBob SquarePants'.\"}"
     },
     {
       "caseId": "fit_052",
@@ -557,7 +557,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"Stephenie LaGrossa is a contestant from the reality TV show 'Survivor'.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Stephenie LaGrossa is a contestant from the reality TV show 'Survivor'.\"}"
     },
     {
       "caseId": "fit_054",
@@ -567,7 +567,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Sandra Diaz-Twine is a well-known contestant from 'Survivor' who won twice.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Sandra Diaz-Twine is a contestant from the reality TV show 'Survivor'.\"}"
     },
     {
       "caseId": "fit_055",
@@ -577,7 +577,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"Rupert Boneham is a contestant from 'Survivor' known for his distinctive appearance.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Rupert Boneham is a contestant from the reality TV show 'Survivor'.\"}"
     },
     {
       "caseId": "fit_056",
@@ -587,7 +587,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"Parvati Shallow is a contestant from 'Survivor' with a memorable presence.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"Parvati Shallow is a contestant from the reality TV show 'Survivor', and 'parvatie' is a common misspelling of her name.\"}"
     },
     {
       "caseId": "fit_057",
@@ -595,9 +595,9 @@
       "modelId": "mistral-small-3.2",
       "status": "ok",
       "expectedLabel": "valid",
-      "actualLabel": "valid",
+      "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"Dirk Been is a contestant from 'Survivor' known for his strategic gameplay.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":0.9,\"reason\":\"Dirk Been is not a known contestant from the reality TV show 'Survivor'.\"}"
     },
     {
       "caseId": "fit_058",
@@ -605,9 +605,9 @@
       "modelId": "mistral-small-3.2",
       "status": "ok",
       "expectedLabel": "valid",
-      "actualLabel": "valid",
+      "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"Dirk Been is a contestant from 'Survivor', and the category 'contestants' is a broader term than 'players'.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":0.9,\"reason\":\"Dirk Been is not a known contestant from the reality TV show 'Survivor'.\"}"
     },
     {
       "caseId": "fit_059",
@@ -615,9 +615,9 @@
       "modelId": "mistral-small-3.2",
       "status": "ok",
       "expectedLabel": "valid",
-      "actualLabel": "valid",
+      "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"Debbie Eaton is a contestant from 'Survivor' known for her time on the show.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":0.9,\"reason\":\"Debbie Eaton is not a known contestant from the reality TV show 'Survivor'.\"}"
     },
     {
       "caseId": "fit_060",
@@ -625,9 +625,9 @@
       "modelId": "mistral-small-3.2",
       "status": "ok",
       "expectedLabel": "valid",
-      "actualLabel": "valid",
+      "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"Alicia Callaway is a contestant from 'Survivor' known for her gameplay.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":0.9,\"reason\":\"Alicia Callaway is not a known contestant from the reality TV show 'Survivor'.\"}"
     },
     {
       "caseId": "fit_061",
@@ -637,7 +637,7 @@
       "expectedLabel": "invalid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Dan Gheesling is a well-known contestant from 'Survivor' with multiple appearances.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Dan Gheesling is a contestant from the reality TV show 'Survivor'.\"}"
     },
     {
       "caseId": "fit_062",
@@ -647,7 +647,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Philip Rivers is a former NFL quarterback with a notable career.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Philip Rivers is a former NFL quarterback.\"}"
     },
     {
       "caseId": "fit_063",
@@ -657,7 +657,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Matt Ryan is a former NFL quarterback known for his time with the Atlanta Falcons.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Matt Ryan is a former NFL quarterback.\"}"
     },
     {
       "caseId": "fit_064",
@@ -667,7 +667,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Joe Montana is a legendary NFL quarterback with multiple Super Bowl wins.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Joe Montana is a legendary NFL quarterback.\"}"
     },
     {
       "caseId": "fit_065",
@@ -677,7 +677,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Patrick Mahomes is an active NFL quarterback known for his current success.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Patrick Mahomes is an active NFL quarterback.\"}"
     },
     {
       "caseId": "fit_066",
@@ -697,7 +697,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Steve Jobs was a co-founder and former CEO of Apple.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Steve Jobs was a CEO of Apple Inc.\"}"
     },
     {
       "caseId": "fit_068",
@@ -707,7 +707,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Tim Cook is the current CEO of Apple.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Tim Cook is the current CEO of Apple Inc.\"}"
     },
     {
       "caseId": "fit_069",
@@ -717,7 +717,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"John Sculley was a former CEO of Apple during the 1980s and 1990s.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"John Sculley was a CEO of Apple Inc.\"}"
     },
     {
       "caseId": "fit_070",
@@ -737,7 +737,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Michael Jordan is a legendary NBA player and cultural icon.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Michael Jordan is a legendary NBA player.\"}"
     },
     {
       "caseId": "fit_072",
@@ -767,7 +767,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Steph Curry is an active NBA player known for his shooting skills.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Steph Curry is an active NBA player.\"}"
     },
     {
       "caseId": "fit_075",
@@ -777,7 +777,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"KAT is a common abbreviation for Karl-Anthony Towns, an active NBA player.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"KAT is a common abbreviation for Karl-Anthony Towns, who is an NBA player.\"}"
     },
     {
       "caseId": "fit_076",
@@ -787,7 +787,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"MJ is a well-known nickname for Michael Jordan, who is a legendary NBA player.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"MJ is a well-known nickname for Michael Jordan, who is a famous NBA player.\"}"
     },
     {
       "caseId": "fit_077",
@@ -797,7 +797,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Gronk is a popular nickname for Rob Gronkowski, a famous NFL tight end.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Gronk is a popular nickname for Rob Gronkowski, a well-known NFL player.\"}"
     },
     {
       "caseId": "fit_078",
@@ -817,7 +817,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"LBJ is a common abbreviation for LeBron James, one of the most famous NBA players.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"LBJ is a common abbreviation for LeBron James, a current NBA player.\"}"
     }
   ]
 }

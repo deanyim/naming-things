@@ -22,9 +22,16 @@ export class OpenRouterError extends Error {
   }
 }
 
+export type JsonSchemaSpec = {
+  name: string;
+  schema: Record<string, unknown>;
+};
+
 export type OpenRouterJsonCallInput<T> = {
   messages: OpenRouterMessage[];
   schema: z.ZodType<T>;
+  /** When provided, uses strict json_schema mode instead of json_object mode. */
+  jsonSchema?: JsonSchemaSpec;
   model?: string;
   temperature?: number;
   maxOutputTokens?: number;
@@ -132,12 +139,23 @@ export async function callOpenRouterJson<T>(
   }
 
   try {
+    const responseFormat = input.jsonSchema
+      ? {
+          type: "json_schema" as const,
+          json_schema: {
+            name: input.jsonSchema.name,
+            strict: true,
+            schema: input.jsonSchema.schema,
+          },
+        }
+      : { type: "json_object" as const };
+
     const requestBody = JSON.stringify({
       model,
       messages: input.messages,
       temperature: input.temperature ?? 0,
       max_tokens: input.maxOutputTokens ?? 512,
-      response_format: { type: "json_object" },
+      response_format: responseFormat,
     });
 
     let lastError: OpenRouterError | null = null;

@@ -4,25 +4,25 @@
   "chunkSize": 25,
   "batches": [
     {
-      "latencyMs": 8168,
+      "latencyMs": 8237,
       "inputTokens": 1196,
-      "outputTokens": 1472,
-      "estimatedCostUsd": 0.008556000000000001
+      "outputTokens": 1486,
+      "estimatedCostUsd": 0.008625999999999998
     },
     {
-      "latencyMs": 8377,
+      "latencyMs": 9310,
       "inputTokens": 1267,
-      "outputTokens": 1723,
-      "estimatedCostUsd": 0.009881999999999998
+      "outputTokens": 1707,
+      "estimatedCostUsd": 0.009801999999999998
     },
     {
-      "latencyMs": 7860,
+      "latencyMs": 11750,
       "inputTokens": 1246,
       "outputTokens": 1441,
       "estimatedCostUsd": 0.008451
     },
     {
-      "latencyMs": 2824,
+      "latencyMs": 2948,
       "inputTokens": 469,
       "outputTokens": 318,
       "estimatedCostUsd": 0.002059
@@ -127,7 +127,7 @@
       "expectedLabel": "invalid",
       "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"The answer '???' is not a color and appears to be a non-answer placeholder.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"The answer '???' is not a color and appears to be a non-answer or placeholder.\"}"
     },
     {
       "caseId": "fit_011",
@@ -167,7 +167,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"Tomato is botanically a fruit but culinarily classified as a vegetable, and fits the vegetables category in common usage.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"While tomatoes are botanically fruits, they are culinarily classified as vegetables and fit the vegetables category.\"}"
     },
     {
       "caseId": "fit_015",
@@ -187,7 +187,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "ambiguous",
       "parseOk": true,
-      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.6,\"reason\":\"Pluto was reclassified as a dwarf planet in 2006 and is no longer considered a planet by the International Astronomical Union, making this answer outdated.\"}"
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.6,\"reason\":\"Pluto was reclassified as a dwarf planet in 2006 and is no longer considered a planet by the IAU, making this answer outdated.\"}"
     },
     {
       "caseId": "fit_017",
@@ -217,7 +217,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Cleopatra was a famous historical woman who clearly fits the famous women category.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Cleopatra was a famous historical female ruler of Egypt and clearly fits the famous women category.\"}"
     },
     {
       "caseId": "fit_020",
@@ -227,7 +227,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Marie Curie was a famous scientist and woman who clearly fits the famous women category.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Marie Curie was a famous female scientist and Nobel Prize winner who clearly fits the famous women category.\"}"
     },
     {
       "caseId": "fit_021",
@@ -237,7 +237,7 @@
       "expectedLabel": "invalid",
       "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Abraham Lincoln was a man, not a woman, and does not fit the famous women category.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Abraham Lincoln was a male U.S. president and does not fit the famous women category.\"}"
     },
     {
       "caseId": "fit_022",
@@ -245,9 +245,9 @@
       "modelId": "claude-haiku-4.5",
       "status": "ok",
       "expectedLabel": "ambiguous",
-      "actualLabel": "valid",
+      "actualLabel": "ambiguous",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.9,\"reason\":\"Mulan is a fictional female character from legend and film, and fits the famous women category.\"}"
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.65,\"reason\":\"Mulan is a legendary/fictional female warrior, and while she is a character rather than a real historical figure, she is famous and female.\"}"
     },
     {
       "caseId": "fit_023",
@@ -257,7 +257,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Beyoncé is a famous contemporary woman and entertainer who clearly fits the famous women category.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Beyoncé is a famous contemporary female musician and entertainer who clearly fits the famous women category.\"}"
     },
     {
       "caseId": "fit_024",
@@ -267,7 +267,7 @@
       "expectedLabel": "invalid",
       "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"While someone's mother could be a woman, 'my mom' is not a famous person and does not fit the famous women category.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"While someone's mother may be a woman, 'my mom' is not a famous person and does not fit the famous women category.\"}"
     },
     {
       "caseId": "fit_025",
@@ -277,7 +277,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"invalid\",\"confidence\":1,\"reason\":\"Siri is a virtual assistant AI, not a real woman, and does not fit the famous women category.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":0.95,\"reason\":\"Siri is a virtual assistant AI with a female voice, not a famous woman, and does not fit the category.\"}"
     },
     {
       "caseId": "fit_026",
@@ -445,9 +445,9 @@
       "modelId": "claude-haiku-4.5",
       "status": "ok",
       "expectedLabel": "ambiguous",
-      "actualLabel": "valid",
+      "actualLabel": "ambiguous",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.85,\"reason\":\"Gordon Ramsay is primarily known as a chef and television personality who hosts cooking competition shows like Hell's Kitchen and MasterChef, which are reality TV shows.\"}"
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.6,\"reason\":\"Gordon Ramsay is primarily known as a chef and TV personality who appears on cooking competition shows like Hell's Kitchen and MasterChef, which are reality TV formats.\"}"
     },
     {
       "caseId": "fit_043",
@@ -457,7 +457,7 @@
       "expectedLabel": "invalid",
       "actualLabel": "invalid",
       "parseOk": true,
-      "rawText": "{\"label\":\"invalid\",\"confidence\":0.99,\"reason\":\"Albert Einstein was a theoretical physicist who died in 1955 and never appeared on reality TV, not fitting the reality TV contestants category.\"}"
+      "rawText": "{\"label\":\"invalid\",\"confidence\":0.99,\"reason\":\"Albert Einstein was a theoretical physicist who died in 1955 and never appeared on reality TV shows.\"}"
     },
     {
       "caseId": "fit_044",
@@ -467,7 +467,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"Paris Hilton appeared on the reality TV show The Simple Life and other reality shows, fitting the reality TV contestants category.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"Paris Hilton appeared on the reality TV show The Simple Life and other reality programs, fitting the reality TV contestants category.\"}"
     },
     {
       "caseId": "fit_045",
@@ -507,7 +507,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "ambiguous",
       "parseOk": true,
-      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.65,\"reason\":\"Dungeons & Dragons is a tabletop role-playing game that can be considered a board game in the broader sense of non-digital games, though it's more specifically a tabletop RPG.\"}"
+      "rawText": "{\"label\":\"ambiguous\",\"confidence\":0.65,\"reason\":\"Dungeons & Dragons is a tabletop role-playing game that can be considered a board game in the broader sense of non-digital games, though it's more accurately a tabletop RPG.\"}"
     },
     {
       "caseId": "fit_049",
@@ -517,7 +517,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"A stethoscope is a medical instrument commonly used by doctors and nurses in hospitals to listen to patients' hearts and lungs.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.99,\"reason\":\"A stethoscope is a medical instrument commonly found and used in hospitals by healthcare professionals.\"}"
     },
     {
       "caseId": "fit_050",
@@ -527,7 +527,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":0.95,\"reason\":\"A vending machine is a common fixture in hospitals where patients, visitors, and staff can purchase snacks and drinks.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":0.95,\"reason\":\"A vending machine is commonly found in hospitals for patients and visitors to purchase snacks and beverages.\"}"
     },
     {
       "caseId": "fit_051",

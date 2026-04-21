@@ -4,25 +4,25 @@
   "chunkSize": 25,
   "batches": [
     {
-      "latencyMs": 2871,
+      "latencyMs": 3150,
       "inputTokens": 1160,
       "outputTokens": 1325,
       "estimatedCostUsd": 0.000646
     },
     {
-      "latencyMs": 3140,
+      "latencyMs": 9750,
       "inputTokens": 1217,
-      "outputTokens": 1324,
-      "estimatedCostUsd": 0.0006513000000000001
+      "outputTokens": 1319,
+      "estimatedCostUsd": 0.0006493
     },
     {
-      "latencyMs": 3118,
+      "latencyMs": 3282,
       "inputTokens": 1212,
       "outputTokens": 1324,
       "estimatedCostUsd": 0.0006508000000000001
     },
     {
-      "latencyMs": 1023,
+      "latencyMs": 974,
       "inputTokens": 422,
       "outputTokens": 236,
       "estimatedCostUsd": 0.0001366
@@ -327,7 +327,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"O.J. Simpson was a famous NFL player, despite his later notoriety.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"O.J. Simpson had a notable career as an NFL player before other controversies.\"}"
     },
     {
       "caseId": "fit_031",
@@ -447,7 +447,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Gordon Ramsay is a chef who has hosted and appeared in many reality TV shows.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Gordon Ramsay is a chef who has hosted and appeared in numerous reality cooking shows.\"}"
     },
     {
       "caseId": "fit_043",
@@ -467,7 +467,7 @@
       "expectedLabel": "valid",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Paris Hilton is known for her appearances on reality television, including The Simple Life.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Paris Hilton gained fame through reality television, particularly The Simple Life.\"}"
     },
     {
       "caseId": "fit_045",
@@ -477,7 +477,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Donald Trump was a contestant on and host of The Apprentice, a reality TV show.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Donald Trump was the star of The Apprentice, a prominent reality TV show.\"}"
     },
     {
       "caseId": "fit_046",
@@ -507,7 +507,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Dungeons & Dragons is a well-known tabletop role-playing game, often categorized with board games.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Dungeons & Dragons is a tabletop role-playing game, often categorized with board games.\"}"
     },
     {
       "caseId": "fit_049",
@@ -527,7 +527,7 @@
       "expectedLabel": "ambiguous",
       "actualLabel": "valid",
       "parseOk": true,
-      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"Vending machines are often found in hospitals for convenience.\"}"
+      "rawText": "{\"label\":\"valid\",\"confidence\":1,\"reason\":\"A vending machine can be found in many places, including hospitals.\"}"
     },
     {
       "caseId": "fit_051",

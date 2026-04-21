@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { env } from "~/env";
-import { callOpenRouterJson } from "../openrouter/client";
+import { callOpenRouterJson, type JsonSchemaSpec } from "../openrouter/client";
 import { buildCategoryFitPrompt } from "./prompts";
 
 const categoryFitSchema = z.object({
@@ -13,6 +13,31 @@ const categoryFitSchema = z.object({
     }),
   ),
 });
+
+const categoryFitJsonSchema: JsonSchemaSpec = {
+  name: "category_fit",
+  schema: {
+    type: "object",
+    properties: {
+      decisions: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            answerId: { type: "number" },
+            reason: { type: "string" },
+            label: { type: "string", enum: ["valid", "invalid", "ambiguous"] },
+            confidence: { type: "number" },
+          },
+          required: ["answerId", "reason", "label", "confidence"],
+          additionalProperties: false,
+        },
+      },
+    },
+    required: ["decisions"],
+    additionalProperties: false,
+  },
+};
 
 export type CategoryFitResult = {
   answerId: number;
@@ -32,6 +57,7 @@ async function judgeChunk(
     timeoutMs: options?.timeoutMs,
     maxOutputTokens: Math.max(512, items.length * 80),
     schema: categoryFitSchema,
+    jsonSchema: categoryFitJsonSchema,
     messages: [{ role: "user", content: buildCategoryFitPrompt(items) }],
   });
 
