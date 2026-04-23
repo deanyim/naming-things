@@ -580,6 +580,24 @@ export const soloRouter = createTRPCRouter({
       return { ok: true as const };
     }),
 
+  getRandomCategory: publicProcedure
+    .query(async ({ ctx }) => {
+      const categories = await ctx.db
+        .selectDistinct({
+          categoryDisplayName: soloRuns.categoryDisplayName,
+          categorySlug: soloRuns.categorySlug,
+        })
+        .from(soloRuns)
+        .where(eq(soloRuns.status, "finished"));
+
+      if (categories.length === 0) {
+        return null;
+      }
+
+      const random = categories[Math.floor(Math.random() * categories.length)];
+      return random;
+    }),
+
   getPublicRun: publicProcedure
     .input(
       z.object({

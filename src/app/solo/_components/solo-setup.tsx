@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "~/hooks/use-session";
 import { api } from "~/trpc/react";
@@ -23,6 +23,17 @@ export function SoloSetup({
     initialTimer && ALLOWED_TIMERS.includes(initialTimer) ? initialTimer : 60,
   );
   const [error, setError] = useState("");
+
+  const randomCategory = api.solo.getRandomCategory.useQuery(undefined, {
+    enabled: false,
+    refetchOnWindowFocus: false,
+  });
+
+  useEffect(() => {
+    if (randomCategory.data) {
+      setCategory(randomCategory.data.categoryDisplayName);
+    }
+  }, [randomCategory.data]);
 
   const createRun = api.solo.createRun.useMutation({
     onSuccess: (data) => {
@@ -75,7 +86,22 @@ export function SoloSetup({
           className="w-full rounded-lg border border-gray-300 px-4 py-3 text-center text-gray-900 placeholder-gray-400 outline-none focus:border-gray-900"
         />
 
-        <CategorySearch value={category} onChange={setCategory} />
+        <div className="flex w-full gap-2">
+          <div className="flex-1">
+            <CategorySearch value={category} onChange={setCategory} />
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setError("");
+              randomCategory.refetch();
+            }}
+            disabled={randomCategory.isFetching}
+            className="shrink-0 rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-50"
+          >
+            random
+          </button>
+        </div>
 
         <div className="flex flex-col gap-1">
           <span className="text-sm text-gray-500">time limit</span>

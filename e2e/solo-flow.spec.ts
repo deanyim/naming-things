@@ -239,4 +239,28 @@ test.describe("Solo mode", () => {
       page.getByRole("button", { name: "start a solo run" }),
     ).toBeVisible();
   });
+
+  test("random category button populates category from existing leaderboards", async ({ page }) => {
+    test.setTimeout(30000);
+    await setupPlayer(page, "RandomCatPlayer");
+
+    // First, create a finished run so there's a category in the database
+    await startSoloRun(page, "fruits");
+    await submitAnswer(page, "apple");
+    await expect(page.getByText("answers (1)")).toBeVisible({ timeout: 2000 });
+    await waitForResults(page);
+
+    // Go back to solo setup and click random category
+    await page.goto("/solo");
+    await expect(
+      page.getByPlaceholder("enter a category (e.g. fruits, countries)"),
+    ).toBeVisible({ timeout: 5000 });
+
+    await page.getByRole("button", { name: "random", exact: true }).click();
+
+    // The category input should be populated with a non-empty value
+    await expect(
+      page.getByPlaceholder("enter a category (e.g. fruits, countries)"),
+    ).not.toHaveValue("", { timeout: 5000 });
+  });
 });
