@@ -67,7 +67,7 @@ export function TeamPlayerList({
               teamPlayers.map((p) => (
                 <span
                   key={p.id}
-                  className="flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700"
+                  className="flex min-h-9 max-w-full items-center rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700"
                 >
                   {p.displayName}
                   {p.isHost && (
@@ -77,7 +77,7 @@ export function TeamPlayerList({
                     <select
                       value={p.teamId ?? ""}
                       onChange={(e) => onSetTeam(p.id, Number(e.target.value))}
-                      className="ml-1 rounded border border-gray-300 bg-transparent px-1 py-0.5 text-xs text-gray-500 outline-none"
+                      className="ml-1 min-h-7 rounded border border-gray-300 bg-transparent px-1 py-0.5 text-xs text-gray-500 outline-none"
                     >
                       {Array.from({ length: numTeams }, (_, i) => i + 1).map(
                         (tid) => (
@@ -91,7 +91,7 @@ export function TeamPlayerList({
                   {isHost && !p.isHost && onKick && (
                     <button
                       onClick={() => onKick(p.id)}
-                      className="ml-1 text-gray-400 hover:text-red-500"
+                      className="ml-1 min-h-6 min-w-6 text-gray-400 hover:text-red-500"
                       aria-label={`Kick ${p.displayName}`}
                     >
                       x
@@ -111,7 +111,7 @@ export function TeamPlayerList({
             {unassigned.map((p) => (
               <span
                 key={p.id}
-                className="flex items-center rounded-full bg-yellow-50 px-3 py-1 text-sm text-gray-700"
+                className="flex min-h-9 max-w-full items-center rounded-full bg-yellow-50 px-3 py-1 text-sm text-gray-700"
               >
                 {p.displayName}
                 {p.isHost && (
@@ -121,7 +121,7 @@ export function TeamPlayerList({
                   <select
                     value=""
                     onChange={(e) => onSetTeam(p.id, Number(e.target.value))}
-                    className="ml-1 rounded border border-gray-300 bg-transparent px-1 py-0.5 text-xs text-gray-500 outline-none"
+                    className="ml-1 min-h-7 rounded border border-gray-300 bg-transparent px-1 py-0.5 text-xs text-gray-500 outline-none"
                   >
                     <option value="" disabled>
                       pick
@@ -138,7 +138,7 @@ export function TeamPlayerList({
                 {isHost && !p.isHost && onKick && (
                   <button
                     onClick={() => onKick(p.id)}
-                    className="ml-1 text-gray-400 hover:text-red-500"
+                    className="ml-1 min-h-6 min-w-6 text-gray-400 hover:text-red-500"
                     aria-label={`Kick ${p.displayName}`}
                   >
                     x
@@ -159,13 +159,13 @@ export function TeamPlayerList({
             {spectators.map((s) => (
               <span
                 key={s.id}
-                className="flex items-center rounded-full bg-gray-50 px-3 py-1 text-sm text-gray-400"
+                  className="flex min-h-9 max-w-full items-center rounded-full bg-gray-50 px-3 py-1 text-sm text-gray-400"
               >
                 {s.displayName}
                 {isHost && onKick && (
                   <button
                     onClick={() => onKick(s.id)}
-                    className="ml-1 text-gray-400 hover:text-red-500"
+                    className="ml-1 min-h-6 min-w-6 text-gray-400 hover:text-red-500"
                     aria-label={`Kick ${s.displayName}`}
                   >
                     x

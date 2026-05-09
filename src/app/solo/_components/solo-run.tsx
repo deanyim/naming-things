@@ -171,7 +171,7 @@ export function SoloRun({
 
   if (!run) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white">
+      <div className="flex min-h-dvh items-center justify-center bg-white px-4">
         <p className="text-gray-400">loading...</p>
       </div>
     );
@@ -181,11 +181,11 @@ export function SoloRun({
   const isUrgent = displaySeconds <= 10 && displaySeconds > 0;
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-white px-4 pt-12">
-      <div className="flex w-full max-w-sm flex-col items-center gap-6">
-        <div className="flex w-full items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-gray-900">
+    <div className="flex min-h-dvh flex-col items-center bg-white px-4 py-6 [padding-bottom:calc(env(safe-area-inset-bottom)+2rem)] [padding-top:calc(env(safe-area-inset-top)+1.5rem)] sm:py-12">
+      <div className="flex w-full max-w-md flex-col items-center gap-6">
+        <div className="flex w-full items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h2 className="break-words text-base font-bold leading-tight text-gray-900 sm:text-lg">
               {run.categoryDisplayName}
             </h2>
             <p className="text-xs text-gray-400">solo mode</p>
@@ -214,12 +214,12 @@ export function SoloRun({
                 onChange={(e) => setInput(e.target.value)}
                 disabled={isExpired}
                 autoFocus
-                className="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-gray-900 disabled:opacity-50"
+                className="min-h-12 min-w-0 flex-1 rounded-lg border border-gray-300 px-4 py-3 text-base text-gray-900 placeholder-gray-400 outline-none focus:border-gray-900 disabled:opacity-50"
               />
               <button
                 type="submit"
                 disabled={isExpired || !input.trim()}
-                className="rounded-lg bg-gray-900 px-6 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
+                className="min-h-12 shrink-0 rounded-lg bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50 sm:px-6"
               >
                 add
               </button>
@@ -232,7 +232,7 @@ export function SoloRun({
             <button
               onClick={handleFinish}
               disabled={nonDuplicateAnswers.length === 0}
-              className="text-sm text-gray-400 transition hover:text-gray-600 disabled:opacity-30 disabled:hover:text-gray-400"
+              className="min-h-10 text-sm text-gray-400 transition hover:text-gray-600 disabled:opacity-30 disabled:hover:text-gray-400"
             >
               finish early
             </button>
@@ -249,9 +249,9 @@ export function SoloRun({
             {nonDuplicateAnswers.map((answer) => (
               <span
                 key={answer.id}
-                className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700"
+                className="inline-flex min-h-9 max-w-full items-center rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700"
               >
-                {answer.text}
+                <span className="block truncate">{answer.text}</span>
               </span>
             ))}
           </div>

@@ -12,11 +12,11 @@ export function ShareCode({ code }: { code: string }) {
   };
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex w-full flex-col items-center gap-2">
       <p className="text-sm text-gray-500">game code</p>
       <button
         onClick={handleCopy}
-        className="rounded-lg bg-gray-100 px-6 py-3 font-mono text-2xl font-bold tracking-widest text-gray-900 transition hover:bg-gray-200"
+        className="min-h-14 w-full rounded-lg bg-gray-100 px-6 py-3 font-mono text-2xl font-bold tracking-widest text-gray-900 transition hover:bg-gray-200"
       >
         {code}
       </button>

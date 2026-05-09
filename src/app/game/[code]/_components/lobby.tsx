@@ -266,8 +266,8 @@ export function Lobby({
   );
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-white px-4">
-      <div className="flex w-full max-w-sm flex-col items-center gap-8">
+    <main className="flex min-h-dvh flex-col items-center bg-white px-4 py-6 [padding-bottom:calc(env(safe-area-inset-bottom)+2rem)] [padding-top:calc(env(safe-area-inset-top)+1.5rem)] sm:justify-center sm:py-10">
+      <div className="flex w-full max-w-md flex-col items-center gap-6 sm:gap-8">
         <h1 className="text-2xl font-bold text-gray-900">lobby</h1>
 
         <ShareCode code={game.code} />
@@ -303,7 +303,7 @@ export function Lobby({
             )}
 
             {game.mode === "classic" && game.isTeamMode && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between gap-3">
                 <label className="text-sm text-gray-500"># teams</label>
                 <input
                   type="number"
@@ -313,7 +313,7 @@ export function Lobby({
                     const val = Math.max(1, Number(e.target.value));
                     setNumTeamsMutation.mutate({ ...mutInput, numTeams: val });
                   }}
-                  className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-gray-900 outline-none focus:border-gray-900"
+                  className="min-h-11 w-24 rounded-lg border border-gray-300 px-3 py-2 text-base text-gray-900 outline-none focus:border-gray-900"
                 />
               </div>
             )}
@@ -330,8 +330,8 @@ export function Lobby({
               ]}
             />
 
-            <div className="flex w-full items-center gap-2">
-              <label className="text-sm text-gray-500">topic</label>
+            <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-[auto_1fr_auto_auto] sm:items-center">
+              <label className="col-span-2 text-sm text-gray-500 sm:col-span-1">topic</label>
               <input
                 type="text"
                 placeholder="e.g. types of cheese"
@@ -341,7 +341,7 @@ export function Lobby({
                 onKeyDown={(e) => {
                   if (e.key === "Enter") saveCategory();
                 }}
-                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 outline-none focus:border-gray-900"
+                className="col-span-2 min-h-11 min-w-0 rounded-lg border border-gray-300 px-3 py-2 text-base text-gray-900 placeholder-gray-400 outline-none focus:border-gray-900 sm:col-span-1"
               />
               <button
                 onClick={saveCategory}
@@ -350,13 +350,13 @@ export function Lobby({
                   !category.trim() ||
                   category.trim() === game.category
                 }
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-50"
+                className="min-h-11 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-50"
               >
                 {setCategoryMutation.isPending ? "..." : "set"}
               </button>
               <button
                 onClick={suggestTopic}
-                className="rounded-lg border border-dashed border-gray-300 px-3 py-2 text-sm font-medium text-gray-400 transition hover:border-gray-400 hover:text-gray-600"
+                className="min-h-11 rounded-lg border border-dashed border-gray-300 px-3 py-2 text-sm font-medium text-gray-400 transition hover:border-gray-400 hover:text-gray-600"
               >
                 random
               </button>
@@ -370,21 +370,21 @@ export function Lobby({
 
             {game.mode === "classic" ? (
               <>
-                <div className="flex items-center gap-2">
+                <div className="grid grid-cols-[auto_1fr] items-center gap-2 sm:flex">
                   <label className="text-sm text-gray-500">timer</label>
                   <input
                     type="number"
                     min={1}
                     value={timerValue}
                     onChange={(e) => setTimerValue(Math.max(1, Number(e.target.value)))}
-                    className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-gray-900 outline-none focus:border-gray-900"
+                    className="min-h-11 w-full rounded-lg border border-gray-300 px-3 py-2 text-base text-gray-900 outline-none focus:border-gray-900 sm:w-20"
                   />
                   <select
                     value={timerUnit}
                     onChange={(e) =>
                       setTimerUnit(e.target.value as "seconds" | "minutes")
                     }
-                    className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900 outline-none focus:border-gray-900"
+                    className="min-h-11 rounded-lg border border-gray-300 px-3 py-2 text-base text-gray-900 outline-none focus:border-gray-900"
                   >
                     <option value="seconds">seconds</option>
                     <option value="minutes">minutes</option>
@@ -392,7 +392,7 @@ export function Lobby({
                   <button
                     onClick={saveTimer}
                     disabled={setTimerMutation.isPending || !timerChanged}
-                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-50"
+                    className="min-h-11 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-50"
                   >
                     {setTimerMutation.isPending ? "..." : "set"}
                   </button>
@@ -404,7 +404,7 @@ export function Lobby({
               </>
             ) : (
               <>
-                <div className="flex items-center gap-2">
+                <div className="grid grid-cols-[auto_1fr] items-center gap-2 sm:flex">
                   <label className="text-sm text-gray-500">turn timer</label>
                   <input
                     type="number"
@@ -412,13 +412,13 @@ export function Lobby({
                     max={30}
                     value={turnTimerValue}
                     onChange={(e) => setTurnTimerValue(Math.max(3, Math.min(30, Number(e.target.value))))}
-                    className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-gray-900 outline-none focus:border-gray-900"
+                    className="min-h-11 w-full rounded-lg border border-gray-300 px-3 py-2 text-base text-gray-900 outline-none focus:border-gray-900 sm:w-20"
                   />
                   <span className="text-sm text-gray-500">seconds</span>
                   <button
                     onClick={saveTurnTimer}
                     disabled={setTurnTimerMutation.isPending || !turnTimerChanged}
-                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-50"
+                    className="min-h-11 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-50"
                   >
                     {setTurnTimerMutation.isPending ? "..." : "set"}
                   </button>
@@ -433,7 +433,7 @@ export function Lobby({
             <button
               onClick={handleStart}
               disabled={startGame.isPending || !topicSet || needMorePlayers}
-              className="w-full rounded-lg bg-gray-900 px-4 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
+              className="min-h-12 w-full rounded-lg bg-gray-900 px-4 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
             >
               {startGame.isPending ? "starting..." : "start round"}
             </button>
@@ -456,7 +456,7 @@ export function Lobby({
                 joinAsPlayer.mutate({ sessionToken, gameId: game.id })
               }
               disabled={joinAsPlayer.isPending}
-              className="w-full rounded-lg border border-gray-900 px-4 py-3 font-medium text-gray-900 transition hover:bg-gray-100 disabled:opacity-50"
+              className="min-h-12 w-full rounded-lg border border-gray-900 px-4 py-3 font-medium text-gray-900 transition hover:bg-gray-100 disabled:opacity-50"
             >
               {joinAsPlayer.isPending ? "joining..." : "join as player"}
             </button>

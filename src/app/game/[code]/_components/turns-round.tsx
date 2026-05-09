@@ -126,8 +126,8 @@ export function TurnsRound({
   const isUrgent = secondsRemaining <= 2 && secondsRemaining > 0 && !game.isPaused;
 
   return (
-    <main className="flex min-h-screen flex-col items-center bg-white px-4 pt-12">
-      <div className="flex w-full max-w-sm flex-col items-center gap-6">
+    <main className="flex min-h-dvh flex-col items-center bg-white px-4 py-6 [padding-bottom:calc(env(safe-area-inset-bottom)+2rem)] [padding-top:calc(env(safe-area-inset-top)+1.5rem)] sm:py-12">
+      <div className="flex w-full max-w-md flex-col items-center gap-6">
         <RoundHeader
           game={game}
           sessionToken={sessionToken}
@@ -200,10 +200,10 @@ export function TurnsRound({
               {[...game.turnsHistory].reverse().map((entry, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between text-sm"
+                  className="flex items-start justify-between gap-3 text-sm"
                 >
-                  <span className="text-gray-700">{entry.text}</span>
-                  <span className="text-gray-400">
+                  <span className="min-w-0 break-words text-gray-700">{entry.text}</span>
+                  <span className="shrink-0 text-gray-400">
                     {entry.playerDisplayName}
                   </span>
                 </div>

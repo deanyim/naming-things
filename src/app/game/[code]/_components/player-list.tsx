@@ -24,7 +24,7 @@ export function PlayerList({
   onKick?: (playerId: number) => void;
 }) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex w-full flex-col gap-2">
       <p className="text-sm font-medium text-gray-500">
         players ({players.length})
       </p>
@@ -32,7 +32,7 @@ export function PlayerList({
         {players.map((p) => (
           <span
             key={p.id}
-            className="flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700"
+            className="flex min-h-9 max-w-full items-center rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700"
           >
             {p.displayName}
             {p.isHost && (
@@ -41,7 +41,7 @@ export function PlayerList({
             {isHost && !p.isHost && onKick && (
               <button
                 onClick={() => onKick(p.id)}
-                className="ml-1 text-gray-400 hover:text-red-500"
+                className="ml-1 min-h-6 min-w-6 text-gray-400 hover:text-red-500"
                 aria-label={`Kick ${p.displayName}`}
               >
                 x
@@ -60,13 +60,13 @@ export function PlayerList({
             {spectators.map((s) => (
               <span
                 key={s.id}
-                className="flex items-center rounded-full bg-gray-50 px-3 py-1 text-sm text-gray-400"
+                className="flex min-h-9 max-w-full items-center rounded-full bg-gray-50 px-3 py-1 text-sm text-gray-400"
               >
                 {s.displayName}
                 {isHost && onKick && (
                   <button
                     onClick={() => onKick(s.id)}
-                    className="ml-1 text-gray-400 hover:text-red-500"
+                    className="ml-1 min-h-6 min-w-6 text-gray-400 hover:text-red-500"
                     aria-label={`Kick ${s.displayName}`}
                   >
                     x

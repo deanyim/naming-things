@@ -32,7 +32,7 @@ export default function SoloRunPage() {
 
   if (!isReady || (runQuery.isLoading && !isNotOwner)) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white">
+      <div className="flex min-h-dvh items-center justify-center bg-white px-4">
         <p className="text-gray-400">loading...</p>
       </div>
     );
@@ -42,14 +42,14 @@ export default function SoloRunPage() {
   if (isNotOwner) {
     if (publicQuery.isLoading) {
       return (
-        <div className="flex min-h-screen items-center justify-center bg-white">
+        <div className="flex min-h-dvh items-center justify-center bg-white px-4">
           <p className="text-gray-400">loading...</p>
         </div>
       );
     }
     if (!publicQuery.data) {
       return (
-        <div className="flex min-h-screen items-center justify-center bg-white">
+        <div className="flex min-h-dvh items-center justify-center bg-white px-4">
           <p className="text-gray-500">run not found</p>
         </div>
       );
@@ -59,7 +59,7 @@ export default function SoloRunPage() {
 
   if (!runQuery.data) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white">
+      <div className="flex min-h-dvh items-center justify-center bg-white px-4">
         <p className="text-gray-500">run not found</p>
       </div>
     );

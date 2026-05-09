@@ -89,8 +89,8 @@ export function FinalScoreboard({
     : null;
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-white px-4">
-      <div className="flex w-full max-w-sm flex-col items-center gap-8">
+    <main className="flex min-h-dvh flex-col items-center bg-white px-4 py-8 [padding-bottom:calc(env(safe-area-inset-bottom)+2rem)] [padding-top:calc(env(safe-area-inset-top)+2rem)] sm:justify-center">
+      <div className="flex w-full max-w-md flex-col items-center gap-6 sm:gap-8">
         <h2 className="text-2xl font-bold text-gray-900">final scores</h2>
         <p className="text-sm text-gray-500">{game.category}</p>
 
@@ -117,21 +117,21 @@ export function FinalScoreboard({
                   onClick={() =>
                     setExpandedItem(isExpanded ? null : key)
                   }
-                  className={`flex w-full items-center justify-between rounded-lg p-4 text-left transition ${
+                  className={`flex min-h-16 w-full items-center justify-between gap-3 rounded-lg p-4 text-left transition ${
                     isTop
                       ? "border-2 border-yellow-400 bg-yellow-50"
                       : "border border-gray-200 bg-gray-50"
                   } ${isExpanded ? "rounded-b-none" : ""}`}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg font-bold text-gray-400">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="shrink-0 text-lg font-bold text-gray-400">
                       {i + 1}
                     </span>
-                    <span className="font-medium text-gray-900">
+                    <span className="min-w-0 truncate font-medium text-gray-900">
                       {player.displayName}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-2">
                     <span className="text-xl font-bold text-gray-900">
                       {player.score}
                     </span>
@@ -167,7 +167,7 @@ export function FinalScoreboard({
               createRematch.mutate({ sessionToken, gameId: game.id })
             }
             disabled={createRematch.isPending || createRematch.isSuccess}
-            className="w-full rounded-lg bg-gray-900 px-4 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
+            className="min-h-12 w-full rounded-lg bg-gray-900 px-4 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
           >
             {createRematch.isPending || createRematch.isSuccess
               ? "starting rematch..."
@@ -181,14 +181,14 @@ export function FinalScoreboard({
 
         <button
           onClick={() => router.push(`/game/${game.code}/history`)}
-          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-500 transition hover:bg-gray-100"
+          className="min-h-12 w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-500 transition hover:bg-gray-100"
         >
           view past rounds
         </button>
 
         <button
           onClick={() => router.push("/")}
-          className="w-full rounded-lg border border-gray-900 px-4 py-3 font-medium text-gray-900 transition hover:bg-gray-100"
+          className="min-h-12 w-full rounded-lg border border-gray-900 px-4 py-3 font-medium text-gray-900 transition hover:bg-gray-100"
         >
           back to home
         </button>
@@ -250,8 +250,8 @@ function TeamScoreboard({
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-white px-4">
-      <div className="flex w-full max-w-sm flex-col items-center gap-8">
+    <main className="flex min-h-dvh flex-col items-center bg-white px-4 py-8 [padding-bottom:calc(env(safe-area-inset-bottom)+2rem)] [padding-top:calc(env(safe-area-inset-top)+2rem)] sm:justify-center">
+      <div className="flex w-full max-w-md flex-col items-center gap-6 sm:gap-8">
         <h2 className="text-2xl font-bold text-gray-900">final scores</h2>
         <p className="text-sm text-gray-500">{game.category}</p>
 
@@ -276,21 +276,21 @@ function TeamScoreboard({
                   onClick={() =>
                     setExpandedItem(isExpanded ? null : key)
                   }
-                  className={`flex w-full items-center justify-between rounded-lg p-4 text-left transition ${
+                  className={`flex min-h-16 w-full items-center justify-between gap-3 rounded-lg p-4 text-left transition ${
                     isTop
                       ? "border-2 border-yellow-400 bg-yellow-50"
                       : "border border-gray-200 bg-gray-50"
                   } ${isExpanded ? "rounded-b-none" : ""}`}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg font-bold text-gray-400">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="shrink-0 text-lg font-bold text-gray-400">
                       {i + 1}
                     </span>
-                    <span className="font-medium text-gray-900">
+                    <span className="min-w-0 truncate font-medium text-gray-900">
                       team {teamId}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-2">
                     <span className="text-xl font-bold text-gray-900">
                       {teamData.score}
                     </span>
@@ -325,13 +325,13 @@ function TeamScoreboard({
                         {teamAnswersList.map((answer, j) => (
                           <li
                             key={j}
-                            className="flex items-center justify-between text-sm"
+                            className="flex flex-col gap-1 text-sm sm:flex-row sm:items-start sm:justify-between"
                           >
                             <span
                               className={
                                 answer.status === "rejected"
-                                  ? "text-gray-400 line-through"
-                                  : "text-gray-700"
+                                  ? "min-w-0 break-words text-gray-400 line-through"
+                                  : "min-w-0 break-words text-gray-700"
                               }
                             >
                               {answer.text}
@@ -341,7 +341,7 @@ function TeamScoreboard({
                                 </span>
                               )}
                             </span>
-                            <span className="flex gap-1.5">
+                            <span className="flex shrink-0 flex-wrap gap-1.5 sm:justify-end">
                               {answer.isCommon && (
                                 <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
                                   common
@@ -381,7 +381,7 @@ function TeamScoreboard({
               createRematch.mutate({ sessionToken, gameId: game.id })
             }
             disabled={createRematch.isPending || createRematch.isSuccess}
-            className="w-full rounded-lg bg-gray-900 px-4 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
+            className="min-h-12 w-full rounded-lg bg-gray-900 px-4 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
           >
             {createRematch.isPending || createRematch.isSuccess
               ? "starting rematch..."
@@ -395,14 +395,14 @@ function TeamScoreboard({
 
         <button
           onClick={() => router.push(`/game/${game.code}/history`)}
-          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-500 transition hover:bg-gray-100"
+          className="min-h-12 w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-500 transition hover:bg-gray-100"
         >
           view past rounds
         </button>
 
         <button
           onClick={() => router.push("/")}
-          className="w-full rounded-lg border border-gray-900 px-4 py-3 font-medium text-gray-900 transition hover:bg-gray-100"
+          className="min-h-12 w-full rounded-lg border border-gray-900 px-4 py-3 font-medium text-gray-900 transition hover:bg-gray-100"
         >
           back to home
         </button>
@@ -442,18 +442,18 @@ function AnswersList({
           {answers.map((answer, j) => (
             <li
               key={j}
-              className="flex items-center justify-between text-sm"
+              className="flex flex-col gap-1 text-sm sm:flex-row sm:items-start sm:justify-between"
             >
               <span
                 className={
                   answer.status === "rejected"
-                    ? "text-gray-400 line-through"
-                    : "text-gray-700"
+                    ? "min-w-0 break-words text-gray-400 line-through"
+                    : "min-w-0 break-words text-gray-700"
                 }
               >
                 {answer.text}
               </span>
-              <span className="flex gap-1.5">
+              <span className="flex shrink-0 flex-wrap gap-1.5 sm:justify-end">
                 {!isTurnsMode && answer.isCommon && (
                   <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
                     common

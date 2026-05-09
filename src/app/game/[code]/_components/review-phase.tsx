@@ -65,7 +65,7 @@ export function ReviewPhase({
   );
 
   return (
-    <main className="flex min-h-screen flex-col items-center bg-white px-4 pt-12">
+    <main className="flex min-h-dvh flex-col items-center bg-white px-4 py-6 [padding-bottom:calc(env(safe-area-inset-bottom)+2rem)] [padding-top:calc(env(safe-area-inset-top)+1.5rem)] sm:py-12">
       <div className="flex w-full max-w-lg flex-col items-center gap-6">
         <h2 className="text-2xl font-bold text-gray-900">review answers</h2>
         <p className="text-sm text-gray-500">{game.category}</p>
@@ -119,15 +119,15 @@ export function ReviewPhase({
                   return (
                     <div
                       key={answer.id}
-                      className={`flex items-center justify-between rounded-lg border p-3 ${
+                      className={`flex items-start justify-between gap-3 rounded-lg border p-3 ${
                         isRejected
                           ? "border-red-200 bg-red-50"
                           : "border-gray-200 bg-gray-50"
                       }`}
                     >
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <span
-                          className={`font-medium ${
+                          className={`break-words font-medium ${
                             isRejected
                               ? "text-gray-400 line-through"
                               : "text-gray-900"
@@ -135,19 +135,19 @@ export function ReviewPhase({
                         >
                           {answer.text}
                         </span>
-                        <span className="ml-2 text-xs text-gray-400">
+                        <span className="mt-1 block text-xs text-gray-400 sm:ml-2 sm:mt-0 sm:inline">
                           by {answer.player.displayName}
                           {game.isTeamMode && group.teamId != null && (
                             <> (team {group.teamId})</>
                           )}
                         </span>
                         {isRejected && (
-                          <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-700">
+                          <span className="mt-2 inline-block rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-700 sm:ml-2 sm:mt-0">
                             rejected
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex shrink-0 items-center gap-2">
                         {!game.isSpectator && (
                           <button
                             onClick={() =>
@@ -157,7 +157,7 @@ export function ReviewPhase({
                               })
                             }
                             disabled={disputeAnswer.isPending}
-                            className="rounded px-2 py-1 text-xs text-gray-400 transition hover:bg-red-100 hover:text-red-600"
+                            className="min-h-9 rounded px-2 py-1 text-xs text-gray-400 transition hover:bg-red-100 hover:text-red-600"
                           >
                             dispute
                           </button>
@@ -184,15 +184,15 @@ export function ReviewPhase({
                   return (
                     <div
                       key={answer.id}
-                      className={`flex items-center justify-between rounded-lg border p-3 ${
+                      className={`flex items-start justify-between gap-3 rounded-lg border p-3 ${
                         isRejected
                           ? "border-red-200 bg-red-50"
                           : "border-green-200 bg-green-50"
                       }`}
                     >
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <span
-                          className={`font-medium ${
+                          className={`break-words font-medium ${
                             isRejected
                               ? "text-gray-400 line-through"
                               : "text-gray-900"
@@ -200,11 +200,11 @@ export function ReviewPhase({
                         >
                           {answer.text}
                         </span>
-                        <span className="ml-2 text-xs text-gray-400">
+                        <span className="mt-1 block text-xs text-gray-400 sm:ml-2 sm:mt-0 sm:inline">
                           by {answer.player.displayName}
                         </span>
                         <span
-                          className={`ml-2 rounded-full px-2 py-0.5 text-xs ${
+                          className={`mt-2 inline-block rounded-full px-2 py-0.5 text-xs sm:ml-2 sm:mt-0 ${
                             isRejected
                               ? "bg-red-100 text-red-700"
                               : "bg-green-100 text-green-700"
@@ -213,7 +213,7 @@ export function ReviewPhase({
                           {isRejected ? "rejected" : "accepted"}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex shrink-0 items-center gap-2">
                         {!game.isSpectator && (
                           <button
                             onClick={() =>
@@ -223,7 +223,7 @@ export function ReviewPhase({
                               })
                             }
                             disabled={disputeAnswer.isPending}
-                            className="rounded px-2 py-1 text-xs text-gray-400 transition hover:bg-red-100 hover:text-red-600"
+                            className="min-h-9 rounded px-2 py-1 text-xs text-gray-400 transition hover:bg-red-100 hover:text-red-600"
                           >
                             dispute
                           </button>
@@ -247,13 +247,13 @@ export function ReviewPhase({
               {commonGroups.map((group) => (
                 <div
                   key={group.normalizedText}
-                  className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 p-3"
+                  className="flex items-start justify-between gap-3 rounded-lg border border-green-200 bg-green-50 p-3"
                 >
-                  <div>
-                    <span className="font-medium text-gray-900">
+                  <div className="min-w-0 flex-1">
+                    <span className="break-words font-medium text-gray-900">
                       {group.answers[0]!.text}
                     </span>
-                    <span className="ml-2 text-xs text-green-600">
+                    <span className="mt-1 block text-xs text-green-600 sm:ml-2 sm:mt-0 sm:inline">
                       {group.answers.length} player{group.answers.length !== 1 ? "s" : ""}
                     </span>
                   </div>
@@ -266,7 +266,7 @@ export function ReviewPhase({
                         })
                       }
                       disabled={disputeAnswer.isPending}
-                      className="rounded px-2 py-1 text-xs text-gray-400 transition hover:bg-red-100 hover:text-red-600"
+                      className="min-h-9 shrink-0 rounded px-2 py-1 text-xs text-gray-400 transition hover:bg-red-100 hover:text-red-600"
                     >
                       dispute
                     </button>
@@ -289,7 +289,7 @@ export function ReviewPhase({
                   retryAutoClassification.mutate({ sessionToken, gameId: game.id })
                 }
                 disabled={retryAutoClassification.isPending || finishGame.isPending}
-                className="w-full rounded-lg border border-blue-300 bg-blue-50 px-4 py-3 font-medium text-blue-700 transition hover:bg-blue-100 disabled:opacity-50"
+                className="min-h-12 w-full rounded-lg border border-blue-300 bg-blue-50 px-4 py-3 font-medium text-blue-700 transition hover:bg-blue-100 disabled:opacity-50"
               >
                 {retryAutoClassification.isPending
                   ? "retrying auto-classification..."
@@ -302,7 +302,7 @@ export function ReviewPhase({
                 finishGame.mutate({ sessionToken, gameId: game.id })
               }
               disabled={finishGame.isPending || retryAutoClassification.isPending}
-              className="w-full rounded-lg bg-gray-900 px-4 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
+              className="min-h-12 w-full rounded-lg bg-gray-900 px-4 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
             >
               {finishGame.isPending ? "tallying scores..." : "finish & score"}
             </button>

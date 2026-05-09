@@ -63,9 +63,9 @@ export function SoloSetup({
   if (!isReady) return null;
 
   return (
-    <div className="flex w-full max-w-sm flex-col items-center gap-8">
+    <div className="flex w-full max-w-md flex-col items-center gap-6 sm:gap-8">
       <div className="flex flex-col items-center gap-2">
-        <h1 className="text-4xl font-bold text-gray-900">solo mode</h1>
+        <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">solo mode</h1>
         <p className="text-center text-gray-500">
           name as many things as you can before time runs out
         </p>
@@ -83,10 +83,10 @@ export function SoloSetup({
               e.target.value,
             );
           }}
-          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-center text-gray-900 placeholder-gray-400 outline-none focus:border-gray-900"
+          className="min-h-12 w-full rounded-lg border border-gray-300 px-4 py-3 text-center text-base text-gray-900 placeholder-gray-400 outline-none focus:border-gray-900"
         />
 
-        <div className="flex w-full gap-2">
+        <div className="flex w-full flex-col gap-2 sm:flex-row">
           <div className="flex-1">
             <CategorySearch value={category} onChange={setCategory} />
           </div>
@@ -97,7 +97,7 @@ export function SoloSetup({
               randomCategory.refetch();
             }}
             disabled={randomCategory.isFetching}
-            className="shrink-0 rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-50"
+            className="min-h-12 shrink-0 rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-50"
           >
             random
           </button>
@@ -105,12 +105,12 @@ export function SoloSetup({
 
         <div className="flex flex-col gap-1">
           <span className="text-sm text-gray-500">time limit</span>
-          <div className="flex gap-2">
+          <div className="grid grid-cols-4 gap-2 sm:flex">
             {TIMER_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 onClick={() => setTimerSeconds(opt.value)}
-                className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                className={`min-h-11 flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition ${
                   timerSeconds === opt.value
                     ? "border-gray-900 bg-gray-900 text-white"
                     : "border-gray-300 text-gray-700 hover:bg-gray-100"
@@ -125,7 +125,7 @@ export function SoloSetup({
         <button
           onClick={handleStart}
           disabled={createRun.isPending}
-          className="w-full rounded-lg bg-gray-900 px-4 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
+          className="min-h-12 w-full rounded-lg bg-gray-900 px-4 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
         >
           {createRun.isPending ? "starting..." : "start run"}
         </button>
@@ -139,14 +139,14 @@ export function SoloSetup({
 
       <button
         onClick={() => router.push("/solo/leaderboards")}
-        className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-500 transition hover:bg-gray-100"
+        className="min-h-12 w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-500 transition hover:bg-gray-100"
       >
         view all leaderboards
       </button>
 
       <button
         onClick={() => router.push("/")}
-        className="text-sm text-gray-400 transition hover:text-gray-600"
+        className="min-h-10 text-sm text-gray-400 transition hover:text-gray-600"
       >
         back to home
       </button>

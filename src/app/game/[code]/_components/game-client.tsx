@@ -142,8 +142,8 @@ export function GameClient({ code, slug }: { code: string; slug?: string }) {
     };
 
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-white px-4">
-        <div className="flex w-full max-w-sm flex-col items-center gap-4">
+      <main className="flex min-h-dvh flex-col items-center justify-center bg-white px-4 py-8 [padding-bottom:calc(env(safe-area-inset-bottom)+2rem)] [padding-top:calc(env(safe-area-inset-top)+2rem)]">
+        <div className="flex w-full max-w-md flex-col items-center gap-4">
           <p className="text-center text-gray-500">
             enter your name to watch this game
           </p>
@@ -155,12 +155,12 @@ export function GameClient({ code, slug }: { code: string; slug?: string }) {
             onKeyDown={(e) => {
               if (e.key === "Enter") void handleNameSubmit();
             }}
-            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-gray-900"
+            className="min-h-12 w-full rounded-lg border border-gray-300 px-4 py-3 text-base text-gray-900 placeholder-gray-400 outline-none focus:border-gray-900"
           />
           <button
             onClick={() => void handleNameSubmit()}
             disabled={!nameInput.trim()}
-            className="w-full rounded-lg bg-gray-900 px-4 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
+            className="min-h-12 w-full rounded-lg bg-gray-900 px-4 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
           >
             continue
           </button>
@@ -171,7 +171,7 @@ export function GameClient({ code, slug }: { code: string; slug?: string }) {
 
   if (gameState.isLoading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-white">
+      <main className="flex min-h-dvh items-center justify-center bg-white px-4">
         <p className="text-gray-500">loading...</p>
       </main>
     );
@@ -179,11 +179,11 @@ export function GameClient({ code, slug }: { code: string; slug?: string }) {
 
   if (gameState.error) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-white px-4">
+      <main className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-white px-4 py-8 text-center">
         <p className="text-red-600">{gameState.error.message}</p>
         <button
           onClick={() => router.push("/")}
-          className="rounded-lg border border-gray-900 px-4 py-2 text-gray-900 hover:bg-gray-100"
+          className="min-h-11 rounded-lg border border-gray-900 px-4 py-2 text-gray-900 hover:bg-gray-100"
         >
           back to home
         </button>

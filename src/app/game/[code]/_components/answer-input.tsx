@@ -24,7 +24,7 @@ export function AnswerInput({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
+    <form onSubmit={handleSubmit} className="flex w-full gap-2">
       <input
         ref={inputRef}
         type="text"
@@ -36,12 +36,12 @@ export function AnswerInput({
         placeholder="type an answer..."
         disabled={disabled}
         autoFocus
-        className="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-gray-900 disabled:opacity-50"
+        className="min-h-12 min-w-0 flex-1 rounded-lg border border-gray-300 px-4 py-3 text-base text-gray-900 placeholder-gray-400 outline-none focus:border-gray-900 disabled:opacity-50"
       />
       <button
         type="submit"
         disabled={disabled || !text.trim()}
-        className="rounded-lg bg-gray-900 px-6 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
+        className="min-h-12 shrink-0 rounded-lg bg-gray-900 px-5 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50 sm:px-6"
       >
         add
       </button>

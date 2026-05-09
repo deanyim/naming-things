@@ -28,7 +28,7 @@ export function CategorySearch({
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-        className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 outline-none focus:border-gray-900"
+        className="min-h-12 w-full rounded-lg border border-gray-300 px-4 py-3 text-base text-gray-900 placeholder-gray-400 outline-none focus:border-gray-900"
       />
       {isFocused &&
         searchResults.data &&
@@ -43,7 +43,7 @@ export function CategorySearch({
                   onSlugChange?.(item.categorySlug);
                   setIsFocused(false);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-gray-700 transition first:rounded-t-lg last:rounded-b-lg hover:bg-gray-100"
+                className="min-h-11 w-full px-4 py-2 text-left text-sm text-gray-700 transition first:rounded-t-lg last:rounded-b-lg hover:bg-gray-100"
               >
                 {item.categoryDisplayName}
               </button>

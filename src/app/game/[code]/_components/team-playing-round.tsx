@@ -124,8 +124,8 @@ export function TeamPlayingRound({
   const answers = teamAnswers.data ?? [];
 
   return (
-    <main className="flex min-h-screen flex-col items-center bg-white px-4 pt-12">
-      <div className="flex w-full max-w-sm flex-col items-center gap-6">
+    <main className="flex min-h-dvh flex-col items-center bg-white px-4 py-6 [padding-bottom:calc(env(safe-area-inset-bottom)+2rem)] [padding-top:calc(env(safe-area-inset-top)+1.5rem)] sm:py-12">
+      <div className="flex w-full max-w-md flex-col items-center gap-6">
         <RoundHeader
           game={game}
           sessionToken={sessionToken}
@@ -136,7 +136,7 @@ export function TeamPlayingRound({
 
         {/* Team info */}
         {myTeamId && !game.isSpectator && (
-          <p className="text-sm text-gray-500">
+          <p className="w-full text-center text-sm text-gray-500">
             team {myTeamId}: {teammates.map((t) => t.displayName).join(", ")}
           </p>
         )}
@@ -158,7 +158,7 @@ export function TeamPlayingRound({
             )}
 
             {answers.length > 0 && (
-              <div className="flex flex-col gap-2">
+              <div className="flex w-full flex-col gap-2">
                 <p className="text-sm text-gray-500">
                   team answers ({answers.length})
                 </p>
@@ -175,10 +175,10 @@ export function TeamPlayingRound({
                           answerId: a.id,
                         })
                       }
-                      className="inline-flex cursor-pointer items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700 transition hover:bg-gray-200 disabled:cursor-default disabled:hover:bg-gray-100"
+                      className="inline-flex min-h-9 max-w-full cursor-pointer items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700 transition hover:bg-gray-200 disabled:cursor-default disabled:hover:bg-gray-100"
                     >
-                      {a.text}
-                      <span className="text-xs text-gray-400">
+                      <span className="min-w-0 truncate">{a.text}</span>
+                      <span className="shrink-0 text-xs text-gray-400">
                         ({a.playerDisplayName})
                       </span>
                       {!inputDisabled && (

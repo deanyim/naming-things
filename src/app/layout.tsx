@@ -1,14 +1,21 @@
 import "~/styles/globals.css";
 
-import { type Metadata } from "next";
+import { type Metadata, type Viewport } from "next";
 import { Geist } from "next/font/google";
 
+import { MobileBottomNav } from "~/app/_components/mobile-bottom-nav";
 import { TRPCReactProvider } from "~/trpc/react";
 
 export const metadata: Metadata = {
   title: "naming things",
   description: "compete with your friends to see who can name the most things",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#ffffff",
 };
 
 const geist = Geist({
@@ -22,7 +29,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geist.variable}`}>
       <body>
-        <TRPCReactProvider>{children}</TRPCReactProvider>
+        <TRPCReactProvider>
+          {children}
+          <MobileBottomNav />
+        </TRPCReactProvider>
       </body>
     </html>
   );

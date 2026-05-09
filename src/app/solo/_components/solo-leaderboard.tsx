@@ -66,17 +66,17 @@ export function SoloLeaderboard({
           <button
             key={entry.id}
             onClick={() => router.push(`/solo/run/${entry.slug}`)}
-            className={`flex w-full items-center justify-between rounded-lg px-3 py-2 transition hover:opacity-80 ${
+            className={`flex min-h-12 w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition hover:opacity-80 ${
               i === 0
                 ? "border border-yellow-400 bg-yellow-50"
                 : "bg-gray-50 hover:bg-gray-100"
             }`}
           >
-            <div className="flex items-center gap-3">
-              <span className="w-6 text-right text-sm font-medium text-gray-400">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="w-6 shrink-0 text-right text-sm font-medium text-gray-400">
                 {i + 1}
               </span>
-              <span className="text-sm font-medium text-gray-900">
+              <span className="min-w-0 truncate text-sm font-medium text-gray-900">
                 {entry.displayName}
                 {entry.attempt > 1 && (
                   <span className="ml-1 text-xs text-gray-400">
@@ -85,7 +85,7 @@ export function SoloLeaderboard({
                 )}
               </span>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex shrink-0 items-center gap-3 sm:gap-4">
               <span className="text-sm text-gray-500">
                 {formatDuration(entry.durationMs)}
               </span>
@@ -128,7 +128,7 @@ export function LeaderboardOverview({
         </p>
         <button
           onClick={() => setPage(page - 1)}
-          className="w-full text-center text-sm text-gray-400 transition hover:text-gray-600"
+          className="min-h-10 w-full text-center text-sm text-gray-400 transition hover:text-gray-600"
         >
           previous
         </button>
@@ -152,17 +152,17 @@ export function LeaderboardOverview({
                 `/solo/leaderboards?category=${bucket.categorySlug}&timer=${bucket.timerSeconds}`,
               )
             }
-            className="flex w-full items-center justify-between rounded-lg bg-gray-50 px-3 py-2 transition hover:bg-gray-100"
+            className="flex min-h-12 w-full items-start justify-between gap-3 rounded-lg bg-gray-50 px-3 py-2 text-left transition hover:bg-gray-100"
           >
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-900">
+            <div className="flex min-w-0 flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-2">
+              <span className="min-w-0 break-words text-sm font-medium text-gray-900">
                 {bucket.categoryDisplayName}
               </span>
               <span className="text-xs text-gray-400">
                 {bucket.timerSeconds}s
               </span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex shrink-0 flex-col items-end gap-0.5 sm:flex-row sm:items-center sm:gap-3">
               <span className="text-xs text-gray-400">
                 {bucket.runCount} {bucket.runCount === 1 ? "run" : "runs"}
               </span>
@@ -178,14 +178,14 @@ export function LeaderboardOverview({
           <button
             onClick={() => setPage(page - 1)}
             disabled={page === 0}
-            className="text-sm text-gray-400 transition hover:text-gray-600 disabled:invisible"
+            className="min-h-10 text-sm text-gray-400 transition hover:text-gray-600 disabled:invisible"
           >
             previous
           </button>
           <button
             onClick={() => setPage(page + 1)}
             disabled={!hasMore}
-            className="text-sm text-gray-400 transition hover:text-gray-600 disabled:invisible"
+            className="min-h-10 text-sm text-gray-400 transition hover:text-gray-600 disabled:invisible"
           >
             next
           </button>

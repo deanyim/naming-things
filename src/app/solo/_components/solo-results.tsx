@@ -35,7 +35,7 @@ export function SoloResults({ slug }: { slug: string }) {
 
   if (!run) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white">
+      <div className="flex min-h-dvh items-center justify-center bg-white px-4">
         <p className="text-gray-400">loading...</p>
       </div>
     );
@@ -52,8 +52,8 @@ export function SoloResults({ slug }: { slug: string }) {
     .slice(0, 5);
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-white px-4 pt-12">
-      <div className="flex w-full max-w-sm flex-col items-center gap-8">
+    <div className="flex min-h-dvh flex-col items-center bg-white px-4 py-8 [padding-bottom:calc(env(safe-area-inset-bottom)+2rem)] [padding-top:calc(env(safe-area-inset-top)+2rem)]">
+      <div className="flex w-full max-w-md flex-col items-center gap-6 sm:gap-8">
         <div className="flex flex-col items-center gap-2">
           <h1 className="text-2xl font-bold text-gray-900">results</h1>
           <p className="text-gray-500">{run.categoryDisplayName}</p>
@@ -87,7 +87,7 @@ export function SoloResults({ slug }: { slug: string }) {
             {nonDuplicateAnswers.map((answer) => (
               <div
                 key={answer.id}
-                className={`flex items-center justify-between rounded-lg px-3 py-2 ${
+                className={`flex items-start justify-between gap-3 rounded-lg px-3 py-2 ${
                   answer.label === "invalid"
                     ? "bg-red-50"
                     : answer.label === "ambiguous"
@@ -96,7 +96,7 @@ export function SoloResults({ slug }: { slug: string }) {
                 }`}
               >
                 <span
-                  className={`text-sm ${
+                  className={`min-w-0 break-words text-sm ${
                     answer.label === "invalid"
                       ? "text-gray-400 line-through"
                       : "text-gray-900"
@@ -119,7 +119,7 @@ export function SoloResults({ slug }: { slug: string }) {
         <div className="flex w-full flex-col gap-2">
           <button
             onClick={() => router.push(`/solo?category=${encodeURIComponent(run.categoryDisplayName)}&timer=${run.timerSeconds}`)}
-            className="w-full rounded-lg bg-gray-900 px-4 py-3 font-medium text-white transition hover:bg-gray-800"
+            className="min-h-12 w-full rounded-lg bg-gray-900 px-4 py-3 font-medium text-white transition hover:bg-gray-800"
           >
             play again
           </button>
@@ -136,7 +136,7 @@ export function SoloResults({ slug }: { slug: string }) {
                     onClick={() =>
                       router.push(`/solo?category=${encodeURIComponent(c)}`)
                     }
-                    className="rounded-full border border-gray-300 px-3 py-1.5 text-sm text-gray-500 transition hover:bg-gray-100"
+                    className="min-h-9 rounded-full border border-gray-300 px-3 py-1.5 text-sm text-gray-500 transition hover:bg-gray-100"
                   >
                     {c}
                   </button>
@@ -147,7 +147,7 @@ export function SoloResults({ slug }: { slug: string }) {
 
           <button
             onClick={() => router.push("/solo/leaderboards")}
-            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-500 transition hover:bg-gray-100"
+            className="min-h-12 w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-500 transition hover:bg-gray-100"
           >
             view all leaderboards
           </button>

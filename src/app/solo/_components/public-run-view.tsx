@@ -28,8 +28,8 @@ export function PublicRunView({ run }: { run: PublicRun }) {
   const nonDuplicateAnswers = run.answers.filter((a) => !a.isDuplicate);
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-white px-4 pt-12">
-      <div className="flex w-full max-w-sm flex-col items-center gap-8">
+    <div className="flex min-h-dvh flex-col items-center bg-white px-4 py-8 [padding-bottom:calc(env(safe-area-inset-bottom)+2rem)] [padding-top:calc(env(safe-area-inset-top)+2rem)]">
+      <div className="flex w-full max-w-md flex-col items-center gap-6 sm:gap-8">
         <div className="flex flex-col items-center gap-2">
           <h1 className="text-2xl font-bold text-gray-900">
             {run.displayName}&apos;s run
@@ -53,7 +53,7 @@ export function PublicRunView({ run }: { run: PublicRun }) {
             {nonDuplicateAnswers.map((answer) => (
               <div
                 key={answer.id}
-                className={`flex items-center justify-between rounded-lg px-3 py-2 ${
+                className={`flex items-start justify-between gap-3 rounded-lg px-3 py-2 ${
                   answer.label === "invalid"
                     ? "bg-red-50"
                     : answer.label === "ambiguous"
@@ -62,7 +62,7 @@ export function PublicRunView({ run }: { run: PublicRun }) {
                 }`}
               >
                 <span
-                  className={`text-sm ${
+                  className={`min-w-0 break-words text-sm ${
                     answer.label === "invalid"
                       ? "text-gray-400 line-through"
                       : "text-gray-900"
@@ -85,13 +85,13 @@ export function PublicRunView({ run }: { run: PublicRun }) {
         <div className="flex w-full flex-col gap-2">
           <button
             onClick={() => router.push(`/solo?category=${encodeURIComponent(run.categoryDisplayName)}`)}
-            className="w-full rounded-lg bg-gray-900 px-4 py-3 font-medium text-white transition hover:bg-gray-800"
+            className="min-h-12 w-full rounded-lg bg-gray-900 px-4 py-3 font-medium text-white transition hover:bg-gray-800"
           >
             play this category
           </button>
           <button
             onClick={() => router.push("/solo/leaderboards")}
-            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-500 transition hover:bg-gray-100"
+            className="min-h-12 w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-500 transition hover:bg-gray-100"
           >
             view all leaderboards
           </button>

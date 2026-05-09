@@ -58,9 +58,11 @@ export function HomeClient() {
   const isLoading = createGame.isPending || joinGame.isPending;
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-white px-4">
-      <div className="flex w-full max-w-sm flex-col items-center gap-10">
-        <h1 className="text-4xl font-bold text-gray-900">naming things</h1>
+    <main className="flex min-h-dvh flex-col items-center justify-center bg-white px-4 py-8 [padding-bottom:calc(env(safe-area-inset-bottom)+2rem)] [padding-top:calc(env(safe-area-inset-top)+2rem)]">
+      <div className="flex w-full max-w-md flex-col items-center gap-8 sm:gap-10">
+        <h1 className="text-center text-3xl font-bold text-gray-900 sm:text-4xl">
+          naming things
+        </h1>
 
         <p className="text-center text-gray-600">
           compete with your friends to see who can name the most things
@@ -78,13 +80,13 @@ export function HomeClient() {
                 e.target.value,
               );
             }}
-            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-center text-gray-900 placeholder-gray-400 outline-none focus:border-gray-900"
+            className="min-h-12 w-full rounded-lg border border-gray-300 px-4 py-3 text-center text-base text-gray-900 placeholder-gray-400 outline-none focus:border-gray-900"
           />
 
           <button
             onClick={handleCreate}
             disabled={isLoading}
-            className="w-full rounded-lg bg-gray-900 px-4 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
+            className="min-h-12 w-full rounded-lg bg-gray-900 px-4 py-3 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
           >
             {createGame.isPending ? "creating..." : "create game"}
           </button>
@@ -96,12 +98,12 @@ export function HomeClient() {
               value={gameCode}
               onChange={(e) => setGameCode(e.target.value.toUpperCase())}
               maxLength={6}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-center font-mono text-lg tracking-widest text-gray-900 placeholder-gray-400 outline-none focus:border-gray-900"
+              className="min-h-12 w-full rounded-lg border border-gray-300 px-4 py-3 text-center font-mono text-lg tracking-widest text-gray-900 placeholder-gray-400 outline-none focus:border-gray-900"
             />
             <button
               onClick={handleJoin}
               disabled={isLoading}
-              className="w-full rounded-lg border border-gray-900 px-4 py-3 font-medium text-gray-900 transition hover:bg-gray-100 disabled:opacity-50"
+              className="min-h-12 w-full rounded-lg border border-gray-900 px-4 py-3 font-medium text-gray-900 transition hover:bg-gray-100 disabled:opacity-50"
             >
               {joinGame.isPending ? "joining..." : "join game"}
             </button>
@@ -119,7 +121,7 @@ export function HomeClient() {
 
           <button
             onClick={() => router.push("/solo")}
-            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-500 transition hover:bg-gray-100"
+            className="min-h-12 w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-500 transition hover:bg-gray-100"
           >
             play solo
           </button>

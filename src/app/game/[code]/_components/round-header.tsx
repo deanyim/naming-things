@@ -48,14 +48,16 @@ export function RoundHeader({
   });
 
   return (
-    <div className="flex w-full items-center justify-between">
-      <h2 className="text-lg font-bold text-gray-900">{game.category}</h2>
-      <div className="flex items-center gap-2">
+    <div className="flex w-full items-start justify-between gap-3">
+      <h2 className="min-w-0 flex-1 break-words text-base font-bold leading-tight text-gray-900 sm:text-lg">
+        {game.category}
+      </h2>
+      <div className="flex shrink-0 items-center gap-2">
         {showPause && game.isHost && !game.isPaused && !isExpired && (
           <button
             onClick={() => pauseGame.mutate({ sessionToken, gameId: game.id })}
             disabled={pauseGame.isPending}
-            className="rounded-lg border border-gray-300 px-2 py-1 text-sm text-gray-500 transition hover:bg-gray-100 disabled:opacity-50"
+            className="min-h-9 rounded-lg border border-gray-300 px-3 py-1 text-sm text-gray-500 transition hover:bg-gray-100 disabled:opacity-50"
           >
             pause
           </button>
