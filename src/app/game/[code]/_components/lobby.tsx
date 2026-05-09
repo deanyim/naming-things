@@ -25,7 +25,7 @@ export function Lobby({
   sessionToken: string;
 }) {
   const [category, setCategory] = useState(game.category ?? "");
-  const [timerValue, setTimerValue] = useState(
+  const [timerValue, setTimerValue] = useState<number | "">(
     game.timerSeconds >= 60 && game.timerSeconds % 60 === 0
       ? game.timerSeconds / 60
       : game.timerSeconds,
@@ -35,7 +35,9 @@ export function Lobby({
       ? "minutes"
       : "seconds",
   );
-  const [turnTimerValue, setTurnTimerValue] = useState(game.turnTimerSeconds);
+  const [turnTimerValue, setTurnTimerValue] = useState<number | "">(
+    game.turnTimerSeconds,
+  );
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -45,7 +47,11 @@ export function Lobby({
   }, [game.category, game.isHost]);
 
   const timerSeconds =
-    timerUnit === "minutes" ? timerValue * 60 : timerValue;
+    timerValue === ""
+      ? null
+      : timerUnit === "minutes"
+        ? timerValue * 60
+        : timerValue;
 
   const utils = api.useUtils();
   const queryInput = { sessionToken, code: game.code };
@@ -191,23 +197,33 @@ export function Lobby({
   };
 
   const saveTimer = () => {
+    if (timerSeconds === null) {
+      setError("Enter a timer");
+      return false;
+    }
     if (timerSeconds < 10 || timerSeconds > 7200) {
       setError("Timer must be between 10 seconds and 120 minutes");
-      return;
+      return false;
     }
     if (timerSeconds !== game.timerSeconds) {
       setTimerMutation.mutate({ ...mutInput, timerSeconds });
     }
+    return true;
   };
 
   const saveTurnTimer = () => {
+    if (turnTimerValue === "") {
+      setError("Enter a turn timer");
+      return false;
+    }
     if (turnTimerValue < 3 || turnTimerValue > 30) {
       setError("Turn timer must be between 3 and 30 seconds");
-      return;
+      return false;
     }
     if (turnTimerValue !== game.turnTimerSeconds) {
       setTurnTimerMutation.mutate({ ...mutInput, turnTimerSeconds: turnTimerValue });
     }
+    return true;
   };
 
   const handleStart = () => {
@@ -219,10 +235,10 @@ export function Lobby({
       saveCategory();
     }
     if (game.mode === "classic" && timerSeconds !== game.timerSeconds) {
-      saveTimer();
+      if (!saveTimer()) return;
     }
     if (game.mode === "turns" && turnTimerValue !== game.turnTimerSeconds) {
-      saveTurnTimer();
+      if (!saveTurnTimer()) return;
     }
     setError("");
     startGame.mutate(mutInput);
@@ -236,8 +252,9 @@ export function Lobby({
 
   const topicSet = !!game.category;
   const needMorePlayers = game.mode === "turns" && game.players.length < 2;
-  const timerChanged = timerSeconds !== game.timerSeconds;
-  const turnTimerChanged = turnTimerValue !== game.turnTimerSeconds;
+  const timerChanged = timerSeconds !== null && timerSeconds !== game.timerSeconds;
+  const turnTimerChanged =
+    turnTimerValue !== "" && turnTimerValue !== game.turnTimerSeconds;
 
   const playerListSection = game.isTeamMode ? (
     <TeamPlayerList
@@ -376,7 +393,10 @@ export function Lobby({
                     type="number"
                     min={1}
                     value={timerValue}
-                    onChange={(e) => setTimerValue(Math.max(1, Number(e.target.value)))}
+                    onChange={(e) => {
+                      const next = e.target.value;
+                      setTimerValue(next === "" ? "" : Number(next));
+                    }}
                     className="min-h-11 w-full rounded-lg border border-gray-300 px-3 py-2 text-base text-gray-900 outline-none focus:border-gray-900 sm:w-20"
                   />
                   <select
@@ -391,7 +411,11 @@ export function Lobby({
                   </select>
                   <button
                     onClick={saveTimer}
-                    disabled={setTimerMutation.isPending || !timerChanged}
+                    disabled={
+                      setTimerMutation.isPending ||
+                      timerSeconds === null ||
+                      !timerChanged
+                    }
                     className="min-h-11 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-50"
                   >
                     {setTimerMutation.isPending ? "..." : "set"}
@@ -411,13 +435,20 @@ export function Lobby({
                     min={3}
                     max={30}
                     value={turnTimerValue}
-                    onChange={(e) => setTurnTimerValue(Math.max(3, Math.min(30, Number(e.target.value))))}
+                    onChange={(e) => {
+                      const next = e.target.value;
+                      setTurnTimerValue(next === "" ? "" : Number(next));
+                    }}
                     className="min-h-11 w-full rounded-lg border border-gray-300 px-3 py-2 text-base text-gray-900 outline-none focus:border-gray-900 sm:w-20"
                   />
                   <span className="text-sm text-gray-500">seconds</span>
                   <button
                     onClick={saveTurnTimer}
-                    disabled={setTurnTimerMutation.isPending || !turnTimerChanged}
+                    disabled={
+                      setTurnTimerMutation.isPending ||
+                      turnTimerValue === "" ||
+                      !turnTimerChanged
+                    }
                     className="min-h-11 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-50"
                   >
                     {setTurnTimerMutation.isPending ? "..." : "set"}
