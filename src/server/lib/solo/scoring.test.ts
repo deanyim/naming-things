@@ -157,6 +157,7 @@ type FakeHistoryRow = {
   runId: number;
   judgeModel: string | null;
   judgeVersion: string | null;
+  categoryEvidencePacketId?: string | null;
   score: number;
   validCount: number;
   invalidCount: number;
@@ -164,11 +165,19 @@ type FakeHistoryRow = {
   answersSnapshot: unknown;
 };
 
+type FakeJudgeRunRow = {
+  id: string;
+  gameRoundId: string;
+  categoryEvidencePacketId: string | null;
+  judgedAt: Date;
+};
+
 function createFakeDb(initial: { run: FakeRun; answers: FakeAnswer[] }) {
   const state = {
     run: { ...initial.run },
     answers: initial.answers.map((a) => ({ ...a })),
     history: [] as FakeHistoryRow[],
+    judgeRuns: [] as FakeJudgeRunRow[],
   };
 
   // We don't interpret drizzle query symbols; each table's findFirst/findMany
@@ -183,8 +192,12 @@ function createFakeDb(initial: { run: FakeRun; answers: FakeAnswer[] }) {
       },
     },
     insert: vi.fn((_table: unknown) => ({
-      values: vi.fn(async (row: FakeHistoryRow) => {
-        state.history.push(row);
+      values: vi.fn(async (row: FakeHistoryRow | FakeJudgeRunRow) => {
+        if ("gameRoundId" in row) {
+          state.judgeRuns.push(row);
+        } else {
+          state.history.push(row);
+        }
       }),
     })),
     update: vi.fn((_table: unknown) => ({
@@ -244,6 +257,62 @@ describe("rerunJudgingForRun", () => {
     // Did not insert a history row and did not mutate run state.
     expect(db.__state.history).toHaveLength(0);
     expect(db.insert).not.toHaveBeenCalled();
+  });
+
+  it("allows a forced rerun when version matches", async () => {
+    const current = computeJudgeVersion();
+    const db = createFakeDb({
+      run: {
+        id: 43,
+        status: "finished",
+        categoryDisplayName: "fruits",
+        score: 1,
+        validCount: 1,
+        invalidCount: 0,
+        ambiguousCount: 0,
+        judgeModel: "test/model-a",
+        judgeVersion: current,
+      },
+      answers: [
+        {
+          id: 430,
+          runId: 43,
+          text: "apple",
+          normalizedText: "apple",
+          label: "valid",
+          confidence: 0.9,
+          reason: "old",
+          isDuplicate: false,
+        },
+      ],
+    });
+
+    judgeMocks.judgeCategoryFit.mockImplementation(async (
+      _category: string,
+      candidates: { answerId: number; text: string }[],
+    ) => {
+      for (const c of candidates) {
+        const row = db.__state.answers.find((a) => a.id === c.answerId);
+        if (row) {
+          row.label = "valid";
+          row.confidence = 1;
+          row.reason = "forced";
+        }
+      }
+      return candidates.map((c) => ({
+        answerId: c.answerId,
+        label: "valid" as const,
+        confidence: 1,
+        reason: "forced",
+      }));
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await rerunJudgingForRun(db as any, 43, { force: true });
+
+    expect(judgeMocks.judgeCategoryFit).toHaveBeenCalledTimes(1);
+    expect(db.__state.history).toHaveLength(1);
+    expect(db.__state.answers[0]?.reason).toBe("forced");
   });
 
   it("throws when the run is not finished", async () => {
@@ -377,6 +446,8 @@ describe("rerunJudgingForRun", () => {
     expect(db.__state.run.invalidCount).toBe(0);
     expect(db.__state.run.judgeVersion).toBe(computeJudgeVersion());
     expect(db.__state.run.judgeModel).toBe("test/model-a");
+    expect(db.__state.judgeRuns).toHaveLength(1);
+    expect(db.__state.judgeRuns[0]?.gameRoundId).toBe("solo:10");
 
     // Lock was released after completion.
     expect(__classifyLocksForTest.has(10)).toBe(false);

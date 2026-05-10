@@ -8,6 +8,7 @@ import {
   soloRunAnswers,
   categoryAliases,
   soloRunJudgmentHistory,
+  categoryEvidencePackets,
 } from "~/server/db/schema";
 import { getPlayerBySession } from "~/server/api/lib/session";
 import { resolveCategory } from "~/server/lib/categories/normalize";
@@ -19,6 +20,11 @@ import {
   rerunJudgingForRun,
   JudgeVersionAlreadyCurrentError,
 } from "~/server/lib/solo/scoring";
+import {
+  classifyCategoryForRetrieval,
+  getLatestCategoryEvidencePacket,
+} from "~/server/lib/verification/retrieval";
+import { resolveCategorySpec } from "~/server/lib/verification/retrieval/category-resolver";
 import {
   insertWithUniqueSoloSlug,
   SoloSlugExhaustedError,
@@ -275,6 +281,7 @@ export const soloRouter = createTRPCRouter({
           ambiguousCount: scoring.ambiguousCount,
           judgeModel: scoring.judgeModel,
           judgeVersion: scoring.judgeVersion,
+          categoryEvidencePacketId: scoring.categoryEvidencePacketId,
         })
         .where(eq(soloRuns.id, run.id))
         .returning();
@@ -499,6 +506,20 @@ export const soloRouter = createTRPCRouter({
         where: eq(soloRunJudgmentHistory.runId, run.id),
         orderBy: [desc(soloRunJudgmentHistory.createdAt)],
       });
+      const categorySpec = resolveCategorySpec(run.categoryDisplayName);
+      const retrievalDecision = await classifyCategoryForRetrieval(
+        run.categoryDisplayName,
+      );
+      const latestEvidencePacket = await getLatestCategoryEvidencePacket(
+        ctx.db,
+        categorySpec.normalizedCategory,
+        { includeStale: true },
+      );
+      const usedEvidencePacket = run.categoryEvidencePacketId
+        ? await ctx.db.query.categoryEvidencePackets.findFirst({
+            where: eq(categoryEvidencePackets.id, run.categoryEvidencePacketId),
+          })
+        : null;
 
       return {
         slug: run.slug,
@@ -513,6 +534,14 @@ export const soloRouter = createTRPCRouter({
         judgeModel: run.judgeModel,
         judgeVersion: run.judgeVersion,
         currentJudgeVersion: computeJudgeVersion(),
+        categoryEvidencePacketId: run.categoryEvidencePacketId,
+        categorySpec,
+        retrievalDecision,
+        evidencePacket: usedEvidencePacket,
+        latestEvidencePacket,
+        hasNewerEvidencePacket:
+          !!latestEvidencePacket &&
+          latestEvidencePacket.id !== run.categoryEvidencePacketId,
         durationMs: run.durationMs,
         startedAt: run.startedAt,
         endedAt: run.endedAt,
@@ -531,6 +560,7 @@ export const soloRouter = createTRPCRouter({
           id: h.id,
           judgeModel: h.judgeModel,
           judgeVersion: h.judgeVersion,
+          categoryEvidencePacketId: h.categoryEvidencePacketId,
           score: h.score,
           validCount: h.validCount,
           invalidCount: h.invalidCount,
@@ -545,6 +575,7 @@ export const soloRouter = createTRPCRouter({
     .input(
       z.object({
         slug: z.string().min(1),
+        force: z.boolean().default(true),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -566,7 +597,7 @@ export const soloRouter = createTRPCRouter({
       }
 
       try {
-        await rerunJudgingForRun(ctx.db, run.id);
+        await rerunJudgingForRun(ctx.db, run.id, { force: input.force });
       } catch (err) {
         if (err instanceof JudgeVersionAlreadyCurrentError) {
           throw new TRPCError({
@@ -578,6 +609,32 @@ export const soloRouter = createTRPCRouter({
       }
 
       return { ok: true as const };
+    }),
+
+  getEvidencePacket: publicProcedure
+    .input(z.object({ id: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
+      const packet = await ctx.db.query.categoryEvidencePackets.findFirst({
+        where: eq(categoryEvidencePackets.id, input.id),
+      });
+
+      if (!packet) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Evidence packet not found",
+        });
+      }
+
+      const runs = await ctx.db
+        .select({
+          slug: soloRuns.slug,
+          categoryDisplayName: soloRuns.categoryDisplayName,
+          score: soloRuns.score,
+        })
+        .from(soloRuns)
+        .where(eq(soloRuns.categoryEvidencePacketId, packet.id));
+
+      return { ...packet, runs };
     }),
 
   getRandomCategory: publicProcedure

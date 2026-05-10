@@ -9,6 +9,10 @@ import {
 import { normalizeAnswer } from "~/lib/normalize";
 import { judgeCategoryFit } from "~/server/lib/verification/category-fit";
 import type { CategoryFitResult } from "~/server/lib/verification/category-fit";
+import {
+  getExistingCategoryEvidencePacket,
+  recordCategoryJudgeRun,
+} from "~/server/lib/verification/retrieval/packets";
 import { type db as dbType } from "~/server/db";
 
 export type DB = typeof dbType;
@@ -101,6 +105,7 @@ export async function classifyAnswers(
   gameId: number,
   category: string,
   results: CategoryFitResult[],
+  categoryEvidencePacketId?: string | null,
 ) {
   const resultMap = new Map(results.map((r) => [r.answerId, r]));
   const allAnswers = await dbOrTx.query.answers.findMany({
@@ -120,6 +125,7 @@ export async function classifyAnswers(
         label: llm.label,
         confidence: Math.round(llm.confidence * 100),
         reason: llm.reason,
+        categoryEvidencePacketId: categoryEvidencePacketId ?? null,
       })
       .onConflictDoUpdate({
         target: answerVerifications.answerId,
@@ -127,6 +133,7 @@ export async function classifyAnswers(
           label: llm.label,
           confidence: Math.round(llm.confidence * 100),
           reason: llm.reason,
+          categoryEvidencePacketId: categoryEvidencePacketId ?? null,
         },
       });
 
@@ -156,15 +163,35 @@ export async function classifyUnverifiedAnswers(
 
   if (toClassify.length === 0) return;
 
+  const evidencePacket = await getExistingCategoryEvidencePacket(db, category);
+
   const results = await judgeCategoryFit(
     category,
     toClassify.map((a) => ({ answerId: a.id, text: a.text })),
-    { model: env.OPENROUTER_MODEL },
+    {
+      model: env.OPENROUTER_MODEL,
+      retrieval: {
+        enabled: !!evidencePacket,
+        evidencePacket,
+      },
+    },
   );
 
   await db.transaction(async (tx) => {
-    await classifyAnswers(tx, gameId, category, results);
+    await classifyAnswers(
+      tx,
+      gameId,
+      category,
+      results,
+      evidencePacket?.id ?? null,
+    );
   });
+
+  await recordCategoryJudgeRun(
+    db,
+    `game:${gameId}`,
+    evidencePacket?.id ?? null,
+  );
 }
 
 export function canRetryClassification(classifiedAt: Date | null | undefined) {

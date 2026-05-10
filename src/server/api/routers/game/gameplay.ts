@@ -8,6 +8,10 @@ import { getPlayerBySession, requireHost, requirePlayer } from "~/server/api/lib
 import { notify } from "~/server/ws/notify";
 import { judgeCategoryFit } from "~/server/lib/verification/category-fit";
 import {
+  getExistingCategoryEvidencePacket,
+  recordCategoryJudgeRun,
+} from "~/server/lib/verification/retrieval/packets";
+import {
   normalizeAnswer,
   advanceTurn,
   classifyAnswers,
@@ -256,15 +260,36 @@ export const gameplayRouter = createTRPCRouter({
         });
 
         if (myAnswers.length > 0) {
+          const evidencePacket = await getExistingCategoryEvidencePacket(
+            ctx.db,
+            game.category,
+          );
           const results = await judgeCategoryFit(
             game.category,
             myAnswers.map((a) => ({ answerId: a.id, text: a.text })),
-            { model: env.OPENROUTER_MODEL },
+            {
+              model: env.OPENROUTER_MODEL,
+              retrieval: {
+                enabled: !!evidencePacket,
+                evidencePacket,
+              },
+            },
           );
 
           await ctx.db.transaction(async (tx) => {
-            await classifyAnswers(tx, input.gameId, game.category!, results);
+            await classifyAnswers(
+              tx,
+              input.gameId,
+              game.category!,
+              results,
+              evidencePacket?.id ?? null,
+            );
           });
+          await recordCategoryJudgeRun(
+            ctx.db,
+            `game:${input.gameId}`,
+            evidencePacket?.id ?? null,
+          );
         }
       }
 

@@ -12,6 +12,13 @@ import {
   type CategoryFitResult,
 } from "~/server/lib/verification/category-fit";
 import { CATEGORY_FIT_PROMPT } from "~/server/lib/verification/prompts";
+import {
+  getExistingCategoryEvidencePacket,
+  getLatestCategoryEvidencePacket,
+  recordCategoryJudgeRun,
+} from "~/server/lib/verification/retrieval/packets";
+import { resolveCategorySpec } from "~/server/lib/verification/retrieval/category-resolver";
+import type { CategoryEvidencePacket } from "~/server/lib/verification/types";
 import { env } from "~/env";
 
 type DB = typeof dbType;
@@ -51,6 +58,7 @@ export type ScoringResult = {
   ambiguousCount: number;
   judgeModel: string;
   judgeVersion: string;
+  categoryEvidencePacketId: string | null;
   results: CategoryFitResult[];
 };
 
@@ -58,10 +66,16 @@ async function classifyAndPersist(
   db: DB,
   category: string,
   candidates: { answerId: number; text: string }[],
+  evidencePacket?: CategoryEvidencePacket | null,
 ): Promise<CategoryFitResult[]> {
   if (candidates.length === 0) return [];
 
-  const results = await judgeCategoryFit(category, candidates);
+  const results = await judgeCategoryFit(category, candidates, {
+    retrieval: {
+      enabled: !!evidencePacket,
+      evidencePacket,
+    },
+  });
 
   await Promise.all(
     results.map((result) =>
@@ -106,7 +120,8 @@ export function maybeClassifyBatch(
 
       const batch = unclassified.slice(0, BACKGROUND_BATCH_SIZE);
       const candidates = batch.map((a) => ({ answerId: a.id, text: a.text }));
-      await classifyAndPersist(db, category, candidates);
+      const evidencePacket = await getExistingCategoryEvidencePacket(db, category);
+      await classifyAndPersist(db, category, candidates, evidencePacket);
     } catch (err) {
       console.error("Background classification batch failed:", err);
     } finally {
@@ -144,7 +159,14 @@ export async function scoreRun(
     text: a.text,
   }));
 
-  const newResults = await classifyAndPersist(db, category, candidates);
+  const evidencePacket = await getExistingCategoryEvidencePacket(db, category);
+
+  const newResults = await classifyAndPersist(
+    db,
+    category,
+    candidates,
+    evidencePacket,
+  );
 
   // Combine pre-classified results with newly classified ones
   const preClassified: CategoryFitResult[] = nonDuplicates
@@ -160,11 +182,17 @@ export async function scoreRun(
   const counts = computeCounts(allResults);
   const judgeModel = getJudgeModel();
   const judgeVersion = computeJudgeVersion();
+  await recordCategoryJudgeRun(
+    db,
+    `solo:${runId}`,
+    evidencePacket?.id ?? null,
+  );
 
   return {
     ...counts,
     judgeModel,
     judgeVersion,
+    categoryEvidencePacketId: evidencePacket?.id ?? null,
     results: allResults,
   };
 }
@@ -176,20 +204,44 @@ export class JudgeVersionAlreadyCurrentError extends Error {
   }
 }
 
+async function getNewerEvidencePacketIdForRun(
+  db: DB,
+  run: {
+    categoryDisplayName: string;
+    categoryEvidencePacketId: string | null;
+  },
+) {
+  if (typeof db.select !== "function") return null;
+
+  const spec = resolveCategorySpec(run.categoryDisplayName);
+
+  const latest = await getLatestCategoryEvidencePacket(
+    db,
+    spec.normalizedCategory,
+    { includeStale: true },
+  );
+
+  if (!latest || latest.id === run.categoryEvidencePacketId) return null;
+  return latest.id;
+}
+
 /**
  * Re-run category-fit judging on an already-finished run, snapshotting
  * the previous classification into `soloRunJudgmentHistory` first so the
  * old labels are preserved for review.
  *
  * Throws `JudgeVersionAlreadyCurrentError` if the stored judgeVersion
- * already matches the current config — both before and after acquiring
- * the classification lock, to guard against concurrent reruns.
+ * already matches the current config and no newer evidence packet exists —
+ * both before and after acquiring the classification lock, to guard against
+ * concurrent reruns.
  */
 export async function rerunJudgingForRun(
   db: DB,
   runId: number,
+  options: { force?: boolean } = {},
 ): Promise<void> {
   const currentVersion = computeJudgeVersion();
+  const force = options.force === true;
 
   const initialRun = await db.query.soloRuns.findFirst({
     where: eq(soloRuns.id, runId),
@@ -200,7 +252,15 @@ export async function rerunJudgingForRun(
   if (initialRun.status !== "finished") {
     throw new Error(`Solo run ${runId} is not finished`);
   }
-  if (initialRun.judgeVersion === currentVersion) {
+  const initialNewerEvidencePacketId = await getNewerEvidencePacketIdForRun(
+    db,
+    initialRun,
+  );
+  if (
+    !force &&
+    initialRun.judgeVersion === currentVersion &&
+    !initialNewerEvidencePacketId
+  ) {
     throw new JudgeVersionAlreadyCurrentError();
   }
 
@@ -217,7 +277,8 @@ export async function rerunJudgingForRun(
     if (!run) {
       throw new Error(`Solo run ${runId} not found`);
     }
-    if (run.judgeVersion === currentVersion) {
+    const newerEvidencePacketId = await getNewerEvidencePacketIdForRun(db, run);
+    if (!force && run.judgeVersion === currentVersion && !newerEvidencePacketId) {
       throw new JudgeVersionAlreadyCurrentError();
     }
 
@@ -241,6 +302,7 @@ export async function rerunJudgingForRun(
       runId: run.id,
       judgeModel: run.judgeModel,
       judgeVersion: run.judgeVersion,
+      categoryEvidencePacketId: run.categoryEvidencePacketId,
       score: run.score,
       validCount: run.validCount,
       invalidCount: run.invalidCount,
@@ -255,7 +317,18 @@ export async function rerunJudgingForRun(
       text: a.text,
     }));
 
-    await classifyAndPersist(db, run.categoryDisplayName, candidates);
+    const evidencePacket = await getExistingCategoryEvidencePacket(
+      db,
+      run.categoryDisplayName,
+      { includeStale: !!newerEvidencePacketId },
+    );
+
+    await classifyAndPersist(
+      db,
+      run.categoryDisplayName,
+      candidates,
+      evidencePacket,
+    );
 
     // Recompute counts from the fresh state.
     const answersAfter = await db.query.soloRunAnswers.findMany({
@@ -280,8 +353,15 @@ export async function rerunJudgingForRun(
         ambiguousCount: counts.ambiguousCount,
         judgeModel: getJudgeModel(),
         judgeVersion: currentVersion,
+        categoryEvidencePacketId: evidencePacket?.id ?? null,
       })
       .where(eq(soloRuns.id, runId));
+
+    await recordCategoryJudgeRun(
+      db,
+      `solo:${runId}`,
+      evidencePacket?.id ?? null,
+    );
   })();
 
   // Wrap the work promise so waiters in the lock map never observe its

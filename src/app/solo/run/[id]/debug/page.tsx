@@ -21,6 +21,7 @@ export default function SoloRunDebugPage() {
   const [expandedHistoryId, setExpandedHistoryId] = useState<number | null>(
     null,
   );
+  const [factsExpanded, setFactsExpanded] = useState(false);
   const [rerunError, setRerunError] = useState<string | null>(null);
 
   const data = api.solo.getRunDebug.useQuery(
@@ -48,7 +49,8 @@ export default function SoloRunDebugPage() {
 
   const run = data.data;
   const isStale = run.judgeVersion !== run.currentJudgeVersion;
-  const rerunDisabled = !isStale || rerunJudging.isPending;
+  const judgingUpToDate = !isStale && !run.hasNewerEvidencePacket;
+  const rerunDisabled = rerunJudging.isPending;
 
   return (
     <main className="flex min-h-screen flex-col items-center bg-white px-4 pt-12">
@@ -74,19 +76,125 @@ export default function SoloRunDebugPage() {
           <p className="mt-0.5 text-xs text-gray-400">
             valid: {run.validCount} · invalid: {run.invalidCount} · ambiguous: {run.ambiguousCount} · category slug: {run.categorySlug}
           </p>
+          <p className="mt-0.5 text-xs text-gray-400">
+            dataset: {run.categorySpec.buildable ? "buildable" : "not buildable"} · {run.categorySpec.entityType} · packet:{" "}
+            {run.categoryEvidencePacketId ? (
+              <a className="underline" href={`/solo/evidence/${run.categoryEvidencePacketId}`}>
+                {run.categoryEvidencePacketId}
+              </a>
+            ) : "none"}
+            {run.hasNewerEvidencePacket ? (
+              <span className="ml-1 text-amber-600">
+                [newer packet available: {run.latestEvidencePacket?.id}]
+              </span>
+            ) : null}
+          </p>
           <div className="mt-2 flex items-center gap-2">
             <button
-              onClick={() => rerunJudging.mutate({ slug })}
+              onClick={() => rerunJudging.mutate({ slug, force: true })}
               disabled={rerunDisabled}
               className="rounded-md border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {rerunJudging.isPending ? "rerunning…" : "rerun judging"}
             </button>
+            {judgingUpToDate && (
+              <span className="text-xs text-amber-600">
+                evidence and prompt are current; this will force a fresh rerun
+              </span>
+            )}
             {rerunError && (
               <span className="text-xs text-red-600">{rerunError}</span>
             )}
           </div>
+          <div className="mt-2 flex items-center gap-2">
+            <a
+              href={`/admin/evidence?category=${encodeURIComponent(run.category)}`}
+              className="rounded-md border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-100"
+            >
+              open evidence admin
+            </a>
+          </div>
         </div>
+
+        {(run.evidencePacket ?? run.latestEvidencePacket) && (
+          <div className="rounded-md border border-gray-200 p-3 text-xs text-gray-600">
+            <h3 className="text-sm font-medium text-gray-900">
+              evidence packet
+            </h3>
+            {(() => {
+              const packet = run.evidencePacket ?? run.latestEvidencePacket!;
+              return (
+                <div className="mt-2 flex flex-col gap-2">
+                  <p>
+                    {packet.id} · {packet.status} · {packet.kind} · retrieved{" "}
+                    {new Date(packet.retrievedAt).toLocaleString()}
+                    {packet.latencyMs != null && (
+                      <span> · {(packet.latencyMs / 1000).toFixed(1)}s</span>
+                    )}
+                  </p>
+                  {packet.error && (
+                    <p className="text-red-600">error: {packet.error}</p>
+                  )}
+                  <p>
+                    facts: {packet.facts.length} · sources:{" "}
+                    {packet.sources.length} · queries:{" "}
+                    {packet.queryLog.join(" | ") || "none"}
+                  </p>
+                  {packet.sources.length > 0 && (
+                    <ul className="flex flex-col gap-1">
+                      {packet.sources.map((source) => (
+                        <li key={source.id}>
+                          <a
+                            className="font-medium text-gray-900 underline"
+                            href={source.url}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {source.title}
+                          </a>{" "}
+                          <span className="text-gray-400">
+                            [{source.sourceType}]
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {packet.facts.length > 0 && (
+                    <div>
+                      <button
+                        onClick={() => setFactsExpanded(!factsExpanded)}
+                        className="text-xs font-medium text-gray-500 hover:text-gray-700"
+                      >
+                        {factsExpanded ? "hide facts" : `show ${packet.facts.length} facts`}
+                      </button>
+                      {factsExpanded && (
+                        <ul className="mt-1 flex flex-col gap-1.5">
+                          {packet.facts.map((fact, i) => (
+                            <li key={i} className="rounded border border-gray-100 px-2 py-1">
+                              <span className="font-medium text-gray-900">
+                                {fact.canonicalAnswer}
+                              </span>
+                              {fact.aliases.length > 0 && (
+                                <span className="ml-1 text-gray-400">
+                                  ({fact.aliases.join(", ")})
+                                </span>
+                              )}
+                              {fact.notes && (
+                                <span className="ml-1 text-gray-400">
+                                  — {fact.notes}
+                                </span>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        )}
 
         <AnswerRateChart
           answers={run.answers}

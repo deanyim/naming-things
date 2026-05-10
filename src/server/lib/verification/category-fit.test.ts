@@ -185,4 +185,91 @@ describe("judgeCategoryFit", () => {
     // Math.max(512, 20 * 80) = 1600
     expect(largeCall[0].maxOutputTokens).toBe(1600);
   });
+
+  it("includes a category evidence packet when retrieval is enabled", async () => {
+    const candidates = makeCandidates(1);
+    await judgeCategoryFit("Survivor winners", candidates, {
+      retrieval: {
+        enabled: true,
+        evidencePacket: {
+          id: "cep_test",
+          category: "Survivor winners",
+          normalizedCategory: "survivor winners",
+          kind: "public_result",
+          status: "ready",
+          createdAt: "2026-05-09T00:00:00.000Z",
+          retrievedAt: "2026-05-09T00:00:00.000Z",
+          expiresAt: null,
+          model: "test",
+          searchProvider: "openrouter:web_search",
+          sources: [],
+          facts: [
+            {
+              canonicalAnswer: "Test Winner",
+              aliases: [],
+              sourceIds: [],
+              notes: null,
+            },
+          ],
+          queryLog: [],
+          latencyMs: 1000,
+          error: null,
+        },
+      },
+    });
+
+    const call = mockCallOpenRouterJson.mock.calls[0] as [
+      { messages: { content: string }[] },
+    ];
+    expect(call[0].messages[0]!.content).toContain(
+      "Category evidence packet:",
+    );
+    expect(call[0].messages[0]!.content).toContain("Test Winner");
+  });
+
+  it("passes shortlist candidates to the LLM for weak dataset matches", async () => {
+    await judgeCategoryFit(
+      "Survivor contestants",
+      [{ answerId: 1, text: "parvti" }],
+      {
+        retrieval: {
+          enabled: true,
+          evidencePacket: {
+            id: "cep_test",
+            category: "Survivor contestants",
+            normalizedCategory: "survivor contestants",
+            kind: "canonical_dataset",
+            status: "ready",
+            createdAt: "2026-05-09T00:00:00.000Z",
+            retrievedAt: "2026-05-09T00:00:00.000Z",
+            expiresAt: null,
+            model: "test",
+            searchProvider: "openrouter:web_search",
+            sources: [],
+            facts: [
+              {
+                canonicalAnswer: "Parvati Shallow",
+                aliases: [],
+                sourceIds: [],
+                notes: null,
+                matchKeys: ["parvati shallow"],
+                metadata: { datasetConfidence: "high" },
+              },
+            ],
+            queryLog: [],
+            latencyMs: 1000,
+            error: null,
+          },
+        },
+      },
+    );
+
+    const call = mockCallOpenRouterJson.mock.calls[0] as [
+      { messages: { content: string }[] },
+    ];
+    expect(call[0].messages[0]!.content).toContain(
+      "Dataset shortlist candidates:",
+    );
+    expect(call[0].messages[0]!.content).toContain("Parvati Shallow");
+  });
 });
