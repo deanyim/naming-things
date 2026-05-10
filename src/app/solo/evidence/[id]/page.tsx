@@ -11,6 +11,7 @@ export default function EvidencePacketDebugPage() {
   const [sourcesExpanded, setSourcesExpanded] = useState(false);
   const [queriesExpanded, setQueriesExpanded] = useState(false);
   const [factFilter, setFactFilter] = useState("");
+  const [slugInput, setSlugInput] = useState("");
   const [selectedFactIndexes, setSelectedFactIndexes] = useState<Set<number>>(
     () => new Set(),
   );
@@ -25,6 +26,17 @@ export default function EvidencePacketDebugPage() {
     onSuccess: async () => {
       setSelectedFactIndexes(new Set());
       setPrimaryFactIndex(null);
+      await utils.solo.getEvidencePacket.invalidate({ id });
+    },
+  });
+  const assignSlug = api.admin.assignEvidencePacketSlug.useMutation({
+    onSuccess: async () => {
+      setSlugInput("");
+      await utils.solo.getEvidencePacket.invalidate({ id });
+    },
+  });
+  const unassignSlug = api.admin.unassignEvidencePacketSlug.useMutation({
+    onSuccess: async () => {
       await utils.solo.getEvidencePacket.invalidate({ id });
     },
   });
@@ -144,6 +156,73 @@ export default function EvidencePacketDebugPage() {
               </p>
             )}
           </div>
+        </div>
+
+        <div className="rounded-md border border-gray-200 p-4">
+          <h3 className="text-sm font-medium text-gray-700">
+            category slug assignments
+          </h3>
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <input
+              value={slugInput}
+              onChange={(event) => setSlugInput(event.target.value)}
+              placeholder="survivor contestants"
+              className="min-h-9 flex-1 rounded-md border border-gray-300 px-3 text-xs outline-none focus:border-gray-900"
+            />
+            <button
+              onClick={() =>
+                assignSlug.mutate({
+                  id,
+                  categorySlug: slugInput,
+                })
+              }
+              disabled={!slugInput.trim() || assignSlug.isPending}
+              className="min-h-9 rounded-md border border-gray-900 px-3 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {assignSlug.isPending ? "Assigning" : "Assign slug"}
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-gray-500">
+            Slugs are normalized the same way solo categories are bucketed.
+            Assigning an existing slug moves it to this packet.
+          </p>
+          {assignSlug.error && (
+            <p className="mt-2 text-xs text-red-600">
+              {assignSlug.error.message}
+            </p>
+          )}
+          {unassignSlug.error && (
+            <p className="mt-2 text-xs text-red-600">
+              {unassignSlug.error.message}
+            </p>
+          )}
+          {(packet.assignedCategorySlugs ?? []).length > 0 ? (
+            <ul className="mt-3 flex flex-wrap gap-2 text-xs">
+              {(packet.assignedCategorySlugs ?? []).map((slug) => (
+                <li
+                  key={slug}
+                  className="inline-flex items-center gap-2 rounded-md border border-gray-200 px-2 py-1"
+                >
+                  <span className="font-mono text-gray-700">{slug}</span>
+                  <button
+                    onClick={() =>
+                      unassignSlug.mutate({
+                        categorySlug: slug,
+                      })
+                    }
+                    disabled={unassignSlug.isPending}
+                    className="text-gray-400 hover:text-red-600 disabled:opacity-50"
+                  >
+                    remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-3 text-xs text-gray-500">
+              No category slugs are assigned to this packet.
+            </p>
+          )}
         </div>
 
         <div className="rounded-md border border-gray-200 p-4">

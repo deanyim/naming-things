@@ -102,6 +102,7 @@ export function maybeClassifyBatch(
   db: DB,
   runId: number,
   category: string,
+  categorySlug?: string | null,
 ): void {
   // Skip if a batch is already in-flight for this run
   if (classifyLocks.has(runId)) return;
@@ -120,7 +121,9 @@ export function maybeClassifyBatch(
 
       const batch = unclassified.slice(0, BACKGROUND_BATCH_SIZE);
       const candidates = batch.map((a) => ({ answerId: a.id, text: a.text }));
-      const evidencePacket = await getExistingCategoryEvidencePacket(db, category);
+      const evidencePacket = await getExistingCategoryEvidencePacket(db, category, {
+        categorySlug,
+      });
       await classifyAndPersist(db, category, candidates, evidencePacket);
     } catch (err) {
       console.error("Background classification batch failed:", err);
@@ -141,6 +144,7 @@ export async function scoreRun(
   db: DB,
   runId: number,
   category: string,
+  categorySlug?: string | null,
 ): Promise<ScoringResult> {
   // Wait for any in-flight background batch to finish before scoring
   const pending = classifyLocks.get(runId);
@@ -159,7 +163,9 @@ export async function scoreRun(
     text: a.text,
   }));
 
-  const evidencePacket = await getExistingCategoryEvidencePacket(db, category);
+  const evidencePacket = await getExistingCategoryEvidencePacket(db, category, {
+    categorySlug,
+  });
 
   const newResults = await classifyAndPersist(
     db,
@@ -208,10 +214,22 @@ async function getNewerEvidencePacketIdForRun(
   db: DB,
   run: {
     categoryDisplayName: string;
+    categorySlug?: string | null;
     categoryEvidencePacketId: string | null;
   },
 ) {
   if (typeof db.select !== "function") return null;
+
+  if (run.categorySlug) {
+    const latestForSlug = await getExistingCategoryEvidencePacket(
+      db,
+      run.categoryDisplayName,
+      { includeStale: true, categorySlug: run.categorySlug },
+    );
+    if (latestForSlug && latestForSlug.id !== run.categoryEvidencePacketId) {
+      return latestForSlug.id;
+    }
+  }
 
   const spec = resolveCategorySpec(run.categoryDisplayName);
 
@@ -320,7 +338,10 @@ export async function rerunJudgingForRun(
     const evidencePacket = await getExistingCategoryEvidencePacket(
       db,
       run.categoryDisplayName,
-      { includeStale: !!newerEvidencePacketId },
+      {
+        includeStale: !!newerEvidencePacketId,
+        categorySlug: run.categorySlug,
+      },
     );
 
     await classifyAndPersist(

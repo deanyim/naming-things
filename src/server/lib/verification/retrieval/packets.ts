@@ -4,6 +4,7 @@ import { env } from "~/env";
 import { type db as dbType } from "~/server/db";
 import {
   categoryEvidencePackets,
+  categoryEvidencePacketSlugAssignments,
   categoryJudgeRuns,
 } from "~/server/db/schema";
 import { type CategoryClassifierOptions, classifyCategoryForRetrieval } from "./policy";
@@ -295,6 +296,41 @@ export async function getLatestCategoryEvidencePacket(
   return rows[0] ? toPacket(rows[0]) : null;
 }
 
+export async function getLatestCategoryEvidencePacketForSlug(
+  db: DB,
+  categorySlug: string,
+  options: { includeStale?: boolean; now?: Date } = {},
+) {
+  if (typeof db.select !== "function") return null;
+
+  const slug = categorySlug.trim().toLowerCase();
+  if (!slug) return null;
+
+  const now = options.now ?? new Date();
+  const rows = await db
+    .select({ packet: categoryEvidencePackets })
+    .from(categoryEvidencePackets)
+    .innerJoin(
+      categoryEvidencePacketSlugAssignments,
+      eq(
+        categoryEvidencePacketSlugAssignments.categoryEvidencePacketId,
+        categoryEvidencePackets.id,
+      ),
+    )
+    .where(
+      options.includeStale
+        ? eq(categoryEvidencePacketSlugAssignments.categorySlug, slug)
+        : and(
+            eq(categoryEvidencePacketSlugAssignments.categorySlug, slug),
+            gt(categoryEvidencePackets.expiresAt, now),
+          ),
+    )
+    .orderBy(desc(categoryEvidencePackets.createdAt))
+    .limit(1);
+
+  return rows[0] ? toPacket(rows[0].packet) : null;
+}
+
 export async function createCategoryEvidencePacket(
   db: DB,
   categoryOrDecision: string | CategoryRetrievalDecision,
@@ -409,8 +445,17 @@ export async function getOrCreateCategoryEvidencePacket(
 export async function getExistingCategoryEvidencePacket(
   db: DB,
   category: string,
-  options: { includeStale?: boolean; now?: Date } = {},
+  options: { includeStale?: boolean; now?: Date; categorySlug?: string | null } = {},
 ) {
+  if (options.categorySlug) {
+    const bySlug = await getLatestCategoryEvidencePacketForSlug(
+      db,
+      options.categorySlug,
+      options,
+    );
+    if (bySlug) return bySlug;
+  }
+
   const spec = resolveCategorySpec(category);
   return getLatestCategoryEvidencePacket(db, spec.normalizedCategory, options);
 }

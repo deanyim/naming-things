@@ -419,6 +419,7 @@ export default function EvidenceAdminPage() {
                 <th className="py-2 pr-3">category</th>
                 <th className="py-2 pr-3">status</th>
                 <th className="py-2 pr-3">entries</th>
+                <th className="py-2 pr-3">slugs</th>
                 <th className="py-2">built</th>
               </tr>
             </thead>
@@ -433,6 +434,11 @@ export default function EvidenceAdminPage() {
                   <td className="py-2 pr-3">{packet.category}</td>
                   <td className="py-2 pr-3">{packet.status}</td>
                   <td className="py-2 pr-3">{packet.facts.length}</td>
+                  <td className="py-2 pr-3 text-gray-500">
+                    {packet.assignedCategorySlugs.length > 0
+                      ? packet.assignedCategorySlugs.join(", ")
+                      : "none"}
+                  </td>
                   <td className="py-2 text-gray-500">
                     {new Date(packet.retrievedAt).toLocaleString()}
                   </td>

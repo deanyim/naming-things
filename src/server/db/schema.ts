@@ -105,6 +105,30 @@ export const categoryEvidencePackets = createTable(
   ],
 );
 
+export const categoryEvidencePacketSlugAssignments = createTable(
+  "category_evidence_packet_slug_assignment",
+  (d) => ({
+    id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
+    categorySlug: d.varchar({ length: 256 }).notNull(),
+    categoryEvidencePacketId: d
+      .varchar({ length: 64 })
+      .notNull()
+      .references(() => categoryEvidencePackets.id, { onDelete: "cascade" }),
+    createdAt: d
+      .timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  }),
+  (t) => [
+    uniqueIndex("category_evidence_packet_slug_assignment_slug_idx").on(
+      t.categorySlug,
+    ),
+    index("category_evidence_packet_slug_assignment_packet_idx").on(
+      t.categoryEvidencePacketId,
+    ),
+  ],
+);
+
 export const categoryJudgeRuns = createTable(
   "category_judge_run",
   (d) => ({

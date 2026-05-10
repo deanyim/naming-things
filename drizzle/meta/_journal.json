@@ -127,6 +127,13 @@
       "when": 1778347238771,
       "tag": "0017_chilly_chat",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1778440434968,
+      "tag": "0018_lazy_rockslide",
+      "breakpoints": true
     }
   ]
 }

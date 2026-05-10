@@ -2,7 +2,11 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { desc, eq } from "drizzle-orm";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import { categoryEvidencePackets } from "~/server/db/schema";
+import {
+  categoryEvidencePackets,
+  categoryEvidencePacketSlugAssignments,
+} from "~/server/db/schema";
+import { normalizeCategory } from "~/server/lib/categories/normalize";
 import { resolveCategorySpec } from "~/server/lib/verification/retrieval/category-resolver";
 import {
   createCategoryEvidencePacket,
@@ -13,6 +17,10 @@ import { discoverWikipediaSources } from "~/server/lib/verification/retrieval/wi
 import { FetchSourceFetcher } from "~/server/lib/verification/retrieval/source-fetcher";
 import { inspectSourceTables } from "~/server/lib/verification/retrieval/extractor";
 import type { EvidenceFact } from "~/server/lib/verification/types";
+
+function normalizeAssignedCategorySlug(value: string) {
+  return normalizeCategory(value).slug;
+}
 
 function dedupeSources<
   T extends {
@@ -193,11 +201,28 @@ export const adminRouter = createTRPCRouter({
   listEvidencePackets: publicProcedure
     .input(z.object({ limit: z.number().min(1).max(100).default(25) }))
     .query(async ({ ctx, input }) => {
-      return ctx.db
+      const packets = await ctx.db
         .select()
         .from(categoryEvidencePackets)
         .orderBy(desc(categoryEvidencePackets.createdAt))
         .limit(input.limit);
+      const assignments =
+        packets.length > 0
+          ? await ctx.db
+              .select()
+              .from(categoryEvidencePacketSlugAssignments)
+          : [];
+      const slugsByPacketId = new Map<string, string[]>();
+      for (const assignment of assignments) {
+        const values = slugsByPacketId.get(assignment.categoryEvidencePacketId) ?? [];
+        values.push(assignment.categorySlug);
+        slugsByPacketId.set(assignment.categoryEvidencePacketId, values);
+      }
+
+      return packets.map((packet) => ({
+        ...packet,
+        assignedCategorySlugs: slugsByPacketId.get(packet.id) ?? [],
+      }));
     }),
 
   getLatestEvidenceForCategory: publicProcedure
@@ -205,6 +230,7 @@ export const adminRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return getExistingCategoryEvidencePacket(ctx.db, input.category, {
         includeStale: true,
+        categorySlug: normalizeAssignedCategorySlug(input.category),
       });
     }),
 
@@ -221,6 +247,57 @@ export const adminRouter = createTRPCRouter({
         });
       }
       return packet;
+    }),
+
+  assignEvidencePacketSlug: publicProcedure
+    .input(
+      z.object({
+        id: z.string().min(1),
+        categorySlug: z.string().min(1).max(256),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const categorySlug = normalizeAssignedCategorySlug(input.categorySlug);
+      if (!categorySlug) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Category slug is empty after normalization.",
+        });
+      }
+
+      const packet = await ctx.db.query.categoryEvidencePackets.findFirst({
+        where: eq(categoryEvidencePackets.id, input.id),
+      });
+      if (!packet) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Evidence packet not found",
+        });
+      }
+
+      await ctx.db
+        .delete(categoryEvidencePacketSlugAssignments)
+        .where(eq(categoryEvidencePacketSlugAssignments.categorySlug, categorySlug));
+      await ctx.db.insert(categoryEvidencePacketSlugAssignments).values({
+        categorySlug,
+        categoryEvidencePacketId: input.id,
+      });
+
+      return { ok: true as const, categorySlug };
+    }),
+
+  unassignEvidencePacketSlug: publicProcedure
+    .input(
+      z.object({
+        categorySlug: z.string().min(1).max(256),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const categorySlug = normalizeAssignedCategorySlug(input.categorySlug);
+      await ctx.db
+        .delete(categoryEvidencePacketSlugAssignments)
+        .where(eq(categoryEvidencePacketSlugAssignments.categorySlug, categorySlug));
+      return { ok: true as const, categorySlug };
     }),
 
   mergeEvidenceFacts: publicProcedure

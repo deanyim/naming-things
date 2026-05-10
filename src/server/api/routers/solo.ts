@@ -9,6 +9,7 @@ import {
   categoryAliases,
   soloRunJudgmentHistory,
   categoryEvidencePackets,
+  categoryEvidencePacketSlugAssignments,
 } from "~/server/db/schema";
 import { getPlayerBySession } from "~/server/api/lib/session";
 import { resolveCategory } from "~/server/lib/categories/normalize";
@@ -22,7 +23,7 @@ import {
 } from "~/server/lib/solo/scoring";
 import {
   classifyCategoryForRetrieval,
-  getLatestCategoryEvidencePacket,
+  getExistingCategoryEvidencePacket,
 } from "~/server/lib/verification/retrieval";
 import { resolveCategorySpec } from "~/server/lib/verification/retrieval/category-resolver";
 import {
@@ -212,7 +213,12 @@ export const soloRouter = createTRPCRouter({
 
       // For longer runs, pre-classify in background batches of 25
       if (run.timerSeconds > 30) {
-        maybeClassifyBatch(ctx.db, run.id, run.categoryDisplayName);
+        maybeClassifyBatch(
+          ctx.db,
+          run.id,
+          run.categoryDisplayName,
+          run.categorySlug,
+        );
       }
 
       return {
@@ -266,6 +272,7 @@ export const soloRouter = createTRPCRouter({
         ctx.db,
         run.id,
         run.categoryDisplayName,
+        run.categorySlug,
       );
 
       // Finalize the run
@@ -510,10 +517,10 @@ export const soloRouter = createTRPCRouter({
       const retrievalDecision = await classifyCategoryForRetrieval(
         run.categoryDisplayName,
       );
-      const latestEvidencePacket = await getLatestCategoryEvidencePacket(
+      const latestEvidencePacket = await getExistingCategoryEvidencePacket(
         ctx.db,
-        categorySpec.normalizedCategory,
-        { includeStale: true },
+        run.categoryDisplayName,
+        { includeStale: true, categorySlug: run.categorySlug },
       );
       const usedEvidencePacket = run.categoryEvidencePacketId
         ? await ctx.db.query.categoryEvidencePackets.findFirst({
@@ -633,8 +640,23 @@ export const soloRouter = createTRPCRouter({
         })
         .from(soloRuns)
         .where(eq(soloRuns.categoryEvidencePacketId, packet.id));
+      const slugAssignments = await ctx.db
+        .select()
+        .from(categoryEvidencePacketSlugAssignments)
+        .where(
+          eq(
+            categoryEvidencePacketSlugAssignments.categoryEvidencePacketId,
+            packet.id,
+          ),
+        );
 
-      return { ...packet, runs };
+      return {
+        ...packet,
+        assignedCategorySlugs: slugAssignments.map(
+          (assignment) => assignment.categorySlug,
+        ),
+        runs,
+      };
     }),
 
   getRandomCategory: publicProcedure
