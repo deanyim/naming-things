@@ -5,6 +5,7 @@ Offline eval framework for category fit verification. All test cases are batched
 ## Tasks
 
 - `category_fit` — labels: `valid`, `invalid`, `ambiguous`
+- `retrieval_packet_judging` — labels: `valid`, `invalid`, `ambiguous`; uses mocked category evidence packets
 
 ## Files
 

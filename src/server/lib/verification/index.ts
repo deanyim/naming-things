@@ -2,3 +2,8 @@ export * from "./types";
 export * from "./normalize";
 export * from "./prompts";
 export * from "./category-fit";
+export * from "./retrieval/policy";
+export * from "./retrieval/packets";
+export * from "./retrieval/category-resolver";
+export * from "./retrieval/builder";
+export * from "./retrieval/matcher";

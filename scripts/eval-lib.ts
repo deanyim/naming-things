@@ -2,7 +2,7 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-export type EvalTask = "category_fit";
+export type EvalTask = "category_fit" | "retrieval_packet_judging";
 
 export type EvalCase = {
   id: string;
@@ -111,7 +111,48 @@ function isJunk(text: string) {
   );
 }
 
+function runRetrievalPacketBaseline(caseData: EvalCase): EvalOutput {
+  const candidate = normalizeText(String(caseData.input.candidate_answer ?? ""));
+  const packet = caseData.input.evidencePacket as
+    | {
+        status?: string;
+        facts?: Array<{ canonicalAnswer?: string; aliases?: string[] }>;
+      }
+    | undefined;
+
+  if (!packet || packet.status !== "ready") {
+    return {
+      label: "ambiguous",
+      confidence: 0.4,
+      reason: "packet is missing or not ready",
+    };
+  }
+
+  for (const fact of packet.facts ?? []) {
+    const names = [fact.canonicalAnswer, ...(fact.aliases ?? [])]
+      .filter((value): value is string => typeof value === "string")
+      .map(normalizeText);
+    if (names.includes(candidate)) {
+      return {
+        label: "valid",
+        confidence: 0.95,
+        reason: "candidate appears in the mocked evidence packet",
+      };
+    }
+  }
+
+  return {
+    label: "invalid",
+    confidence: 0.75,
+    reason: "ready packet does not contain the candidate",
+  };
+}
+
 export function runLocalBaseline(caseData: EvalCase): EvalOutput {
+  if (caseData.task === "retrieval_packet_judging") {
+    return runRetrievalPacketBaseline(caseData);
+  }
+
   const { input } = caseData;
   const candidate = String(input.candidate_answer ?? "");
   const category = normalizeText(caseData.category);

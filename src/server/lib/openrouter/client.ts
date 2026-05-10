@@ -29,7 +29,7 @@ export type JsonSchemaSpec = {
 
 export type OpenRouterJsonCallInput<T> = {
   messages: OpenRouterMessage[];
-  schema: z.ZodType<T>;
+  schema: z.ZodType<T, z.ZodTypeDef, unknown>;
   /** When provided, uses strict json_schema mode instead of json_object mode. */
   jsonSchema?: JsonSchemaSpec;
   model?: string;
@@ -77,11 +77,7 @@ export function extractJsonText(text: string) {
 }
 
 async function readResponseBody(response: Response) {
-  try {
-    return await response.text();
-  } catch {
-    return "";
-  }
+  return response.text();
 }
 
 function sleep(ms: number) {
