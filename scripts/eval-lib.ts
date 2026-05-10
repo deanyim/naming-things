@@ -2,12 +2,7 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-export type EvalTask =
-  | "category_fit"
-  | "retrieval_policy"
-  | "retrieval_category_classifier"
-  | "retrieval_packet_judging"
-  | "retrieval_live_smoke";
+export type EvalTask = "category_fit" | "retrieval_packet_judging";
 
 export type EvalCase = {
   id: string;
@@ -116,54 +111,6 @@ function isJunk(text: string) {
   );
 }
 
-const RETRIEVAL_ELIGIBLE_KINDS = new Set([
-  "official_roster",
-  "canonical_media_metadata",
-  "public_result",
-]);
-
-function classifyRetrievalCategory(category: string) {
-  const text = ` ${normalizeText(category)} `;
-
-  if (/\b(latest|current|newest)\b.*\b(version|versions|release|releases)\b/.test(text)) {
-    return "release_version";
-  }
-  if (/\b(schedule|fixture|fixtures|upcoming|tour dates?|calendar)\b/.test(text)) {
-    return "public_schedule";
-  }
-  if (/\b(law|laws|legal|regulation|regulations|statute|court|tax code)\b/.test(text)) {
-    return "government_or_legal";
-  }
-  if (/\b(ceo|cfo|cto|stock price|market cap|revenue|earnings|employees)\b/.test(text)) {
-    return "public_company_fact";
-  }
-  if (/\b(restaurants?|bars?|coffee shops?|businesses?|stores?|near me|open now|address|phone)\b/.test(text)) {
-    return "business_listing";
-  }
-  if (/\b(rumou?rs?|alleged|gossip|dating|secretly)\b/.test(text)) {
-    return "rumor";
-  }
-  if (/\b(best|favorite|favourite|worst|coolest|prettiest|most fun)\b/.test(text)) {
-    return "subjective_preference";
-  }
-  if (/\b(age|religion|ethnicity|race|health|medical|disability|sexual orientation|political affiliation)\b/.test(text)) {
-    return "sensitive_personal_attribute";
-  }
-  if (/\b(left handed|right handed|height|hometown|middle name|siblings?|spouse|married|birthday)\b/.test(text)) {
-    return "low_indexability_biographical_detail";
-  }
-  if (/\b(winners?|losers?|results?|scores?|champions?|final standings|eliminated|elimination|won|winner)\b/.test(text)) {
-    return "public_result";
-  }
-  if (/\b(episodes?|season|seasons|movies?|films?|directed by|written by|starring|cast of|credits?|release dates?)\b/.test(text)) {
-    return "canonical_media_metadata";
-  }
-  if (/\b(roster|squad|lineup|cast list|contestants?|players?|senators?|representatives?|board members?|cabinet members?)\b/.test(text)) {
-    return "official_roster";
-  }
-  return "unknown";
-}
-
 function runRetrievalPacketBaseline(caseData: EvalCase): EvalOutput {
   const candidate = normalizeText(String(caseData.input.candidate_answer ?? ""));
   const packet = caseData.input.evidencePacket as
@@ -202,35 +149,8 @@ function runRetrievalPacketBaseline(caseData: EvalCase): EvalOutput {
 }
 
 export function runLocalBaseline(caseData: EvalCase): EvalOutput {
-  if (caseData.task === "retrieval_policy") {
-    const kind = String(caseData.input.kind ?? classifyRetrievalCategory(caseData.category));
-    const eligible = RETRIEVAL_ELIGIBLE_KINDS.has(kind);
-    return {
-      label: eligible ? "eligible" : "ineligible",
-      confidence: 1,
-      reason: eligible ? "kind is allowlisted" : "kind is excluded",
-    };
-  }
-
-  if (caseData.task === "retrieval_category_classifier") {
-    const kind = classifyRetrievalCategory(caseData.category);
-    return {
-      label: kind,
-      confidence: 0.8,
-      reason: "local heuristic category classifier",
-    };
-  }
-
   if (caseData.task === "retrieval_packet_judging") {
     return runRetrievalPacketBaseline(caseData);
-  }
-
-  if (caseData.task === "retrieval_live_smoke") {
-    return {
-      label: "skipped",
-      confidence: 0,
-      reason: "live retrieval smoke cases are disabled in the local baseline",
-    };
   }
 
   const { input } = caseData;

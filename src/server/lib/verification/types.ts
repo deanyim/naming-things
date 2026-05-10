@@ -24,12 +24,6 @@ export const openRouterJsonResponseSchema = z.object({
       prompt_tokens: z.number().int().nonnegative().optional(),
       completion_tokens: z.number().int().nonnegative().optional(),
       total_tokens: z.number().int().nonnegative().optional(),
-      server_tool_use: z
-        .object({
-          web_search_requests: z.number().int().nonnegative().optional(),
-        })
-        .passthrough()
-        .optional(),
     })
     .optional(),
 });

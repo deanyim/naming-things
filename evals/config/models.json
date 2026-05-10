@@ -8,14 +8,6 @@
     "outputCostUsdPerM": 0
   },
   {
-    "id": "grok-4.1-fast",
-    "provider": "openrouter",
-    "model": "x-ai/grok-4.1-fast",
-    "enabled": true,
-    "inputCostUsdPerM": 0.20,
-    "outputCostUsdPerM": 0.50
-  },
-  {
     "id": "mistral-small-3.2",
     "provider": "openrouter",
     "model": "mistralai/mistral-small-3.2-24b-instruct",

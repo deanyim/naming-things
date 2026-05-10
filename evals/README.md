@@ -5,10 +5,7 @@ Offline eval framework for category fit verification. All test cases are batched
 ## Tasks
 
 - `category_fit` — labels: `valid`, `invalid`, `ambiguous`
-- `retrieval_policy` — labels: `eligible`, `ineligible`
-- `retrieval_category_classifier` — labels are retrieval category kinds
 - `retrieval_packet_judging` — labels: `valid`, `invalid`, `ambiguous`; uses mocked category evidence packets
-- `retrieval_live_smoke` — labels: `valid`, `invalid`, `ambiguous`; optional live web-search smoke suite
 
 ## Files
 
@@ -50,12 +47,6 @@ node --experimental-strip-types scripts/run-evals.ts --chunk-size 10,26,52 --mod
 - `--tasks` — comma-separated list of tasks to run (default: all)
 
 Environment variables `EVAL_CHUNK_SIZE`, `EVAL_MODELS`, and `EVAL_TASKS` work as alternatives.
-
-Live retrieval smoke cases are skipped unless explicitly enabled:
-
-```bash
-EVAL_LIVE_RETRIEVAL=1 node --experimental-strip-types scripts/run-evals.ts --tasks retrieval_live_smoke --models gpt-5.4-mini
-```
 
 ## Data Shape
 
