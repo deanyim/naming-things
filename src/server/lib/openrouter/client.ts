@@ -29,7 +29,7 @@ export type JsonSchemaSpec = {
 
 export type OpenRouterJsonCallInput<T> = {
   messages: OpenRouterMessage[];
-  schema: z.ZodType<T>;
+  schema: z.ZodType<T, z.ZodTypeDef, unknown>;
   /** When provided, uses strict json_schema mode instead of json_object mode. */
   jsonSchema?: JsonSchemaSpec;
   model?: string;
@@ -37,6 +37,15 @@ export type OpenRouterJsonCallInput<T> = {
   maxOutputTokens?: number;
   timeoutMs?: number;
   signal?: AbortSignal;
+};
+
+export type OpenRouterTool = {
+  type: string;
+  parameters?: Record<string, unknown>;
+};
+
+export type OpenRouterToolJsonCallInput<T> = OpenRouterJsonCallInput<T> & {
+  tools: OpenRouterTool[];
 };
 
 export type OpenRouterJsonCallResult<T> = {
@@ -48,6 +57,10 @@ export type OpenRouterJsonCallResult<T> = {
   inputTokens: number | null;
   outputTokens: number | null;
   totalTokens: number | null;
+};
+
+export type OpenRouterToolJsonCallResult<T> = OpenRouterJsonCallResult<T> & {
+  webSearchRequests: number | null;
 };
 
 export function stripMarkdownFences(text: string) {
@@ -77,11 +90,7 @@ export function extractJsonText(text: string) {
 }
 
 async function readResponseBody(response: Response) {
-  try {
-    return await response.text();
-  } catch {
-    return "";
-  }
+  return response.text();
 }
 
 function sleep(ms: number) {
@@ -93,9 +102,9 @@ function truncateForLog(text: string, maxLength = 2000) {
   return `${text.slice(0, maxLength)}... [truncated ${text.length - maxLength} chars]`;
 }
 
-export async function callOpenRouterJson<T>(
-  input: OpenRouterJsonCallInput<T>,
-): Promise<OpenRouterJsonCallResult<T>> {
+async function callOpenRouterJsonInternal<T>(
+  input: OpenRouterJsonCallInput<T> & { tools?: OpenRouterTool[] },
+): Promise<OpenRouterToolJsonCallResult<T>> {
   const apiKey = env.OPENROUTER_API_KEY;
   if (!apiKey) {
     throw new OpenRouterError("OPENROUTER_API_KEY is not configured");
@@ -150,13 +159,15 @@ export async function callOpenRouterJson<T>(
         }
       : { type: "json_object" as const };
 
-    const requestBody = JSON.stringify({
+    const requestPayload = {
       model,
       messages: input.messages,
       temperature: input.temperature ?? 0,
       max_tokens: input.maxOutputTokens ?? 512,
       response_format: responseFormat,
-    });
+      ...(input.tools ? { tools: input.tools } : {}),
+    };
+    const requestBody = JSON.stringify(requestPayload);
 
     let lastError: OpenRouterError | null = null;
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
@@ -216,6 +227,8 @@ export async function callOpenRouterJson<T>(
         inputTokens: json.usage?.prompt_tokens ?? null,
         outputTokens: json.usage?.completion_tokens ?? null,
         totalTokens: json.usage?.total_tokens ?? null,
+        webSearchRequests:
+          json.usage?.server_tool_use?.web_search_requests ?? null,
       };
     }
 
@@ -251,4 +264,26 @@ export async function callOpenRouterJson<T>(
     }
     if (timeoutId) clearTimeout(timeoutId);
   }
+}
+
+export async function callOpenRouterJson<T>(
+  input: OpenRouterJsonCallInput<T>,
+): Promise<OpenRouterJsonCallResult<T>> {
+  const result = await callOpenRouterJsonInternal(input);
+  return {
+    model: result.model,
+    rawText: result.rawText,
+    parsed: result.parsed,
+    requestId: result.requestId,
+    latencyMs: result.latencyMs,
+    inputTokens: result.inputTokens,
+    outputTokens: result.outputTokens,
+    totalTokens: result.totalTokens,
+  };
+}
+
+export async function callOpenRouterJsonWithTools<T>(
+  input: OpenRouterToolJsonCallInput<T>,
+): Promise<OpenRouterToolJsonCallResult<T>> {
+  return callOpenRouterJsonInternal(input);
 }
