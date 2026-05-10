@@ -147,6 +147,108 @@ export function normalizeEvidenceFacts(
   return normalized;
 }
 
+function uniqueTrimmed(values: Array<string | null | undefined>) {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const value of values) {
+    const trimmed = value?.trim();
+    if (!trimmed) continue;
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(trimmed);
+  }
+  return result;
+}
+
+export function mergeEvidenceFacts(
+  facts: EvidenceFact[],
+  factIndexes: number[],
+  primaryFactIndex = factIndexes[0],
+) {
+  const selectedIndexes = Array.from(new Set(factIndexes)).sort((a, b) => a - b);
+  if (selectedIndexes.length < 2) {
+    throw new Error("Select at least two facts to merge.");
+  }
+  if (
+    primaryFactIndex == null ||
+    !selectedIndexes.includes(primaryFactIndex)
+  ) {
+    throw new Error("Primary fact must be one of the selected facts.");
+  }
+  if (
+    selectedIndexes.some(
+      (index) => !Number.isInteger(index) || index < 0 || index >= facts.length,
+    )
+  ) {
+    throw new Error("Selected fact index is out of range.");
+  }
+
+  const selectedFacts = selectedIndexes.map((index) => facts[index]!);
+  const primaryFact = facts[primaryFactIndex]!;
+  const canonicalAnswer = primaryFact.canonicalAnswer.trim();
+  const canonicalKey = canonicalAnswer.toLowerCase();
+  const aliases = uniqueTrimmed(
+    selectedFacts.flatMap((fact, index) => [
+      selectedIndexes[index] === primaryFactIndex ? null : fact.canonicalAnswer,
+      ...fact.aliases,
+    ]),
+  ).filter((alias) => alias.toLowerCase() !== canonicalKey);
+  const sourceIds = uniqueTrimmed(
+    selectedFacts.flatMap((fact) => fact.sourceIds),
+  );
+  const notes = uniqueTrimmed(selectedFacts.map((fact) => fact.notes)).join(" / ");
+  const matchKeys = uniqueTrimmed(
+    selectedFacts.flatMap((fact) => fact.matchKeys ?? []),
+  );
+  const sourceEntries = selectedFacts.flatMap(
+    (fact) => fact.sourceEntries ?? [],
+  );
+  const confidenceValues = selectedFacts
+    .map((fact) => fact.confidence)
+    .filter((confidence): confidence is number => typeof confidence === "number");
+  const metadata = {
+    ...Object.assign(
+      {},
+      ...selectedFacts.map((fact) => fact.metadata ?? {}),
+    ),
+    manualMerge: {
+      mergedFrom: selectedFacts.map((fact) => fact.canonicalAnswer),
+      primary: canonicalAnswer,
+    },
+  };
+
+  const mergedFact: EvidenceFact = {
+    ...primaryFact,
+    canonicalAnswer,
+    aliases,
+    sourceIds,
+    notes: notes || null,
+    matchKeys: matchKeys.length > 0 ? matchKeys : primaryFact.matchKeys,
+    metadata,
+    sourceEntries:
+      sourceEntries.length > 0 ? sourceEntries : primaryFact.sourceEntries,
+    confidence:
+      confidenceValues.length > 0
+        ? Math.max(...confidenceValues)
+        : primaryFact.confidence,
+  };
+
+  const selectedSet = new Set(selectedIndexes);
+  const insertAt = selectedIndexes[0]!;
+  const mergedFacts: EvidenceFact[] = [];
+  facts.forEach((fact, index) => {
+    if (index === insertAt) {
+      mergedFacts.push(mergedFact);
+      return;
+    }
+    if (selectedSet.has(index)) return;
+    mergedFacts.push(fact);
+  });
+
+  return { facts: mergedFacts, mergedFact };
+}
+
 export function formatCategoryEvidencePacketForJudge(
   packet: CategoryEvidencePacket,
 ) {

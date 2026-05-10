@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   formatCategoryEvidencePacketForJudge,
+  mergeEvidenceFacts,
   normalizeEvidenceFacts,
   normalizeEvidenceSources,
 } from "./packets";
@@ -107,6 +108,60 @@ describe("packet normalization", () => {
         confidence: 0.9,
       },
     ]);
+  });
+});
+
+describe("mergeEvidenceFacts", () => {
+  it("merges selected facts and keeps alternate canonical names as aliases", () => {
+    const facts: EvidenceFact[] = [
+      {
+        canonicalAnswer: 'Kathleen "Kathy" Vavrick-O\'Brien',
+        aliases: [],
+        sourceIds: ["s1"],
+        notes: null,
+        matchKeys: ["kathleen kathy vavrick o brien"],
+        metadata: { datasetConfidence: "high" },
+        confidence: 0.9,
+      },
+      {
+        canonicalAnswer: "Kathy Vavrick-O'Brien",
+        aliases: [],
+        sourceIds: ["s2"],
+        notes: "alternate source display",
+        matchKeys: ["kathy vavrick o brien"],
+        metadata: { source: "table-2" },
+        confidence: 0.8,
+      },
+      {
+        canonicalAnswer: "Parvati Shallow",
+        aliases: [],
+        sourceIds: ["s1"],
+        notes: null,
+      },
+    ];
+
+    const result = mergeEvidenceFacts(facts, [0, 1], 0);
+
+    expect(result.facts).toHaveLength(2);
+    expect(result.facts[0]).toMatchObject({
+      canonicalAnswer: 'Kathleen "Kathy" Vavrick-O\'Brien',
+      aliases: ["Kathy Vavrick-O'Brien"],
+      sourceIds: ["s1", "s2"],
+      notes: "alternate source display",
+      matchKeys: [
+        "kathleen kathy vavrick o brien",
+        "kathy vavrick o brien",
+      ],
+      confidence: 0.9,
+    });
+    expect(result.facts[0]?.metadata?.manualMerge).toEqual({
+      mergedFrom: [
+        'Kathleen "Kathy" Vavrick-O\'Brien',
+        "Kathy Vavrick-O'Brien",
+      ],
+      primary: 'Kathleen "Kathy" Vavrick-O\'Brien',
+    });
+    expect(result.facts[1]?.canonicalAnswer).toBe("Parvati Shallow");
   });
 });
 

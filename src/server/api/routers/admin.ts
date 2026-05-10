@@ -7,10 +7,12 @@ import { resolveCategorySpec } from "~/server/lib/verification/retrieval/categor
 import {
   createCategoryEvidencePacket,
   getExistingCategoryEvidencePacket,
+  mergeEvidenceFacts,
 } from "~/server/lib/verification/retrieval/packets";
 import { discoverWikipediaSources } from "~/server/lib/verification/retrieval/wikipedia-source-discovery";
 import { FetchSourceFetcher } from "~/server/lib/verification/retrieval/source-fetcher";
 import { inspectSourceTables } from "~/server/lib/verification/retrieval/extractor";
+import type { EvidenceFact } from "~/server/lib/verification/types";
 
 function dedupeSources<
   T extends {
@@ -219,5 +221,59 @@ export const adminRouter = createTRPCRouter({
         });
       }
       return packet;
+    }),
+
+  mergeEvidenceFacts: publicProcedure
+    .input(
+      z.object({
+        id: z.string().min(1),
+        factIndexes: z.array(z.number().int().min(0)).min(2),
+        primaryFactIndex: z.number().int().min(0).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const packet = await ctx.db.query.categoryEvidencePackets.findFirst({
+        where: eq(categoryEvidencePackets.id, input.id),
+      });
+      if (!packet) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Evidence packet not found",
+        });
+      }
+
+      let merged;
+      try {
+        merged = mergeEvidenceFacts(
+          packet.facts as EvidenceFact[],
+          input.factIndexes,
+          input.primaryFactIndex,
+        );
+      } catch (err) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: err instanceof Error ? err.message : "Could not merge facts.",
+        });
+      }
+
+      const queryLog = [
+        ...packet.queryLog,
+        `manual_merge:${merged.mergedFact.canonicalAnswer}<=${input.factIndexes.join(",")}`,
+      ];
+
+      const [updated] = await ctx.db
+        .update(categoryEvidencePackets)
+        .set({
+          facts: merged.facts,
+          queryLog,
+        })
+        .where(eq(categoryEvidencePackets.id, input.id))
+        .returning();
+
+      return updated ?? {
+        ...packet,
+        facts: merged.facts,
+        queryLog,
+      };
     }),
 });

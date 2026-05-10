@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildDatasetLookupHint, judgeAnswerWithDataset } from "./matcher";
 import type { CategoryEvidencePacket } from "../types";
+import { mergeEvidenceFacts } from "./packets";
 
 function packet(): CategoryEvidencePacket {
   return {
@@ -159,5 +160,40 @@ describe("judgeAnswerWithDataset", () => {
       status: "valid",
       canonical: "Sophie B. Hawkins",
     });
+  });
+
+  it("accepts answers after duplicate facts are manually merged", () => {
+    const mergePacket = packet();
+    mergePacket.facts = [
+      {
+        canonicalAnswer: 'Kathleen "Kathy" Vavrick-O\'Brien',
+        aliases: [],
+        sourceIds: ["s1"],
+        notes: null,
+        matchKeys: ["kathy vavrick o brien"],
+        metadata: { datasetConfidence: "high" },
+      },
+      {
+        canonicalAnswer: "Kathy Vavrick-O'Brien",
+        aliases: [],
+        sourceIds: ["s1"],
+        notes: null,
+        matchKeys: ["kathy vavrick o brien"],
+        metadata: { datasetConfidence: "high" },
+      },
+    ];
+
+    expect(judgeAnswerWithDataset(mergePacket, "kathy vavrick o'brien"))
+      .toMatchObject({
+        status: "ambiguous",
+      });
+
+    mergePacket.facts = mergeEvidenceFacts(mergePacket.facts, [0, 1], 0).facts;
+
+    expect(judgeAnswerWithDataset(mergePacket, "kathy vavrick o'brien"))
+      .toMatchObject({
+        status: "valid",
+        canonical: 'Kathleen "Kathy" Vavrick-O\'Brien',
+      });
   });
 });
