@@ -1,0 +1,1 @@
+ALTER TABLE "naming-things_category_evidence_packet" ADD COLUMN "latencyMs" integer;

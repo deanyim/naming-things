@@ -1,14 +1,10 @@
 import { sql, relations } from "drizzle-orm";
 import {
-  boolean,
   index,
-  integer,
   pgEnum,
   pgTableCreator,
   real,
-  timestamp,
   uniqueIndex,
-  varchar,
 } from "drizzle-orm/pg-core";
 
 
@@ -49,6 +45,84 @@ export const categoryFitLabelEnum = pgEnum("category_fit_label", [
   "invalid",
   "ambiguous",
 ]);
+
+export type DbEvidenceSource = {
+  id: string;
+  url: string;
+  title: string;
+  sourceType:
+    | "official"
+    | "primary"
+    | "structured_database"
+    | "reputable_secondary"
+    | "community"
+    | "unknown";
+  publishedAt: string | null;
+  retrievedAt: string;
+  snippet: string;
+  retrievedAtIso?: string;
+  contentHash?: string;
+  contentType?: string;
+  metadata?: Record<string, unknown>;
+};
+
+export type DbEvidenceFact = {
+  canonicalAnswer: string;
+  aliases: string[];
+  sourceIds: string[];
+  notes: string | null;
+  matchKeys?: string[];
+  metadata?: Record<string, unknown>;
+  sourceEntries?: unknown[];
+  confidence?: number;
+};
+
+export const categoryEvidencePackets = createTable(
+  "category_evidence_packet",
+  (d) => ({
+    id: d.varchar({ length: 64 }).primaryKey(),
+    category: d.varchar({ length: 256 }).notNull(),
+    normalizedCategory: d.varchar({ length: 256 }).notNull(),
+    kind: d.varchar({ length: 64 }).notNull(),
+    status: d.varchar({ length: 64 }).notNull(),
+    retrievedAt: d.timestamp({ withTimezone: true }).notNull(),
+    expiresAt: d.timestamp({ withTimezone: true }),
+    model: d.varchar({ length: 256 }).notNull(),
+    searchProvider: d.varchar({ length: 64 }).notNull(),
+    sources: d.jsonb().$type<DbEvidenceSource[]>().notNull(),
+    facts: d.jsonb().$type<DbEvidenceFact[]>().notNull(),
+    queryLog: d.jsonb().$type<string[]>().notNull(),
+    latencyMs: d.integer(),
+    error: d.varchar({ length: 2048 }),
+    createdAt: d
+      .timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  }),
+  (t) => [
+    index("category_evidence_packet_category_idx").on(t.normalizedCategory),
+    index("category_evidence_packet_created_idx").on(t.createdAt),
+  ],
+);
+
+export const categoryJudgeRuns = createTable(
+  "category_judge_run",
+  (d) => ({
+    id: d.varchar({ length: 64 }).primaryKey(),
+    gameRoundId: d.varchar({ length: 128 }).notNull(),
+    categoryEvidencePacketId: d
+      .varchar({ length: 64 })
+      .references(() => categoryEvidencePackets.id, { onDelete: "set null" }),
+    judgedAt: d
+      .timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  }),
+  (t) => [
+    index("category_judge_run_round_idx").on(t.gameRoundId),
+    index("category_judge_run_packet_idx").on(t.categoryEvidencePacketId),
+  ],
+);
 
 // Players
 export const players = createTable(
@@ -193,6 +267,9 @@ export const answerVerifications = createTable(
     label: categoryFitLabelEnum().notNull(),
     confidence: d.integer(),
     reason: d.varchar({ length: 512 }),
+    categoryEvidencePacketId: d
+      .varchar({ length: 64 })
+      .references(() => categoryEvidencePackets.id, { onDelete: "set null" }),
     createdAt: d
       .timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
@@ -201,6 +278,9 @@ export const answerVerifications = createTable(
   (t) => [
     uniqueIndex("answer_verification_answer_idx").on(t.answerId),
     index("answer_verification_game_idx").on(t.gameId),
+    index("answer_verification_evidence_packet_idx").on(
+      t.categoryEvidencePacketId,
+    ),
   ],
 );
 
@@ -280,6 +360,9 @@ export const soloRuns = createTable(
     ambiguousCount: d.integer().default(0).notNull(),
     judgeModel: d.varchar({ length: 256 }),
     judgeVersion: d.varchar({ length: 256 }),
+    categoryEvidencePacketId: d
+      .varchar({ length: 64 })
+      .references(() => categoryEvidencePackets.id, { onDelete: "set null" }),
     createdAt: d
       .timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
@@ -377,6 +460,9 @@ export const soloRunJudgmentHistory = createTable(
       .references(() => soloRuns.id, { onDelete: "cascade" }),
     judgeModel: d.varchar({ length: 256 }),
     judgeVersion: d.varchar({ length: 256 }),
+    categoryEvidencePacketId: d
+      .varchar({ length: 64 })
+      .references(() => categoryEvidencePackets.id, { onDelete: "set null" }),
     score: d.integer().notNull(),
     validCount: d.integer().notNull(),
     invalidCount: d.integer().notNull(),
