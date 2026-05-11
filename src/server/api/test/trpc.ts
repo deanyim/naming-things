@@ -40,6 +40,14 @@ export function createMockDb() {
         findFirst: vi.fn(),
         findMany: vi.fn(),
       },
+      soloRuns: {
+        findFirst: vi.fn(),
+        findMany: vi.fn(),
+      },
+      soloRunAnswers: {
+        findFirst: vi.fn(),
+        findMany: vi.fn(),
+      },
     },
     update: vi.fn(() => createUpdateChain()),
     insert: vi.fn(() => createInsertChain()),

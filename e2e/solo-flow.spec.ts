@@ -88,6 +88,28 @@ test.describe("Solo mode", () => {
     await expect(page.getByText("answers (1)")).toBeVisible();
   });
 
+  test("clicking an answer pill removes it while the run is active", async ({ page }) => {
+    await setupPlayer(page, "SoloDeletePlayer");
+    await startSoloRun(page, "colors");
+
+    await submitAnswer(page, "red");
+    await expect(page.getByText("answers (1)")).toBeVisible({ timeout: 2000 });
+    await submitAnswer(page, "blue");
+    await expect(page.getByText("answers (2)")).toBeVisible({ timeout: 2000 });
+    await submitAnswer(page, "green");
+    await expect(page.getByText("answers (3)")).toBeVisible({ timeout: 2000 });
+
+    const blueButton = page.getByRole("button", { name: "remove blue" });
+    await expect(blueButton).toBeEnabled({ timeout: 5000 });
+    await blueButton.click();
+
+    await expect(page.getByText("answers (2)")).toBeVisible({ timeout: 2000 });
+    await expect(page.getByText("blue", { exact: true })).not.toBeVisible();
+
+    await submitAnswer(page, "yellow");
+    await expect(page.getByText("answers (3)")).toBeVisible({ timeout: 2000 });
+  });
+
   test("run auto-finishes and shows scored results", async ({ page }) => {
     test.setTimeout(30000);
     await setupPlayer(page, "TimerPlayer");

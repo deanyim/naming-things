@@ -228,6 +228,64 @@ export const soloRouter = createTRPCRouter({
       };
     }),
 
+  deleteAnswer: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        slug: z.string().min(1),
+        answerId: z.number().int().positive(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const player = await getPlayerBySession(ctx.db, input.sessionToken);
+      const run = await ctx.db.query.soloRuns.findFirst({
+        where: and(
+          eq(soloRuns.slug, input.slug),
+          eq(soloRuns.playerId, player.id),
+        ),
+      });
+
+      if (!run) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Run not found" });
+      }
+
+      if (run.status !== "playing") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Run is not active",
+        });
+      }
+
+      const endsAt = run.startedAt.getTime() + run.timerSeconds * 1000;
+      if (Date.now() > endsAt) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Timer has expired",
+        });
+      }
+
+      const answer = await ctx.db.query.soloRunAnswers.findFirst({
+        where: and(
+          eq(soloRunAnswers.id, input.answerId),
+          eq(soloRunAnswers.runId, run.id),
+          eq(soloRunAnswers.playerId, player.id),
+        ),
+      });
+
+      if (!answer) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Answer not found",
+        });
+      }
+
+      await ctx.db
+        .delete(soloRunAnswers)
+        .where(eq(soloRunAnswers.id, input.answerId));
+
+      return { success: true };
+    }),
+
   finishRun: publicProcedure
     .input(
       z.object({

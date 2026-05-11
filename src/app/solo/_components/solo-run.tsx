@@ -89,6 +89,34 @@ export function SoloRun({
     },
   });
 
+  const deleteAnswer = api.solo.deleteAnswer.useMutation({
+    onMutate: async (variables) => {
+      await utils.solo.getRun.cancel({ sessionToken, slug });
+
+      const previous = utils.solo.getRun.getData({ sessionToken, slug });
+
+      if (previous) {
+        utils.solo.getRun.setData({ sessionToken, slug }, {
+          ...previous,
+          answers: previous.answers.filter((a) => a.id !== variables.answerId),
+        });
+      }
+
+      return { previous };
+    },
+    onError: (err, _variables, context) => {
+      if (context?.previous) {
+        utils.solo.getRun.setData({ sessionToken, slug }, context.previous);
+      }
+      setError(err.message);
+      setTimeout(() => setError(""), 2000);
+      inputRef.current?.focus();
+    },
+    onSettled: () => {
+      void utils.solo.getRun.invalidate({ sessionToken, slug });
+    },
+  });
+
   const finishRun = api.solo.finishRun.useMutation({
     onSuccess: () => {
       void runQuery.refetch();
@@ -107,13 +135,15 @@ export function SoloRun({
     finishRun.mutate({ sessionToken, slug });
   }, [sessionToken, slug, isFinishing, finishRun]);
 
+  const runStartedAt = run?.startedAt;
+  const runTimerSeconds = run?.timerSeconds;
+
   // Countdown timer: only starts after run data loads.
   // Avoids the stale isExpired=true from useCountdown(undefined).
   useEffect(() => {
-    if (!run) return;
+    if (!runStartedAt || !runTimerSeconds) return;
 
-    const endsAt =
-      new Date(run.startedAt).getTime() + run.timerSeconds * 1000;
+    const endsAt = new Date(runStartedAt).getTime() + runTimerSeconds * 1000;
 
     function tick() {
       const remaining = Math.max(
@@ -126,7 +156,7 @@ export function SoloRun({
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [run?.startedAt, run?.timerSeconds]);
+  }, [runStartedAt, runTimerSeconds]);
 
   // Auto-finish via setTimeout
   useEffect(() => {
@@ -166,6 +196,15 @@ export function SoloRun({
       sessionToken,
       slug,
       text,
+    });
+  };
+
+  const handleDeleteAnswer = (answerId: number) => {
+    if (isExpired || isFinishing || answerId < 0) return;
+    deleteAnswer.mutate({
+      sessionToken,
+      slug,
+      answerId,
     });
   };
 
@@ -247,12 +286,19 @@ export function SoloRun({
           </div>
           <div className="flex flex-wrap gap-2">
             {nonDuplicateAnswers.map((answer) => (
-              <span
+              <button
                 key={answer.id}
-                className="inline-flex min-h-9 max-w-full items-center rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700"
+                type="button"
+                aria-label={`remove ${answer.text}`}
+                disabled={isExpired || isFinishing || answer.id < 0}
+                onClick={() => handleDeleteAnswer(answer.id)}
+                className="inline-flex min-h-9 max-w-full cursor-pointer items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700 transition hover:bg-gray-200 disabled:cursor-default disabled:hover:bg-gray-100"
               >
-                <span className="block truncate">{answer.text}</span>
-              </span>
+                <span className="min-w-0 truncate">{answer.text}</span>
+                {!isExpired && !isFinishing && answer.id >= 0 && (
+                  <span className="text-xs text-gray-400">&times;</span>
+                )}
+              </button>
             ))}
           </div>
         </div>

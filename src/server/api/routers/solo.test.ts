@@ -1,6 +1,11 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import { normalizeCategory } from "~/server/lib/categories/normalize";
 import { normalizeAnswer } from "~/lib/normalize";
+import { createMockDb, createTestCaller } from "~/server/api/test/trpc";
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 // Test category normalization for leaderboard bucketing
 describe("solo leaderboard bucketing", () => {
@@ -49,6 +54,69 @@ describe("duplicate answer detection", () => {
     const a = normalizeAnswer("the apple");
     const b = normalizeAnswer("apple");
     expect(a.normalizedText).toBe(b.normalizedText);
+  });
+});
+
+describe("deleteAnswer", () => {
+  it("removes an owned answer from an active solo run", async () => {
+    vi.spyOn(Date, "now").mockReturnValue(1_000_000);
+
+    const db = createMockDb();
+    db.query.players.findFirst.mockResolvedValue({ id: 1 });
+    db.query.soloRuns.findFirst.mockResolvedValue({
+      id: 10,
+      slug: "solo-run",
+      playerId: 1,
+      status: "playing",
+      startedAt: new Date(990_000),
+      timerSeconds: 60,
+    });
+    db.query.soloRunAnswers.findFirst.mockResolvedValue({
+      id: 42,
+      runId: 10,
+      playerId: 1,
+      text: "blue",
+    });
+
+    const caller = createTestCaller(db);
+    await expect(
+      caller.solo.deleteAnswer({
+        sessionToken: "session-1",
+        slug: "solo-run",
+        answerId: 42,
+      }),
+    ).resolves.toEqual({ success: true });
+
+    expect(db.delete).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects deletion after the solo timer has expired", async () => {
+    vi.spyOn(Date, "now").mockReturnValue(1_000_000);
+
+    const db = createMockDb();
+    db.query.players.findFirst.mockResolvedValue({ id: 1 });
+    db.query.soloRuns.findFirst.mockResolvedValue({
+      id: 10,
+      slug: "solo-run",
+      playerId: 1,
+      status: "playing",
+      startedAt: new Date(900_000),
+      timerSeconds: 60,
+    });
+
+    const caller = createTestCaller(db);
+    await expect(
+      caller.solo.deleteAnswer({
+        sessionToken: "session-1",
+        slug: "solo-run",
+        answerId: 42,
+      }),
+    ).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+      message: "Timer has expired",
+    });
+
+    expect(db.delete).not.toHaveBeenCalled();
   });
 });
 
