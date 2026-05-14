@@ -1,8 +1,9 @@
 import { createHash } from "crypto";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, inArray, sql } from "drizzle-orm";
 import { type db as dbType } from "~/server/db";
 import {
   soloRunAnswers,
+  soloCategoryAnswerJudgments,
   soloRuns,
   soloRunJudgmentHistory,
   type SoloRunJudgmentSnapshotAnswer,
@@ -24,6 +25,20 @@ import { env } from "~/env";
 type DB = typeof dbType;
 
 const BACKGROUND_BATCH_SIZE = 25;
+const ANSWER_NORMALIZER_VERSION = "1";
+const JUDGMENT_CACHE_SCHEMA_VERSION = "1";
+
+export type SoloJudgmentCacheMode = "use" | "bypass";
+type JudgmentSource = "cache" | "fresh";
+type CachedJudgmentResult = CategoryFitResult & {
+  cacheId: number;
+  sourceRunId: number | null;
+  sourceAnswerId: number | null;
+};
+type PersistableJudgmentResult = CategoryFitResult & {
+  judgmentSource?: JudgmentSource;
+  judgmentCacheId?: number | null;
+};
 
 // Per-run lock to prevent concurrent classification of the same answers.
 // Maps runId to a promise that resolves when the in-flight batch completes.
@@ -51,6 +66,25 @@ export function computeJudgeVersion(): string {
     .slice(0, 8);
 }
 
+export function computeSoloJudgmentContextKey(input: {
+  judgeModel: string;
+  judgeVersion: string;
+  categoryEvidencePacketId: string | null;
+}): string {
+  return createHash("sha256")
+    .update(input.judgeVersion)
+    .update("|")
+    .update(input.judgeModel)
+    .update("|")
+    .update(input.categoryEvidencePacketId ?? "none")
+    .update("|")
+    .update(ANSWER_NORMALIZER_VERSION)
+    .update("|")
+    .update(JUDGMENT_CACHE_SCHEMA_VERSION)
+    .digest("hex")
+    .slice(0, 16);
+}
+
 export type ScoringResult = {
   score: number;
   validCount: number;
@@ -64,18 +98,160 @@ export type ScoringResult = {
 
 async function classifyAndPersist(
   db: DB,
-  category: string,
-  candidates: { answerId: number; text: string }[],
-  evidencePacket?: CategoryEvidencePacket | null,
+  input: {
+    category: string;
+    categorySlug: string;
+    sourceRunId: number;
+    candidates: {
+      answerId: number;
+      text: string;
+      normalizedText: string;
+    }[];
+    evidencePacket?: CategoryEvidencePacket | null;
+    cacheMode?: SoloJudgmentCacheMode;
+  },
 ): Promise<CategoryFitResult[]> {
+  const {
+    category,
+    categorySlug,
+    sourceRunId,
+    candidates,
+    evidencePacket = null,
+    cacheMode = "use",
+  } = input;
   if (candidates.length === 0) return [];
 
-  const results = await judgeCategoryFit(category, candidates, {
-    retrieval: {
-      enabled: !!evidencePacket,
-      evidencePacket,
-    },
+  const judgeModel = getJudgeModel();
+  const judgeVersion = computeJudgeVersion();
+  const judgmentContextKey = computeSoloJudgmentContextKey({
+    judgeModel,
+    judgeVersion,
+    categoryEvidencePacketId: evidencePacket?.id ?? null,
   });
+
+  const cachedResults =
+    cacheMode === "use"
+      ? await getCachedJudgments(db, {
+          categorySlug,
+          judgmentContextKey,
+          candidates,
+        })
+      : new Map<string, CachedJudgmentResult>();
+
+  const cachedByAnswerId = new Map<number, PersistableJudgmentResult>();
+  const misses: typeof candidates = [];
+  for (const candidate of candidates) {
+    const cached = cachedResults.get(candidate.normalizedText);
+    if (cached) {
+      cachedByAnswerId.set(candidate.answerId, {
+        ...cached,
+        answerId: candidate.answerId,
+        judgmentSource: "cache",
+        judgmentCacheId: cached.cacheId,
+      });
+    } else {
+      misses.push(candidate);
+    }
+  }
+
+  await persistClassificationResults(db, Array.from(cachedByAnswerId.values()));
+
+  const judgedResults =
+    misses.length > 0
+      ? await judgeCategoryFit(
+          category,
+          misses.map((candidate) => ({
+            answerId: candidate.answerId,
+            text: candidate.text,
+          })),
+          {
+            retrieval: {
+              enabled: !!evidencePacket,
+              evidencePacket,
+            },
+          },
+        )
+      : [];
+
+  await persistClassificationResults(
+    db,
+    judgedResults.map((result) => ({
+      ...result,
+      judgmentSource: "fresh",
+      judgmentCacheId: null,
+    })),
+  );
+
+  if (judgedResults.length > 0) {
+    await writeJudgmentsToCache(db, {
+      categorySlug,
+      categoryDisplayName: category,
+      sourceRunId,
+      candidates: misses,
+      results: judgedResults,
+      judgeModel,
+      judgeVersion,
+      categoryEvidencePacketId: evidencePacket?.id ?? null,
+      judgmentContextKey,
+      overwrite: cacheMode === "bypass",
+    });
+  }
+
+  if (judgedResults.length > 0) {
+    const canonical = await getCachedJudgments(db, {
+      categorySlug,
+      judgmentContextKey,
+      candidates: misses,
+    });
+    const canonicalResults: PersistableJudgmentResult[] = misses.flatMap(
+      (candidate) => {
+        const cached = canonical.get(candidate.normalizedText);
+        return cached
+          ? [
+              {
+                ...cached,
+                answerId: candidate.answerId,
+                judgmentSource:
+                  cached.sourceAnswerId === candidate.answerId
+                    ? "fresh"
+                    : "cache",
+                judgmentCacheId: cached.cacheId,
+              },
+            ]
+          : [];
+      },
+    );
+    if (canonicalResults.length > 0) {
+      await persistClassificationResults(db, canonicalResults);
+      for (const result of canonicalResults) {
+        cachedByAnswerId.set(result.answerId, result);
+      }
+    }
+  }
+
+  const judgedByAnswerId = new Map(
+    judgedResults.map((result) => [
+      result.answerId,
+      {
+        ...result,
+        judgmentSource: "fresh" as const,
+        judgmentCacheId: null,
+      },
+    ]),
+  );
+
+  return candidates.map((candidate) => {
+    const cached = cachedByAnswerId.get(candidate.answerId);
+    if (cached) return cached;
+    return judgedByAnswerId.get(candidate.answerId)!;
+  });
+}
+
+async function persistClassificationResults(
+  db: DB,
+  results: PersistableJudgmentResult[],
+) {
+  if (results.length === 0) return;
 
   await Promise.all(
     results.map((result) =>
@@ -85,13 +261,143 @@ async function classifyAndPersist(
           label: result.label,
           confidence: result.confidence,
           reason: result.reason,
+          judgmentSource: result.judgmentSource ?? null,
+          judgmentCacheId: result.judgmentCacheId ?? null,
         })
         .where(eq(soloRunAnswers.id, result.answerId)),
     ),
   );
-
-  return results;
 }
+
+async function getCachedJudgments(
+  db: DB,
+  input: {
+    categorySlug: string;
+    judgmentContextKey: string;
+    candidates: { normalizedText: string }[];
+  },
+): Promise<Map<string, CachedJudgmentResult>> {
+  if (typeof db.select !== "function") return new Map();
+
+  const normalizedTexts = Array.from(
+    new Set(input.candidates.map((candidate) => candidate.normalizedText)),
+  );
+  if (normalizedTexts.length === 0) return new Map();
+
+  const rows = await db
+    .select()
+    .from(soloCategoryAnswerJudgments)
+    .where(
+      and(
+        eq(soloCategoryAnswerJudgments.categorySlug, input.categorySlug),
+        eq(
+          soloCategoryAnswerJudgments.judgmentContextKey,
+          input.judgmentContextKey,
+        ),
+        inArray(soloCategoryAnswerJudgments.normalizedText, normalizedTexts),
+      ),
+    );
+
+  return new Map(
+    rows.map((row) => [
+      row.normalizedText,
+      {
+        answerId: row.sourceAnswerId ?? 0,
+        cacheId: row.id,
+        label: row.label,
+        confidence: row.confidence ?? 0,
+        reason: row.reason ?? "",
+        sourceRunId: row.sourceRunId,
+        sourceAnswerId: row.sourceAnswerId,
+      },
+    ]),
+  );
+}
+
+async function writeJudgmentsToCache(
+  db: DB,
+  input: {
+    categorySlug: string;
+    categoryDisplayName: string;
+    sourceRunId: number;
+    candidates: {
+      answerId: number;
+      normalizedText: string;
+    }[];
+    results: CategoryFitResult[];
+    judgeModel: string;
+    judgeVersion: string;
+    categoryEvidencePacketId: string | null;
+    judgmentContextKey: string;
+    overwrite: boolean;
+  },
+) {
+  if (typeof db.select !== "function") return;
+
+  const resultMap = new Map(input.results.map((result) => [result.answerId, result]));
+  const values = input.candidates.flatMap((candidate) => {
+    const result = resultMap.get(candidate.answerId);
+    if (!result) return [];
+    return [
+      {
+        categorySlug: input.categorySlug,
+        categoryDisplayName: input.categoryDisplayName,
+        normalizedText: candidate.normalizedText,
+        label: result.label,
+        confidence: result.confidence,
+        reason: result.reason,
+        judgeModel: input.judgeModel,
+        judgeVersion: input.judgeVersion,
+        categoryEvidencePacketId: input.categoryEvidencePacketId,
+        judgmentContextKey: input.judgmentContextKey,
+        sourceRunId: input.sourceRunId,
+        sourceAnswerId: candidate.answerId,
+      },
+    ];
+  });
+
+  if (values.length === 0) return;
+
+  const insert = db.insert(soloCategoryAnswerJudgments).values(values);
+  if (input.overwrite) {
+    await insert.onConflictDoUpdate({
+      target: [
+        soloCategoryAnswerJudgments.categorySlug,
+        soloCategoryAnswerJudgments.normalizedText,
+        soloCategoryAnswerJudgments.judgmentContextKey,
+      ],
+      set: {
+        categoryDisplayName: input.categoryDisplayName,
+        label: excluded(soloCategoryAnswerJudgments.label),
+        confidence: excluded(soloCategoryAnswerJudgments.confidence),
+        reason: excluded(soloCategoryAnswerJudgments.reason),
+        judgeModel: input.judgeModel,
+        judgeVersion: input.judgeVersion,
+        categoryEvidencePacketId: input.categoryEvidencePacketId,
+        sourceRunId: input.sourceRunId,
+        sourceAnswerId: excluded(soloCategoryAnswerJudgments.sourceAnswerId),
+        updatedAt: new Date(),
+      },
+    });
+    return;
+  }
+
+  await insert.onConflictDoNothing({
+    target: [
+      soloCategoryAnswerJudgments.categorySlug,
+      soloCategoryAnswerJudgments.normalizedText,
+      soloCategoryAnswerJudgments.judgmentContextKey,
+    ],
+  });
+}
+
+function excluded(column: { name: string }) {
+  return sql.raw(`excluded."${column.name}"`);
+}
+
+export const __soloJudgmentCacheForTest = {
+  classifyAndPersist,
+};
 
 /**
  * Check if there are enough unclassified answers to trigger a background
@@ -120,11 +426,22 @@ export function maybeClassifyBatch(
       if (unclassified.length < BACKGROUND_BATCH_SIZE) return;
 
       const batch = unclassified.slice(0, BACKGROUND_BATCH_SIZE);
-      const candidates = batch.map((a) => ({ answerId: a.id, text: a.text }));
+      const candidates = batch.map((a) => ({
+        answerId: a.id,
+        text: a.text,
+        normalizedText: a.normalizedText,
+      }));
       const evidencePacket = await getExistingCategoryEvidencePacket(db, category, {
         categorySlug,
       });
-      await classifyAndPersist(db, category, candidates, evidencePacket);
+      await classifyAndPersist(db, {
+        category,
+        categorySlug: categorySlug ?? category,
+        sourceRunId: runId,
+        candidates,
+        evidencePacket,
+        cacheMode: "use",
+      });
     } catch (err) {
       console.error("Background classification batch failed:", err);
     } finally {
@@ -161,18 +478,21 @@ export async function scoreRun(
   const candidates = unclassified.map((a) => ({
     answerId: a.id,
     text: a.text,
+    normalizedText: a.normalizedText,
   }));
 
   const evidencePacket = await getExistingCategoryEvidencePacket(db, category, {
     categorySlug,
   });
 
-  const newResults = await classifyAndPersist(
-    db,
+  const newResults = await classifyAndPersist(db, {
     category,
+    categorySlug: categorySlug ?? category,
+    sourceRunId: runId,
     candidates,
     evidencePacket,
-  );
+    cacheMode: "use",
+  });
 
   // Combine pre-classified results with newly classified ones
   const preClassified: CategoryFitResult[] = nonDuplicates
@@ -256,10 +576,11 @@ async function getNewerEvidencePacketIdForRun(
 export async function rerunJudgingForRun(
   db: DB,
   runId: number,
-  options: { force?: boolean } = {},
+  options: { force?: boolean; cacheMode?: SoloJudgmentCacheMode } = {},
 ): Promise<void> {
   const currentVersion = computeJudgeVersion();
   const force = options.force === true;
+  const cacheMode = options.cacheMode ?? "use";
 
   const initialRun = await db.query.soloRuns.findFirst({
     where: eq(soloRuns.id, runId),
@@ -333,6 +654,7 @@ export async function rerunJudgingForRun(
     const candidates = nonDuplicates.map((a) => ({
       answerId: a.id,
       text: a.text,
+      normalizedText: a.normalizedText,
     }));
 
     const evidencePacket = await getExistingCategoryEvidencePacket(
@@ -344,12 +666,14 @@ export async function rerunJudgingForRun(
       },
     );
 
-    await classifyAndPersist(
-      db,
-      run.categoryDisplayName,
+    await classifyAndPersist(db, {
+      category: run.categoryDisplayName,
+      categorySlug: run.categorySlug,
+      sourceRunId: run.id,
       candidates,
       evidencePacket,
-    );
+      cacheMode,
+    });
 
     // Recompute counts from the fresh state.
     const answersAfter = await db.query.soloRunAnswers.findMany({

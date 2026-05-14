@@ -529,7 +529,7 @@ export const soloRouter = createTRPCRouter({
             sql`(
               ${soloRuns.score} > ${bestRun.score}
               OR (${soloRuns.score} = ${bestRun.score} AND ${soloRuns.durationMs} < ${bestRun.durationMs})
-              OR (${soloRuns.score} = ${bestRun.score} AND ${soloRuns.durationMs} = ${bestRun.durationMs} AND ${soloRuns.createdAt} < ${bestRun.createdAt})
+              OR (${soloRuns.score} = ${bestRun.score} AND ${soloRuns.durationMs} = ${bestRun.durationMs} AND ${soloRuns.createdAt} < ${bestRun.createdAt.toISOString()}::timestamptz)
             )`,
           ),
         );
@@ -618,6 +618,8 @@ export const soloRouter = createTRPCRouter({
           label: a.label,
           confidence: a.confidence,
           reason: a.reason,
+          judgmentSource: a.judgmentSource,
+          judgmentCacheId: a.judgmentCacheId,
           isDuplicate: a.isDuplicate,
           createdAt: a.createdAt,
         })),
@@ -641,6 +643,7 @@ export const soloRouter = createTRPCRouter({
       z.object({
         slug: z.string().min(1),
         force: z.boolean().default(true),
+        cacheMode: z.enum(["use", "bypass"]).default("use"),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -662,7 +665,10 @@ export const soloRouter = createTRPCRouter({
       }
 
       try {
-        await rerunJudgingForRun(ctx.db, run.id, { force: input.force });
+        await rerunJudgingForRun(ctx.db, run.id, {
+          force: input.force,
+          cacheMode: input.cacheMode,
+        });
       } catch (err) {
         if (err instanceof JudgeVersionAlreadyCurrentError) {
           throw new TRPCError({

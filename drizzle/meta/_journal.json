@@ -134,6 +134,20 @@
       "when": 1778440434968,
       "tag": "0018_lazy_rockslide",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1778795276331,
+      "tag": "0019_legal_peter_quill",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1778797366927,
+      "tag": "0020_tearful_nova",
+      "breakpoints": true
     }
   ]
 }

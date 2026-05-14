@@ -31,10 +31,12 @@ vi.mock("~/env", async () => {
 
 import {
   computeCounts,
+  computeSoloJudgmentContextKey,
   computeJudgeVersion,
   rerunJudgingForRun,
   JudgeVersionAlreadyCurrentError,
   __classifyLocksForTest,
+  __soloJudgmentCacheForTest,
 } from "./scoring";
 import type { CategoryFitResult } from "~/server/lib/verification/category-fit";
 
@@ -126,6 +128,178 @@ describe("computeJudgeVersion", () => {
 
   it("never equals the legacy value '1'", () => {
     expect(computeJudgeVersion()).not.toBe("1");
+  });
+});
+
+describe("solo judgment cache", () => {
+  beforeEach(() => {
+    judgeMocks.judgeCategoryFit.mockReset();
+  });
+
+  function createCacheDb(cacheRows: unknown[] = []) {
+    const updates: Record<string, unknown>[] = [];
+    const inserts: unknown[][] = [];
+    const cache = [...cacheRows] as Array<Record<string, unknown>>;
+    const db = {
+      select: vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(async () => cache),
+        })),
+      })),
+      update: vi.fn(() => ({
+        set: vi.fn((patch: Record<string, unknown>) => {
+          updates.push(patch);
+          return { where: vi.fn(async () => undefined) };
+        }),
+      })),
+      insert: vi.fn(() => ({
+        values: vi.fn((value: unknown | unknown[]) => {
+          const rows = Array.isArray(value) ? value : [value];
+          inserts.push(rows);
+          return {
+            onConflictDoNothing: vi.fn(async () => {
+              for (const row of rows as Array<Record<string, unknown>>) {
+                if (
+                  !cache.some(
+                    (existing) =>
+                      existing.categorySlug === row.categorySlug &&
+                      existing.normalizedText === row.normalizedText &&
+                      existing.judgmentContextKey === row.judgmentContextKey,
+                  )
+                ) {
+                  cache.push({ id: cache.length + 1, ...row });
+                }
+              }
+            }),
+            onConflictDoUpdate: vi.fn(async () => {
+              for (const row of rows as Array<Record<string, unknown>>) {
+                const existing = cache.find(
+                  (cached) =>
+                    cached.categorySlug === row.categorySlug &&
+                    cached.normalizedText === row.normalizedText &&
+                    cached.judgmentContextKey === row.judgmentContextKey,
+                );
+                if (existing) {
+                  Object.assign(existing, row);
+                } else {
+                  cache.push({ id: cache.length + 1, ...row });
+                }
+              }
+            }),
+          };
+        }),
+      })),
+    };
+
+    return { db, updates, inserts };
+  }
+
+  it("reuses a cached decision without calling the judge", async () => {
+    const contextKey = computeSoloJudgmentContextKey({
+      judgeModel: "test/model-a",
+      judgeVersion: computeJudgeVersion(),
+      categoryEvidencePacketId: null,
+    });
+    const { db, updates, inserts } = createCacheDb([
+      {
+        normalizedText: "apple",
+        id: 1,
+        categorySlug: "fruit",
+        sourceAnswerId: 100,
+        sourceRunId: 99,
+        label: "valid",
+        confidence: 0.9,
+        reason: "cached fruit",
+        judgmentContextKey: contextKey,
+      },
+    ]);
+
+    const results = await __soloJudgmentCacheForTest.classifyAndPersist(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      db as any,
+      {
+        category: "fruits",
+        categorySlug: "fruit",
+        sourceRunId: 1,
+        candidates: [
+          { answerId: 10, text: "Apple", normalizedText: "apple" },
+        ],
+        cacheMode: "use",
+      },
+    );
+
+    expect(judgeMocks.judgeCategoryFit).not.toHaveBeenCalled();
+    expect(results[0]).toMatchObject({
+      answerId: 10,
+      label: "valid",
+      confidence: 0.9,
+      reason: "cached fruit",
+    });
+    expect(updates).toContainEqual({
+      label: "valid",
+      confidence: 0.9,
+      reason: "cached fruit",
+      judgmentSource: "cache",
+      judgmentCacheId: 1,
+    });
+    expect(inserts).toHaveLength(0);
+  });
+
+  it("bypasses cache reads and overwrites the shared cache when requested", async () => {
+    const contextKey = computeSoloJudgmentContextKey({
+      judgeModel: "test/model-a",
+      judgeVersion: computeJudgeVersion(),
+      categoryEvidencePacketId: null,
+    });
+    const { db, inserts } = createCacheDb([
+      {
+        id: 1,
+        categorySlug: "fruit",
+        normalizedText: "apple",
+        sourceAnswerId: 100,
+        label: "invalid",
+        confidence: 0.7,
+        reason: "old cache",
+        judgmentContextKey: contextKey,
+      },
+    ]);
+    judgeMocks.judgeCategoryFit.mockResolvedValue([
+      {
+        answerId: 10,
+        label: "valid",
+        confidence: 1,
+        reason: "fresh judge",
+      },
+    ]);
+
+    const results = await __soloJudgmentCacheForTest.classifyAndPersist(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      db as any,
+      {
+        category: "fruits",
+        categorySlug: "fruit",
+        sourceRunId: 1,
+        candidates: [
+          { answerId: 10, text: "Apple", normalizedText: "apple" },
+        ],
+        cacheMode: "bypass",
+      },
+    );
+
+    expect(judgeMocks.judgeCategoryFit).toHaveBeenCalledTimes(1);
+    expect(results[0]).toMatchObject({
+      answerId: 10,
+      label: "valid",
+      reason: "fresh judge",
+    });
+    expect(inserts).toHaveLength(1);
+    expect(inserts[0]?.[0]).toMatchObject({
+      categorySlug: "fruit",
+      normalizedText: "apple",
+      label: "valid",
+      sourceRunId: 1,
+      sourceAnswerId: 10,
+    });
   });
 });
 

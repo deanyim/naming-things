@@ -58,6 +58,8 @@ export function SoloRun({
               label: null,
               confidence: null,
               reason: null,
+              judgmentSource: null,
+              judgmentCacheId: null,
               createdAt: new Date(),
             },
           ],

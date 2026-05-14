@@ -89,17 +89,29 @@ export default function SoloRunDebugPage() {
               </span>
             ) : null}
           </p>
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             <button
-              onClick={() => rerunJudging.mutate({ slug, force: true })}
+              onClick={() =>
+                rerunJudging.mutate({ slug, force: true, cacheMode: "use" })
+              }
               disabled={rerunDisabled}
               className="rounded-md border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {rerunJudging.isPending ? "rerunning…" : "rerun judging"}
+              {rerunJudging.isPending ? "rerunning…" : "rerun with cache"}
+            </button>
+            <button
+              onClick={() =>
+                rerunJudging.mutate({ slug, force: true, cacheMode: "bypass" })
+              }
+              disabled={rerunDisabled}
+              className="rounded-md border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {rerunJudging.isPending ? "rerunning…" : "rerun without cache"}
             </button>
             {judgingUpToDate && (
               <span className="text-xs text-amber-600">
-                evidence and prompt are current; this will force a fresh rerun
+                current already; cache mode reuses shared decisions, no-cache
+                mode replaces them
               </span>
             )}
             {rerunError && (
@@ -210,6 +222,7 @@ export default function SoloRunDebugPage() {
               <th className="py-2 pr-3">normalized</th>
               <th className="py-2 pr-3">label</th>
               <th className="py-2 pr-3">conf</th>
+              <th className="py-2 pr-3">source</th>
               <th className="py-2 pr-3">dup</th>
               <th className="py-2">reason</th>
             </tr>
@@ -247,6 +260,26 @@ export default function SoloRunDebugPage() {
                   {a.confidence != null
                     ? `${(a.confidence * 100).toFixed(0)}%`
                     : "—"}
+                </td>
+                <td className="py-2 pr-3 text-xs text-gray-500">
+                  {a.judgmentSource ? (
+                    <span
+                      title={
+                        a.judgmentCacheId
+                          ? `cache row ${a.judgmentCacheId}`
+                          : undefined
+                      }
+                      className={
+                        a.judgmentSource === "cache"
+                          ? "text-blue-600"
+                          : "text-gray-600"
+                      }
+                    >
+                      {a.judgmentSource}
+                    </span>
+                  ) : (
+                    "—"
+                  )}
                 </td>
                 <td className="py-2 pr-3 text-xs">
                   {a.isDuplicate ? (

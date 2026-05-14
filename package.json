@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "next build",
+    "backfill:solo-judgments": "tsx scripts/backfill-solo-judgment-cache.ts",
     "eval": "npm run eval:run && npm run eval:score",
     "eval:run": "node --experimental-strip-types scripts/run-evals.ts",
     "eval:score": "node --experimental-strip-types scripts/score-evals.ts",

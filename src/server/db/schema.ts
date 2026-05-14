@@ -425,6 +425,8 @@ export const soloRunAnswers = createTable(
     label: categoryFitLabelEnum(),
     confidence: real(),
     reason: d.varchar({ length: 512 }),
+    judgmentSource: d.varchar({ length: 32 }),
+    judgmentCacheId: d.integer(),
     isDuplicate: d.boolean().default(false).notNull(),
     createdAt: d
       .timestamp({ withTimezone: true })
@@ -433,6 +435,48 @@ export const soloRunAnswers = createTable(
   }),
   (t) => [
     index("solo_answer_run_normalized_idx").on(t.runId, t.normalizedText),
+  ],
+);
+
+export const soloCategoryAnswerJudgments = createTable(
+  "solo_category_answer_judgment",
+  (d) => ({
+    id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
+    categorySlug: d.varchar({ length: 256 }).notNull(),
+    categoryDisplayName: d.varchar({ length: 256 }).notNull(),
+    normalizedText: d.varchar({ length: 256 }).notNull(),
+    label: categoryFitLabelEnum().notNull(),
+    confidence: real(),
+    reason: d.varchar({ length: 512 }),
+    judgeModel: d.varchar({ length: 256 }),
+    judgeVersion: d.varchar({ length: 256 }).notNull(),
+    categoryEvidencePacketId: d
+      .varchar({ length: 64 })
+      .references(() => categoryEvidencePackets.id, { onDelete: "set null" }),
+    judgmentContextKey: d.varchar({ length: 64 }).notNull(),
+    sourceRunId: d
+      .integer()
+      .references(() => soloRuns.id, { onDelete: "set null" }),
+    sourceAnswerId: d
+      .integer()
+      .references(() => soloRunAnswers.id, { onDelete: "set null" }),
+    createdAt: d
+      .timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
+  }),
+  (t) => [
+    uniqueIndex("solo_category_answer_judgment_unique_idx").on(
+      t.categorySlug,
+      t.normalizedText,
+      t.judgmentContextKey,
+    ),
+    index("solo_category_answer_judgment_category_idx").on(t.categorySlug),
+    index("solo_category_answer_judgment_answer_idx").on(t.normalizedText),
+    index("solo_category_answer_judgment_packet_idx").on(
+      t.categoryEvidencePacketId,
+    ),
   ],
 );
 
@@ -446,6 +490,10 @@ export const soloRunAnswersRelations = relations(
     player: one(players, {
       fields: [soloRunAnswers.playerId],
       references: [players.id],
+    }),
+    judgmentCache: one(soloCategoryAnswerJudgments, {
+      fields: [soloRunAnswers.judgmentCacheId],
+      references: [soloCategoryAnswerJudgments.id],
     }),
   }),
 );
